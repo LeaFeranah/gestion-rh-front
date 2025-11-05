@@ -31,6 +31,8 @@ import Sidebar from './components/layout/Sidebar';
 import DashboardPage from './pages/Dashboard/DashboardPage';
 //import EmployeesPage from './components/employee/Employee';
 import SocietePage from './components/societe/SocietePage';
+import EmployePage from './pages/employee/EmployePage';
+//import EmployeeManagementSystem from './pages/employee/EmployeeManagementSystem';
 
 
 // import EmployeesPage from './pages/Employees/EmployeesPage';
@@ -60,7 +62,9 @@ const HRManagementApp = () => {
         {/* Affichage conditionnel selon le menu cliqué */}
         {activeMenu === 'dashboard' && <DashboardPage />}
         {/* {activeMenu === 'employees' && <EmployeesPage/>} */}
-        {activeMenu === 'employees' && <div className="p-6 text-gray-800">Page des employés</div>}
+        {activeMenu === 'employees' && <EmployePage/>}
+        {/* {activeMenu === 'employees' && <EmployeeManagementSystem/>} */}
+        {/* {activeMenu === 'employees' && <div className="p-6 text-gray-800">Page des employés</div>} */}
         {/* {activeMenu === 'employees' && <EmployeesPage/>} */}
         {activeMenu === 'recruitment' && <div className="p-6 text-gray-800">Page du recrutement</div>}
         {activeMenu === 'company' && <SocietePage/>}
