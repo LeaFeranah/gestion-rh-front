@@ -3,7 +3,7 @@ import { getColorGradient } from '../../utils/colorGradients';
 
 const ActivityListItem = ({ activity }) => {
   return (
-    <div className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-all duration-300">
+    <div className="flex items-center gap-4 p-3 rounded-sm hover:bg-gray-50 transition-all duration-300">
       <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${getColorGradient(activity.color)} flex items-center justify-center text-white font-semibold shadow-md`}>
         {activity.name.charAt(0)}
       </div>

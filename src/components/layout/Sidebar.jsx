@@ -6,7 +6,7 @@ import { LogOut } from 'lucide-react';
 
 const Sidebar = ({ isOpen, activeMenu, onMenuChange }) => {
   return (
-    <aside className={`fixed left-0 top-16 bottom-0 bg-white shadow-xl transition-all duration-500 z-40 ${isOpen ? 'w-64' : 'w-20'}`}>
+    <aside className={`fixed left-0 top-16 bottom-0 bg-white shadow-sm transition-all duration-500 z-40 ${isOpen ? 'w-64' : 'w-20'}`}>
       <div className="h-full overflow-y-auto py-6 px-3">
         <nav className="space-y-2">
           {MENU_ITEMS.map((item) => (
