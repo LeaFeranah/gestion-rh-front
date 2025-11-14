@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:8000/societes/api/societe/";
+//const BASE_URL = "http://localhost:8000/societes/api/societe/";
+const BASE_URL = "http://192.168.3.178:8000/societes/api/societe/";
 
 // Liste complète
 export const fetchSocietesListe = async () => {
