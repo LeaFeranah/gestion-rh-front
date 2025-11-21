@@ -51,26 +51,37 @@ const EmployeesPage = () => {
   });
 
   // Fonctions de formatage
-  const formatNom = (nom) => {
-    return nom ? nom.toUpperCase() : "";
-  };
+  // const formatNom = (nom) => {
+  //   return nom ? nom.toUpperCase() : "";
+  // };
 
-  const formatPrenoms = (prenoms) => {
-    if (!prenoms) return "";
-    return prenoms
+  // const formatPrenoms = (prenoms) => {
+  //   if (!prenoms) return "";
+  //   return prenoms
+  //     .split(" ")
+  //     .map(
+  //       (prenom) =>
+  //         prenom.charAt(0).toUpperCase() + prenom.slice(1).toLowerCase()
+  //     )
+  //     .join(" ");
+  // };
+
+  // const formatDisplayName = (emp) => {
+  //   const nomFormatted = formatNom(emp.nom);
+  //   const prenomsFormatted = formatPrenoms(emp.prenoms);
+  //   return `${nomFormatted} ${prenomsFormatted}`;
+  // };
+
+  // NOUVELLE fonction pour formater le nom complet
+  const formatNomComplet = (nomComplet) => {
+    if (!nomComplet) return "";
+    return nomComplet
       .split(" ")
-      .map(
-        (prenom) =>
-          prenom.charAt(0).toUpperCase() + prenom.slice(1).toLowerCase()
-      )
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
       .join(" ");
   };
 
-  const formatDisplayName = (emp) => {
-    const nomFormatted = formatNom(emp.nom);
-    const prenomsFormatted = formatPrenoms(emp.prenoms);
-    return `${nomFormatted} ${prenomsFormatted}`;
-  };
+  
 
   useEffect(() => {
     fetchEmployees();
@@ -93,8 +104,8 @@ const EmployeesPage = () => {
   // Filtrage et pagination
   const filteredEmployees = employees.filter((emp) => {
     const matchesSearch =
-      emp.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.prenoms?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      emp.nom_complet?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      //emp.prenoms?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       emp.numero_matricule?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesFilters =
@@ -142,12 +153,12 @@ const EmployeesPage = () => {
     if (!formData.numero_matricule?.trim()) {
       errors.push("Le numéro matricule est obligatoire");
     }
-    if (!formData.nom?.trim()) {
-      errors.push("Le nom est obligatoire");
+    if (!formData.nom_complet?.trim()) {
+      errors.push("Le nom complet est obligatoire");
     }
-    if (!formData.prenoms?.trim()) {
-      errors.push("Les prénoms sont obligatoires");
-    }
+    // if (!formData.prenoms?.trim()) {
+    //   errors.push("Les prénoms sont obligatoires");
+    // }
 
     if (errors.length > 0) {
       alert(errors.join("\n"));
@@ -248,13 +259,13 @@ const EmployeesPage = () => {
       const persoData = new FormData();
 
       // Formater les données avant envoi
-      const nomFormatted = formatNom(formData.nom);
-      const prenomsFormatted = formatPrenoms(formData.prenoms);
+      const nomCompletFormatted = formatNomComplet(formData.nom_complet);
+      //const prenomsFormatted = formatPrenoms(formData.prenoms);
 
       const personalFields = {
         numero_matricule: formData.numero_matricule,
-        nom: nomFormatted,
-        prenoms: prenomsFormatted,
+        nom_complet: nomCompletFormatted,
+        //prenoms: prenomsFormatted,
         sexe: formData.sexe,
         appellation: formData.appellation,
         fonction: formData.fonction,
@@ -415,15 +426,15 @@ const EmployeesPage = () => {
       const persoData = new FormData();
 
       // Formater les données avant envoi
-      const nomFormatted = formatNom(formData.nom);
-      const prenomsFormatted = formatPrenoms(formData.prenoms);
+      const nomCompletFormatted = formatNomComplet(formData.nom_complet);
+      //const prenomsFormatted = formatPrenoms(formData.prenoms);
 
       persoData.append(
         "numero_matricule",
         formData.numero_matricule?.trim() || ""
       );
-      persoData.append("nom", nomFormatted);
-      persoData.append("prenoms", prenomsFormatted);
+      persoData.append("nom_complet", nomCompletFormatted);
+      //persoData.append("prenoms", prenomsFormatted);
 
       const optionalFields = {
         sexe: formData.sexe,
@@ -591,8 +602,7 @@ const EmployeesPage = () => {
   const resetForm = () => {
     setFormData({
       numero_matricule: "",
-      nom: "",
-      prenoms: "",
+      nom_complet: "",
       sexe: "",
       appellation: "",
       fonction: "",
@@ -638,15 +648,15 @@ const EmployeesPage = () => {
               </p>
             </div>
 
-            <button className="flex items-center gap-2 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+            {/* <button className="flex items-center gap-2 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
               <Download className="w-4 h-4" />
               Exporter
-            </button>
+            </button> */}
           </div>
 
           {/* Stats Cards améliorées */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all">
+            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:transform hover:scale-105 border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
@@ -662,7 +672,7 @@ const EmployeesPage = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all">
+            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:transform hover:scale-105 border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Hommes</p>
@@ -676,7 +686,7 @@ const EmployeesPage = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all">
+            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:transform hover:scale-105 border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Femmes</p>
@@ -690,7 +700,7 @@ const EmployeesPage = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all">
+            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:transform hover:scale-105 border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Affichage</p>
@@ -1041,8 +1051,8 @@ const EmployeesPage = () => {
                                 )}
                               </div>
                               <div className="min-w-0">
-                                <p className="text-sm font-semibold text-gray-900 truncate">
-                                  {formatDisplayName(emp)}
+                                 <p className="text-sm font-semibold text-gray-900 truncate">
+                                  {emp.nom_complet || "Nom non spécifié"} {/* CHANGEMENT ICI */}
                                 </p>
                                 <p className="text-xs text-gray-500 truncate">
                                   {emp.appellation || "Non spécifié"}
@@ -1135,8 +1145,8 @@ const EmployeesPage = () => {
                               )}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <h3 className="font-bold text-gray-900 text-lg truncate">
-                                {formatDisplayName(emp)}
+                               <h3 className="font-bold text-gray-900 text-lg truncate">
+                                {emp.nom_complet || "Nom non spécifié"} {/* CHANGEMENT ICI */}
                               </h3>
                               <p className="text-sm text-gray-500 truncate">
                                 {emp.appellation || "Non spécifié"}
