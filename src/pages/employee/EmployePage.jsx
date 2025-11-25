@@ -50,28 +50,6 @@ const EmployeesPage = () => {
     sexe: "",
   });
 
-  // Fonctions de formatage
-  // const formatNom = (nom) => {
-  //   return nom ? nom.toUpperCase() : "";
-  // };
-
-  // const formatPrenoms = (prenoms) => {
-  //   if (!prenoms) return "";
-  //   return prenoms
-  //     .split(" ")
-  //     .map(
-  //       (prenom) =>
-  //         prenom.charAt(0).toUpperCase() + prenom.slice(1).toLowerCase()
-  //     )
-  //     .join(" ");
-  // };
-
-  // const formatDisplayName = (emp) => {
-  //   const nomFormatted = formatNom(emp.nom);
-  //   const prenomsFormatted = formatPrenoms(emp.prenoms);
-  //   return `${nomFormatted} ${prenomsFormatted}`;
-  // };
-
   // NOUVELLE fonction pour formater le nom complet
   const formatNomComplet = (nomComplet) => {
     if (!nomComplet) return "";
@@ -80,8 +58,6 @@ const EmployeesPage = () => {
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
       .join(" ");
   };
-
-  
 
   useEffect(() => {
     fetchEmployees();
@@ -324,16 +300,22 @@ const EmployeesPage = () => {
       if (formData.salaire_personnel) {
         const salaireData = {
           date_embauche: formData.salaire_personnel.date_embauche || "",
-          fonction: formData.salaire_personnel.fonction || "",
+          //fonction: formData.salaire_personnel.fonction || "",
           categorie: formData.salaire_personnel.categorie || "",
-          salaire: formData.salaire_personnel.salaire || "",
-          section: formData.salaire_personnel.section || "",
+          indice: formData.salaire_personnel.indice || "",
+          taux_horaire: formData.salaire_personnel.taux_horaire || "",
+          salaire_base: formData.salaire_personnel.salaire_base || "",
+          autre_indemnite: formData.salaire_personnel.autre_indemnite || "",
+          //section: formData.salaire_personnel.section || "",
           responsable_section:
             formData.salaire_personnel.responsable_section || "",
           prime_anciennete: formData.salaire_personnel.prime_anciennete || "",
           indemnite_deplacement:
             formData.salaire_personnel.indemnite_deplacement || "",
-          obs_prime: formData.salaire_personnel.obs_prime || "",
+          dernier_aug_indice:
+            formData.salaire_personnel.dernier_aug_indice || "",
+          //obs_prime: formData.salaire_personnel.obs_prime || "",
+          salaire_total: formData.salaire_personnel.salaire_total || "",
           employe: selectedEmployee.id,
         };
 
@@ -493,17 +475,20 @@ const EmployeesPage = () => {
         hasValidData(formData.salaire_personnel)
       ) {
         const salaireData = {
-          date_embauche: formData.salaire_personnel.date_embauche || "",
-          fonction: formData.salaire_personnel.fonction || "",
-          categorie: formData.salaire_personnel.categorie || "",
-          salaire: formData.salaire_personnel.salaire || "",
-          section: formData.salaire_personnel.section || "",
+          date_embauche: formData.salaire_personnel?.date_embauche || "",
           responsable_section:
-            formData.salaire_personnel.responsable_section || "",
-          prime_anciennete: formData.salaire_personnel.prime_anciennete || "",
+            formData.salaire_personnel?.responsable_section || "",
+          categorie: formData.salaire_personnel?.categorie || "",
+          indice: formData.salaire_personnel?.indice || "",
+          taux_horaire: formData.salaire_personnel?.taux_horaire || "",
+          salaire_base: formData.salaire_personnel?.salaire_base || "",
+          autre_indemnite: formData.salaire_personnel?.autre_indemnite || "",
+          prime_anciennete: formData.salaire_personnel?.prime_anciennete || "",
           indemnite_deplacement:
-            formData.salaire_personnel.indemnite_deplacement || "",
-          obs_prime: formData.salaire_personnel.obs_prime || "",
+            formData.salaire_personnel?.indemnite_deplacement || "",
+          dernier_aug_indice:
+            formData.salaire_personnel?.dernier_aug_indice || "",
+          salaire_total: formData.salaire_personnel?.salaire_total || "",
           employe: newEmp.id,
         };
 
@@ -1051,8 +1036,9 @@ const EmployeesPage = () => {
                                 )}
                               </div>
                               <div className="min-w-0">
-                                 <p className="text-sm font-semibold text-gray-900 truncate">
-                                  {emp.nom_complet || "Nom non spécifié"} {/* CHANGEMENT ICI */}
+                                <p className="text-sm font-semibold text-gray-900 truncate">
+                                  {emp.nom_complet || "Nom non spécifié"}{" "}
+                                  {/* CHANGEMENT ICI */}
                                 </p>
                                 <p className="text-xs text-gray-500 truncate">
                                   {emp.appellation || "Non spécifié"}
@@ -1145,8 +1131,9 @@ const EmployeesPage = () => {
                               )}
                             </div>
                             <div className="min-w-0 flex-1">
-                               <h3 className="font-bold text-gray-900 text-lg truncate">
-                                {emp.nom_complet || "Nom non spécifié"} {/* CHANGEMENT ICI */}
+                              <h3 className="font-bold text-gray-900 text-lg truncate">
+                                {emp.nom_complet || "Nom non spécifié"}{" "}
+                                {/* CHANGEMENT ICI */}
                               </h3>
                               <p className="text-sm text-gray-500 truncate">
                                 {emp.appellation || "Non spécifié"}
