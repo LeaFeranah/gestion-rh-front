@@ -808,11 +808,351 @@ const EmployeeBlock = ({
           </div>
         );
 
+      // case "salaire":
+      //   return (
+      //     <div className="bg-gray-200 p-6 rounded-md border border-gray-200">
+      //       {isAddMode && (
+      //         <div className="flex items-center gap-2 mb-6 pb-4 border-b border-gray-200">
+      //           <Briefcase className="w-5 h-5 text-gray-600" />
+      //           <h3 className="text-lg font-semibold text-gray-900">
+      //             Informations Salariales
+      //           </h3>
+      //         </div>
+      //       )}
+
+      //       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      //         {/* Colonne 1 */}
+      //         <div className="space-y-4">
+      //           <div className="flex flex-col">
+      //             <label className="text-sm font-medium text-gray-700 mb-1">
+      //               Date d'embauche
+      //             </label>
+      //             {editMode ? (
+      //               <input
+      //                 type="date"
+      //                 value={data.salaire_personnel?.date_embauche || ""}
+      //                 onChange={(e) =>
+      //                   handleSectionChange(
+      //                     "salaire_personnel",
+      //                     "date_embauche",
+      //                     e.target.value
+      //                   )
+      //                 }
+      //                 className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+      //               />
+      //             ) : (
+      //               <span className="text-sm text-gray-900 py-2">
+      //                 {data.salaire_personnel?.date_embauche || "-"}
+      //               </span>
+      //             )}
+      //           </div>
+
+      //           <div className="flex flex-col">
+      //             <label className="text-sm font-medium text-gray-700 mb-1">
+      //               Responsable section
+      //             </label>
+      //             {editMode ? (
+      //               <input
+      //                 type="text"
+      //                 value={data.salaire_personnel?.responsable_section || ""}
+      //                 onChange={(e) =>
+      //                   handleSectionChange(
+      //                     "salaire_personnel",
+      //                     "responsable_section",
+      //                     e.target.value
+      //                   )
+      //                 }
+      //                 className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+      //               />
+      //             ) : (
+      //               <span className="text-sm text-gray-900 py-2">
+      //                 {data.salaire_personnel?.responsable_section || "-"}
+      //               </span>
+      //             )}
+      //           </div>
+
+      //           <div className="flex flex-col">
+      //             <label className="text-sm font-medium text-gray-700 mb-1">
+      //               Catégorie
+      //             </label>
+      //             {editMode ? (
+      //               <select
+      //                 value={data.salaire_personnel?.categorie || ""}
+      //                 onChange={(e) =>
+      //                   handleSectionChange(
+      //                     "salaire_personnel",
+      //                     "categorie",
+      //                     e.target.value
+      //                   )
+      //                 }
+      //                 className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+      //               >
+      //                 <option value="">-- Sélectionnez une catégorie --</option>
+      //                 <option value="M1">M1</option>
+      //                 <option value="M2">M2</option>
+      //                 <option value="0S1">0S1</option>
+      //                 <option value="0S2">0S2</option>
+      //                 <option value="0S3">0S3</option>
+      //                 <option value="0P1A">0P1A</option>
+      //                 <option value="0P1B">0P1B</option>
+      //                 <option value="0P2A">0P2A</option>
+      //                 <option value="0P2B">0P2B</option>
+      //                 <option value="0P3">0P3</option>
+      //                 <option value="H.C">H.C</option>
+      //               </select>
+      //             ) : (
+      //               <span className="text-sm text-gray-900 py-2">
+      //                 {data.salaire_personnel?.categorie || "-"}
+      //               </span>
+      //             )}
+      //           </div>
+
+      //           <div className="flex flex-col">
+      //             <label className="text-sm font-medium text-gray-700 mb-1">
+      //               Indice
+      //             </label>
+      //             {editMode ? (
+      //               <input
+      //                 type="text"
+      //                 value={data.salaire_personnel?.indice || ""}
+      //                 onChange={(e) =>
+      //                   handleSectionChange(
+      //                     "salaire_personnel",
+      //                     "indice",
+      //                     e.target.value
+      //                   )
+      //                 }
+      //                 className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+      //               />
+      //             ) : (
+      //               <span className="text-sm text-gray-900 py-2">
+      //                 {data.salaire_personnel?.indice || "-"}
+      //               </span>
+      //             )}
+      //           </div>
+
+      //           <div className="flex flex-col">
+      //             <label className="text-sm font-medium text-gray-700 mb-1">
+      //               Taux horaire (Ar)
+      //             </label>
+      //             {editMode ? (
+      //               <input
+      //                 type="number"
+      //                 step="0.01"
+      //                 value={data.salaire_personnel?.taux_horaire || ""}
+      //                 onChange={(e) =>
+      //                   handleSectionChange(
+      //                     "salaire_personnel",
+      //                     "taux_horaire",
+      //                     e.target.value
+      //                   )
+      //                 }
+      //                 className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+      //               />
+      //             ) : (
+      //               <span className="text-sm text-gray-900 py-2">
+      //                 {data.salaire_personnel?.taux_horaire
+      //                   ? `${Number(
+      //                       data.salaire_personnel.taux_horaire
+      //                     ).toLocaleString("fr-FR")} Ar`
+      //                   : "-"}
+      //               </span>
+      //             )}
+      //           </div>
+
+      //           <div className="flex flex-col">
+      //             <label className="text-sm font-medium text-gray-700 mb-1">
+      //               Salaire de base (Ar)
+      //             </label>
+      //             {editMode ? (
+      //               <input
+      //                 type="number"
+      //                 step="0.01"
+      //                 value={data.salaire_personnel?.salaire_base || ""}
+      //                 onChange={(e) =>
+      //                   handleSectionChange(
+      //                     "salaire_personnel",
+      //                     "salaire_base",
+      //                     e.target.value
+      //                   )
+      //                 }
+      //                 className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+      //               />
+      //             ) : (
+      //               <span className="text-sm text-gray-900 py-2">
+      //                 {data.salaire_personnel?.salaire_base
+      //                   ? `${Number(
+      //                       data.salaire_personnel.salaire_base
+      //                     ).toLocaleString("fr-FR")} Ar`
+      //                   : "-"}
+      //               </span>
+      //             )}
+      //           </div>
+      //         </div>
+
+      //         {/* Colonne 2 */}
+      //         <div className="space-y-4">
+      //           <div className="flex flex-col">
+      //             <label className="text-sm font-medium text-gray-700 mb-1">
+      //               Prime ancienneté (Ar)
+      //             </label>
+      //             {editMode ? (
+      //               <input
+      //                 type="number"
+      //                 step="0.01"
+      //                 value={data.salaire_personnel?.prime_anciennete || ""}
+      //                 onChange={(e) =>
+      //                   handleSectionChange(
+      //                     "salaire_personnel",
+      //                     "prime_anciennete",
+      //                     e.target.value
+      //                   )
+      //                 }
+      //                 className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+      //               />
+      //             ) : (
+      //               <span className="text-sm text-gray-900 py-2">
+      //                 {data.salaire_personnel?.prime_anciennete
+      //                   ? `${Number(
+      //                       data.salaire_personnel.prime_anciennete
+      //                     ).toLocaleString("fr-FR")} Ar`
+      //                   : "-"}
+      //               </span>
+      //             )}
+      //           </div>
+
+      //           <div className="flex flex-col">
+      //             <label className="text-sm font-medium text-gray-700 mb-1">
+      //               Indemnité déplacement (Ar)
+      //             </label>
+      //             {editMode ? (
+      //               <input
+      //                 type="number"
+      //                 step="0.01"
+      //                 value={
+      //                   data.salaire_personnel?.indemnite_deplacement || ""
+      //                 }
+      //                 onChange={(e) =>
+      //                   handleSectionChange(
+      //                     "salaire_personnel",
+      //                     "indemnite_deplacement",
+      //                     e.target.value
+      //                   )
+      //                 }
+      //                 className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+      //               />
+      //             ) : (
+      //               <span className="text-sm text-gray-900 py-2">
+      //                 {data.salaire_personnel?.indemnite_deplacement
+      //                   ? `${Number(
+      //                       data.salaire_personnel.indemnite_deplacement
+      //                     ).toLocaleString("fr-FR")} Ar`
+      //                   : "-"}
+      //               </span>
+      //             )}
+      //           </div>
+
+      //           <div className="flex flex-col">
+      //             <label className="text-sm font-medium text-gray-700 mb-1">
+      //               Autre indemnité (Ar)
+      //             </label>
+      //             {editMode ? (
+      //               <input
+      //                 type="number"
+      //                 step="0.01"
+      //                 value={data.salaire_personnel?.autre_indemnite || ""}
+      //                 onChange={(e) =>
+      //                   handleSectionChange(
+      //                     "salaire_personnel",
+      //                     "autre_indemnite",
+      //                     e.target.value
+      //                   )
+      //                 }
+      //                 className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+      //               />
+      //             ) : (
+      //               <span className="text-sm text-gray-900 py-2">
+      //                 {data.salaire_personnel?.autre_indemnite
+      //                   ? `${Number(
+      //                       data.salaire_personnel.autre_indemnite
+      //                     ).toLocaleString("fr-FR")} Ar`
+      //                   : "-"}
+      //               </span>
+      //             )}
+      //           </div>
+
+      //           <div className="flex flex-col">
+      //             <label className="text-sm font-medium text-gray-700 mb-1">
+      //               Dernier augmentation indice
+      //             </label>
+      //             {editMode ? (
+      //               <input
+      //                 type="text"
+      //                 value={data.salaire_personnel?.dernier_aug_indice || ""}
+      //                 onChange={(e) =>
+      //                   handleSectionChange(
+      //                     "salaire_personnel",
+      //                     "dernier_aug_indice",
+      //                     e.target.value
+      //                   )
+      //                 }
+      //                 className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+      //               />
+      //             ) : (
+      //               <span className="text-sm text-gray-900 py-2">
+      //                 {data.salaire_personnel?.dernier_aug_indice || "-"}
+      //               </span>
+      //             )}
+      //           </div>
+
+      //           <div className="flex flex-col">
+      //             <label className="text-sm font-medium text-gray-700 mb-1">
+      //               Salaire total (Ar)
+      //             </label>
+      //             {editMode ? (
+      //               <input
+      //                 type="number"
+      //                 step="0.01"
+      //                 value={data.salaire_personnel?.salaire_total || ""}
+      //                 onChange={(e) =>
+      //                   handleSectionChange(
+      //                     "salaire_personnel",
+      //                     "salaire_total",
+      //                     e.target.value
+      //                   )
+      //                 }
+      //                 className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+      //               />
+      //             ) : (
+      //               <span className="text-sm text-gray-900 py-2">
+      //                 {data.salaire_personnel?.salaire_total
+      //                   ? `${Number(
+      //                       data.salaire_personnel.salaire_total
+      //                     ).toLocaleString("fr-FR")} Ar`
+      //                   : "-"}
+      //               </span>
+      //             )}
+      //           </div>
+      //         </div>
+      //       </div>
+      //       <div>
+      //               {/* 🔹 NOUVEAU : Historique en bas, seulement en mode visualisation */}
+      //         {!editMode && employee && data.salaire_personnel?.id && (
+      //           <HistoriqueSalaire
+      //             employeId={employee.id}
+      //             salaireId={data.salaire_personnel.id}
+      //           />
+      //         )}
+      //       </div>
+
+      //     </div>
+      //   );
+
       case "salaire":
         return (
-          <div className="bg-gray-200 p-6 rounded-md border border-gray-200">
+          <div className="bg-gray-200 rounded-md border border-gray-200">
             {isAddMode && (
-              <div className="flex items-center gap-2 mb-6 pb-4 border-b border-gray-200">
+              <div className="flex items-center gap-2 p-6 pb-4 border-b border-gray-200">
                 <Briefcase className="w-5 h-5 text-gray-600" />
                 <h3 className="text-lg font-semibold text-gray-900">
                   Informations Salariales
@@ -820,327 +1160,336 @@ const EmployeeBlock = ({
               </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Colonne 1 */}
-              <div className="space-y-4">
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    Date d'embauche
-                  </label>
-                  {editMode ? (
-                    <input
-                      type="date"
-                      value={data.salaire_personnel?.date_embauche || ""}
-                      onChange={(e) =>
-                        handleSectionChange(
-                          "salaire_personnel",
-                          "date_embauche",
-                          e.target.value
-                        )
-                      }
-                      className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-                    />
-                  ) : (
-                    <span className="text-sm text-gray-900 py-2">
-                      {data.salaire_personnel?.date_embauche || "-"}
-                    </span>
-                  )}
+            <div className="p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Colonne 1 */}
+                <div className="space-y-4">
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-gray-700 mb-1">
+                      Date d'embauche
+                    </label>
+                    {editMode ? (
+                      <input
+                        type="date"
+                        value={data.salaire_personnel?.date_embauche || ""}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "salaire_personnel",
+                            "date_embauche",
+                            e.target.value
+                          )
+                        }
+                        className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                      />
+                    ) : (
+                      <span className="text-sm text-gray-900 py-2">
+                        {data.salaire_personnel?.date_embauche || "-"}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-gray-700 mb-1">
+                      Responsable section
+                    </label>
+                    {editMode ? (
+                      <input
+                        type="text"
+                        value={
+                          data.salaire_personnel?.responsable_section || ""
+                        }
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "salaire_personnel",
+                            "responsable_section",
+                            e.target.value
+                          )
+                        }
+                        className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                      />
+                    ) : (
+                      <span className="text-sm text-gray-900 py-2">
+                        {data.salaire_personnel?.responsable_section || "-"}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-gray-700 mb-1">
+                      Catégorie
+                    </label>
+                    {editMode ? (
+                      <select
+                        value={data.salaire_personnel?.categorie || ""}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "salaire_personnel",
+                            "categorie",
+                            e.target.value
+                          )
+                        }
+                        className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                      >
+                        <option value="">
+                          -- Sélectionnez une catégorie --
+                        </option>
+                        <option value="M1">M1</option>
+                        <option value="M2">M2</option>
+                        <option value="0S1">0S1</option>
+                        <option value="0S2">0S2</option>
+                        <option value="0S3">0S3</option>
+                        <option value="0P1A">0P1A</option>
+                        <option value="0P1B">0P1B</option>
+                        <option value="0P2A">0P2A</option>
+                        <option value="0P2B">0P2B</option>
+                        <option value="0P3">0P3</option>
+                        <option value="H.C">H.C</option>
+                      </select>
+                    ) : (
+                      <span className="text-sm text-gray-900 py-2">
+                        {data.salaire_personnel?.categorie || "-"}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-gray-700 mb-1">
+                      Indice
+                    </label>
+                    {editMode ? (
+                      <input
+                        type="text"
+                        value={data.salaire_personnel?.indice || ""}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "salaire_personnel",
+                            "indice",
+                            e.target.value
+                          )
+                        }
+                        className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                      />
+                    ) : (
+                      <span className="text-sm text-gray-900 py-2">
+                        {data.salaire_personnel?.indice || "-"}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-gray-700 mb-1">
+                      Taux horaire (Ar)
+                    </label>
+                    {editMode ? (
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={data.salaire_personnel?.taux_horaire || ""}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "salaire_personnel",
+                            "taux_horaire",
+                            e.target.value
+                          )
+                        }
+                        className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                      />
+                    ) : (
+                      <span className="text-sm text-gray-900 py-2">
+                        {data.salaire_personnel?.taux_horaire
+                          ? `${Number(
+                              data.salaire_personnel.taux_horaire
+                            ).toLocaleString("fr-FR")} Ar`
+                          : "-"}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-gray-700 mb-1">
+                      Salaire de base (Ar)
+                    </label>
+                    {editMode ? (
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={data.salaire_personnel?.salaire_base || ""}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "salaire_personnel",
+                            "salaire_base",
+                            e.target.value
+                          )
+                        }
+                        className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                      />
+                    ) : (
+                      <span className="text-sm text-gray-900 py-2">
+                        {data.salaire_personnel?.salaire_base
+                          ? `${Number(
+                              data.salaire_personnel.salaire_base
+                            ).toLocaleString("fr-FR")} Ar`
+                          : "-"}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    Responsable section
-                  </label>
-                  {editMode ? (
-                    <input
-                      type="text"
-                      value={data.salaire_personnel?.responsable_section || ""}
-                      onChange={(e) =>
-                        handleSectionChange(
-                          "salaire_personnel",
-                          "responsable_section",
-                          e.target.value
-                        )
-                      }
-                      className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-                    />
-                  ) : (
-                    <span className="text-sm text-gray-900 py-2">
-                      {data.salaire_personnel?.responsable_section || "-"}
-                    </span>
-                  )}
-                </div>
+                {/* Colonne 2 */}
+                <div className="space-y-4">
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-gray-700 mb-1">
+                      Prime ancienneté (Ar)
+                    </label>
+                    {editMode ? (
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={data.salaire_personnel?.prime_anciennete || ""}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "salaire_personnel",
+                            "prime_anciennete",
+                            e.target.value
+                          )
+                        }
+                        className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                      />
+                    ) : (
+                      <span className="text-sm text-gray-900 py-2">
+                        {data.salaire_personnel?.prime_anciennete
+                          ? `${Number(
+                              data.salaire_personnel.prime_anciennete
+                            ).toLocaleString("fr-FR")} Ar`
+                          : "-"}
+                      </span>
+                    )}
+                  </div>
 
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    Catégorie
-                  </label>
-                  {editMode ? (
-                    <select
-                      value={data.salaire_personnel?.categorie || ""}
-                      onChange={(e) =>
-                        handleSectionChange(
-                          "salaire_personnel",
-                          "categorie",
-                          e.target.value
-                        )
-                      }
-                      className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-                    >
-                      <option value="">-- Sélectionnez une catégorie --</option>
-                      <option value="M1">M1</option>
-                      <option value="M2">M2</option>
-                      <option value="0S1">0S1</option>
-                      <option value="0S2">0S2</option>
-                      <option value="0S3">0S3</option>
-                      <option value="0P1A">0P1A</option>
-                      <option value="0P1B">0P1B</option>
-                      <option value="0P2A">0P2A</option>
-                      <option value="0P2B">0P2B</option>
-                      <option value="0P3">0P3</option>
-                      <option value="H.C">H.C</option>
-                    </select>
-                  ) : (
-                    <span className="text-sm text-gray-900 py-2">
-                      {data.salaire_personnel?.categorie || "-"}
-                    </span>
-                  )}
-                </div>
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-gray-700 mb-1">
+                      Indemnité déplacement (Ar)
+                    </label>
+                    {editMode ? (
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={
+                          data.salaire_personnel?.indemnite_deplacement || ""
+                        }
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "salaire_personnel",
+                            "indemnite_deplacement",
+                            e.target.value
+                          )
+                        }
+                        className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                      />
+                    ) : (
+                      <span className="text-sm text-gray-900 py-2">
+                        {data.salaire_personnel?.indemnite_deplacement
+                          ? `${Number(
+                              data.salaire_personnel.indemnite_deplacement
+                            ).toLocaleString("fr-FR")} Ar`
+                          : "-"}
+                      </span>
+                    )}
+                  </div>
 
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    Indice
-                  </label>
-                  {editMode ? (
-                    <input
-                      type="text"
-                      value={data.salaire_personnel?.indice || ""}
-                      onChange={(e) =>
-                        handleSectionChange(
-                          "salaire_personnel",
-                          "indice",
-                          e.target.value
-                        )
-                      }
-                      className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-                    />
-                  ) : (
-                    <span className="text-sm text-gray-900 py-2">
-                      {data.salaire_personnel?.indice || "-"}
-                    </span>
-                  )}
-                </div>
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-gray-700 mb-1">
+                      Autre indemnité (Ar)
+                    </label>
+                    {editMode ? (
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={data.salaire_personnel?.autre_indemnite || ""}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "salaire_personnel",
+                            "autre_indemnite",
+                            e.target.value
+                          )
+                        }
+                        className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                      />
+                    ) : (
+                      <span className="text-sm text-gray-900 py-2">
+                        {data.salaire_personnel?.autre_indemnite
+                          ? `${Number(
+                              data.salaire_personnel.autre_indemnite
+                            ).toLocaleString("fr-FR")} Ar`
+                          : "-"}
+                      </span>
+                    )}
+                  </div>
 
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    Taux horaire (Ar)
-                  </label>
-                  {editMode ? (
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={data.salaire_personnel?.taux_horaire || ""}
-                      onChange={(e) =>
-                        handleSectionChange(
-                          "salaire_personnel",
-                          "taux_horaire",
-                          e.target.value
-                        )
-                      }
-                      className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-                    />
-                  ) : (
-                    <span className="text-sm text-gray-900 py-2">
-                      {data.salaire_personnel?.taux_horaire
-                        ? `${Number(
-                            data.salaire_personnel.taux_horaire
-                          ).toLocaleString("fr-FR")} Ar`
-                        : "-"}
-                    </span>
-                  )}
-                </div>
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-gray-700 mb-1">
+                      Dernier augmentation indice
+                    </label>
+                    {editMode ? (
+                      <input
+                        type="text"
+                        value={data.salaire_personnel?.dernier_aug_indice || ""}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "salaire_personnel",
+                            "dernier_aug_indice",
+                            e.target.value
+                          )
+                        }
+                        className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                      />
+                    ) : (
+                      <span className="text-sm text-gray-900 py-2">
+                        {data.salaire_personnel?.dernier_aug_indice || "-"}
+                      </span>
+                    )}
+                  </div>
 
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    Salaire de base (Ar)
-                  </label>
-                  {editMode ? (
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={data.salaire_personnel?.salaire_base || ""}
-                      onChange={(e) =>
-                        handleSectionChange(
-                          "salaire_personnel",
-                          "salaire_base",
-                          e.target.value
-                        )
-                      }
-                      className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-                    />
-                  ) : (
-                    <span className="text-sm text-gray-900 py-2">
-                      {data.salaire_personnel?.salaire_base
-                        ? `${Number(
-                            data.salaire_personnel.salaire_base
-                          ).toLocaleString("fr-FR")} Ar`
-                        : "-"}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Colonne 2 */}
-              <div className="space-y-4">
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    Prime ancienneté (Ar)
-                  </label>
-                  {editMode ? (
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={data.salaire_personnel?.prime_anciennete || ""}
-                      onChange={(e) =>
-                        handleSectionChange(
-                          "salaire_personnel",
-                          "prime_anciennete",
-                          e.target.value
-                        )
-                      }
-                      className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-                    />
-                  ) : (
-                    <span className="text-sm text-gray-900 py-2">
-                      {data.salaire_personnel?.prime_anciennete
-                        ? `${Number(
-                            data.salaire_personnel.prime_anciennete
-                          ).toLocaleString("fr-FR")} Ar`
-                        : "-"}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    Indemnité déplacement (Ar)
-                  </label>
-                  {editMode ? (
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={
-                        data.salaire_personnel?.indemnite_deplacement || ""
-                      }
-                      onChange={(e) =>
-                        handleSectionChange(
-                          "salaire_personnel",
-                          "indemnite_deplacement",
-                          e.target.value
-                        )
-                      }
-                      className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-                    />
-                  ) : (
-                    <span className="text-sm text-gray-900 py-2">
-                      {data.salaire_personnel?.indemnite_deplacement
-                        ? `${Number(
-                            data.salaire_personnel.indemnite_deplacement
-                          ).toLocaleString("fr-FR")} Ar`
-                        : "-"}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    Autre indemnité (Ar)
-                  </label>
-                  {editMode ? (
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={data.salaire_personnel?.autre_indemnite || ""}
-                      onChange={(e) =>
-                        handleSectionChange(
-                          "salaire_personnel",
-                          "autre_indemnite",
-                          e.target.value
-                        )
-                      }
-                      className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-                    />
-                  ) : (
-                    <span className="text-sm text-gray-900 py-2">
-                      {data.salaire_personnel?.autre_indemnite
-                        ? `${Number(
-                            data.salaire_personnel.autre_indemnite
-                          ).toLocaleString("fr-FR")} Ar`
-                        : "-"}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    Dernier augmentation indice
-                  </label>
-                  {editMode ? (
-                    <input
-                      type="text"
-                      value={data.salaire_personnel?.dernier_aug_indice || ""}
-                      onChange={(e) =>
-                        handleSectionChange(
-                          "salaire_personnel",
-                          "dernier_aug_indice",
-                          e.target.value
-                        )
-                      }
-                      className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-                    />
-                  ) : (
-                    <span className="text-sm text-gray-900 py-2">
-                      {data.salaire_personnel?.dernier_aug_indice || "-"}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    Salaire total (Ar)
-                  </label>
-                  {editMode ? (
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={data.salaire_personnel?.salaire_total || ""}
-                      onChange={(e) =>
-                        handleSectionChange(
-                          "salaire_personnel",
-                          "salaire_total",
-                          e.target.value
-                        )
-                      }
-                      className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-                    />
-                  ) : (
-                    <span className="text-sm text-gray-900 py-2">
-                      {data.salaire_personnel?.salaire_total
-                        ? `${Number(
-                            data.salaire_personnel.salaire_total
-                          ).toLocaleString("fr-FR")} Ar`
-                        : "-"}
-                    </span>
-                  )}
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-gray-700 mb-1">
+                      Salaire total (Ar)
+                    </label>
+                    {editMode ? (
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={data.salaire_personnel?.salaire_total || ""}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "salaire_personnel",
+                            "salaire_total",
+                            e.target.value
+                          )
+                        }
+                        className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                      />
+                    ) : (
+                      <span className="text-sm text-gray-900 py-2">
+                        {data.salaire_personnel?.salaire_total
+                          ? `${Number(
+                              data.salaire_personnel.salaire_total
+                            ).toLocaleString("fr-FR")} Ar`
+                          : "-"}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-            {/* 🔹 NOUVEAU : Historique en bas, seulement en mode visualisation */}
+
+            {/* Historique en bas, seulement en mode visualisation */}
             {!editMode && employee && data.salaire_personnel?.id && (
-              <HistoriqueSalaire
-                employeId={employee.id}
-                salaireId={data.salaire_personnel.id}
-              />
+              <div className="-mx-0">
+                <HistoriqueSalaire
+                  employeId={employee.id}
+                  salaireId={data.salaire_personnel.id}
+                />
+              </div>
             )}
           </div>
         );
