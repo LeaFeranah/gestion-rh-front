@@ -281,7 +281,7 @@ const HistoriqueSalaire = ({ employeId, salaireId }) => {
   return (
     <div className="bg-white rounded-md border border-gray-200 mt-6">
       {/* En-tête */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-6 pb-4 border-b border-gray-200">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-6 pb-4 border-b border-gray-200 mb-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">
             Historique des Salaires
@@ -304,8 +304,8 @@ const HistoriqueSalaire = ({ employeId, salaireId }) => {
 
       {/* Graphique d'évolution */}
       {chartData.length > 0 && (
-        <div className="p-6 border-b border-gray-200">
-          <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <div className="p-6 mb-6">
+          <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2 mb-8">
             <TrendingUp className="w-5 h-5 text-blue-600" />
             Évolution du Salaire Total
           </h4>
@@ -373,31 +373,31 @@ const HistoriqueSalaire = ({ employeId, salaireId }) => {
             <table className="min-w-full">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 border-t border-gray-300">
                     <div className="flex items-center gap-1">Date & Heure</div>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 border-t border-gray-300">
                     Catégorie
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 border-t border-gray-300">
                     <div className="flex items-center gap-1">Indice</div>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 border-t border-gray-300">
                     Taux Horaire
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 border-t border-gray-300">
                     Salaire de Base
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 border-t border-gray-300">
                     Prime Ancienneté
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 border-t border-gray-300">
                     Ind. Déplacement
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 border-t border-gray-300">
                     Autre Ind.
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-t border-gray-300">
                     <div className="flex items-center gap-1">Salaire Total</div>
                   </th>
                 </tr>
