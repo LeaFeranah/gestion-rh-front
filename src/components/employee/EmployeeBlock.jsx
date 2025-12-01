@@ -36,6 +36,55 @@ const EmployeeBlock = ({
     y: 0,
   });
 
+  // Gestion de la navigation au clavier - VERSION FINALE
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // LAISSER LES FLÈCHES FONCTIONNER NORMALEMENT pour selects et dates
+      if (
+        e.target.tagName === "SELECT" ||
+        e.target.tagName === "TEXTAREA" ||
+        e.target.type === "date"
+      ) {
+        return; // ← Les flèches fonctionnent normalement pour ces éléments
+      }
+
+      // Navigation par flèches uniquement pour les autres champs
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+
+        // Seulement les champs qui doivent utiliser notre navigation
+        const focusableElements = Array.from(
+          document.querySelectorAll(`
+          input[type="text"],
+          input[type="email"],
+          input[type="number"],
+          input[type="tel"],
+          input[type="password"],
+          button:not([disabled])
+        `)
+        ).filter((el) => !el.disabled && el.offsetParent !== null);
+
+        if (focusableElements.length === 0) return;
+
+        const currentIndex = focusableElements.indexOf(document.activeElement);
+        let nextIndex;
+
+        if (e.key === "ArrowDown") {
+          nextIndex =
+            currentIndex < focusableElements.length - 1 ? currentIndex + 1 : 0;
+        } else {
+          nextIndex =
+            currentIndex > 0 ? currentIndex - 1 : focusableElements.length - 1;
+        }
+
+        focusableElements[nextIndex]?.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const data = formData || {};
 
   // Fonctions de gestion des changements
@@ -432,15 +481,7 @@ const EmployeeBlock = ({
                     </span>
                   )}
                 </div>
-                {/* <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-2">
-                    Âge
-                  </label>
-                  <span className="text-sm text-gray-900 py-2">
-                    {data.age || "Non spécifié"}
-                  </span>
-                </div> */}
-                {/* CHAMP ÂGE - Maintenant en mode saisie */}
+
                 {/* CHAMP ÂGE - Calculé automatiquement et affiché dans le champ */}
                 <div className="flex flex-col">
                   <label className="text-sm font-medium text-gray-700 mb-1">
@@ -624,87 +665,123 @@ const EmployeeBlock = ({
 
                 <div className="flex flex-col">
                   <label className="text-sm font-medium text-gray-700 mb-1">
-                    Section
+                    Section & Responsable
                   </label>
+
                   {editMode ? (
-                    <div className="relative">
-                      <select
-                        value={data.section || ""}
-                        onChange={(e) =>
-                          handlePersonalChange("section", e.target.value)
-                        }
-                        className="border border-gray-300 rounded px-3 py-0.5 text-sm focus:outline-none focus:ring-1 focus:ring-gray-500 w-full appearance-none bg-white"
-                      >
-                        <option value="">-- Sélectionnez une section --</option>
-                        <option value="ADMINISTRATION">ADMINISTRATION</option>
-                        <option value="BRODERIE MACHINE">
-                          BRODERIE MACHINE
-                        </option>
-                        <option value="BRODERIE MAIN AK17">
-                          BRODERIE MAIN AK17
-                        </option>
-                        <option value="BRODERIE MAIN DEV">
-                          BRODERIE MAIN DEV
-                        </option>
-                        <option value="BUREAU DE METHODE">
-                          BUREAU DE METHODE
-                        </option>
-                        <option value="CONTROLE QUALITE AS">
-                          CONTROLE QUALITE AS
-                        </option>
-                        <option value="CHAINE 1">CHAINE 1</option>
-                        <option value="CHAINE 2">CHAINE 2</option>
-                        <option value="CHAINE 3">CHAINE 3</option>
-                        <option value="CHAINE 4">CHAINE 4</option>
-                        <option value="CHAINE 5">CHAINE 5</option>
-                        <option value="CHAINE 6">CHAINE 6</option>
-                        <option value="CHAINE 7">CHAINE 7</option>
-                        <option value="CHAINE 8">CHAINE 8</option>
-                        <option value="CHAINE 9">CHAINE 9</option>
-                        <option value="CHAINE 10">CHAINE 10</option>
-                        <option value="CHAINE 11">CHAINE 11</option>
-                        <option value="CHAINE 12">CHAINE 12</option>
-                        <option value="CHAINE CUIR">CHAINE CUIR</option>
-                        <option value="COLLECTION">COLLECTION</option>
-                        <option value="COUPE">COUPE</option>
-                        <option value="COUPE COLLECTION">
-                          COUPE COLLECTION
-                        </option>
-                        <option value="FINITION D">FINITION D</option>
-                        <option value="FINITION M">FINITION M</option>
-                        <option value="FINITION P">FINITION P</option>
-                        <option value="FINITION Q">FINITION Q</option>
-                        <option value="FINITION R">FINITION R</option>
-                        <option value="LECTRA">LECTRA</option>
-                        <option value="LEMARIE HVA">LEMARIE HVA</option>
-                        <option value="MAINTENANCE">MAINTENANCE</option>
-                        <option value="MAISON">MAISON</option>
-                        <option value="PACKING/EXPEDITION">
-                          PACKING/EXPEDITION
-                        </option>
-                        <option value="PLISSE">PLISSE</option>
-                        <option value="POLE QUALITE 1">POLE QUALITE 1</option>
-                        <option value="POLE QUALITE 2">POLE QUALITE 2</option>
-                        <option value="RAPHIA 1">RAPHIA 1</option>
-                        <option value="RAPHIA 2">RAPHIA 2</option>
-                        <option value="RAPHIA 3">RAPHIA 3</option>
-                        <option value="RAPHIA 4">RAPHIA 4</option>
-                        <option value="RAPHIA 5">RAPHIA 5</option>
-                        <option value="RAPHIA 6">RAPHIA 6</option>
-                        <option value="RESPONSABLE 0">RESPONSABLE 0</option>
-                        <option value="RESPONSABLE 1">RESPONSABLE 1</option>
-                        <option value="RESPONSABLE 2">RESPONSABLE 2</option>
-                        <option value="RESPONSABLE 3">RESPONSABLE 3</option>
-                        <option value="RESPONSABLE RAPHIA">
-                          RESPONSABLE RAPHIA
-                        </option>
-                        <option value="SECURITE">SECURITE</option>
-                      </select>
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Premier select : Section */}
+                      <div className="relative">
+                        <select
+                          value={data.section || ""}
+                          onChange={(e) =>
+                            handlePersonalChange("section", e.target.value)
+                          }
+                          className="border border-gray-300 rounded px-3 py-0.5 text-sm focus:outline-none focus:ring-1 focus:ring-gray-500 w-full appearance-none bg-white"
+                        >
+                          <option value="">
+                            -- Sélectionnez une section --
+                          </option>
+                          <option value="ADMINISTRATION">ADMINISTRATION</option>
+                          <option value="BRODERIE MACHINE">
+                            BRODERIE MACHINE
+                          </option>
+                          <option value="BRODERIE MAIN AK17">
+                            BRODERIE MAIN AK17
+                          </option>
+                          <option value="BRODERIE MAIN DEV">
+                            BRODERIE MAIN DEV
+                          </option>
+                          <option value="BUREAU DE METHODE">
+                            BUREAU DE METHODE
+                          </option>
+                          <option value="CONTROLE QUALITE AS">
+                            CONTROLE QUALITE AS
+                          </option>
+                          <option value="CHAINE 1">CHAINE 1</option>
+                          <option value="CHAINE 2">CHAINE 2</option>
+                          <option value="CHAINE 3">CHAINE 3</option>
+                          <option value="CHAINE 4">CHAINE 4</option>
+                          <option value="CHAINE 5">CHAINE 5</option>
+                          <option value="CHAINE 6">CHAINE 6</option>
+                          <option value="CHAINE 7">CHAINE 7</option>
+                          <option value="CHAINE 8">CHAINE 8</option>
+                          <option value="CHAINE 9">CHAINE 9</option>
+                          <option value="CHAINE 10">CHAINE 10</option>
+                          <option value="CHAINE 11">CHAINE 11</option>
+                          <option value="CHAINE 12">CHAINE 12</option>
+                          <option value="CHAINE CUIR">CHAINE CUIR</option>
+                          <option value="COLLECTION">COLLECTION</option>
+                          <option value="COUPE">COUPE</option>
+                          <option value="COUPE COLLECTION">
+                            COUPE COLLECTION
+                          </option>
+                          <option value="FINITION D">FINITION D</option>
+                          <option value="FINITION M">FINITION M</option>
+                          <option value="FINITION P">FINITION P</option>
+                          <option value="FINITION Q">FINITION Q</option>
+                          <option value="FINITION R">FINITION R</option>
+                          <option value="LECTRA">LECTRA</option>
+                          <option value="LEMARIE HVA">LEMARIE HVA</option>
+                          <option value="MAINTENANCE">MAINTENANCE</option>
+                          <option value="MAISON">MAISON</option>
+                          <option value="PACKING/EXPEDITION">
+                            PACKING/EXPEDITION
+                          </option>
+                          <option value="PLISSE">PLISSE</option>
+                          <option value="POLE QUALITE 1">POLE QUALITE 1</option>
+                          <option value="POLE QUALITE 2">POLE QUALITE 2</option>
+                          <option value="RAPHIA 1">RAPHIA 1</option>
+                          <option value="RAPHIA 2">RAPHIA 2</option>
+                          <option value="RAPHIA 3">RAPHIA 3</option>
+                          <option value="RAPHIA 4">RAPHIA 4</option>
+                          <option value="RAPHIA 5">RAPHIA 5</option>
+                          <option value="RAPHIA 6">RAPHIA 6</option>
+                          <option value="RESPONSABLE 0">RESPONSABLE 0</option>
+                          <option value="RESPONSABLE 1">RESPONSABLE 1</option>
+                          <option value="RESPONSABLE 2">RESPONSABLE 2</option>
+                          <option value="RESPONSABLE 3">RESPONSABLE 3</option>
+                          <option value="RESPONSABLE RAPHIA">
+                            RESPONSABLE RAPHIA
+                          </option>
+                          <option value="SECURITE">SECURITE</option>
+                        </select>
+                      </div>
+
+                      {/* Deuxième select : Responsable */}
+                      <div className="relative">
+                        <select
+                          value={data.responsable || ""}
+                          onChange={(e) =>
+                            handlePersonalChange("responsable", e.target.value)
+                          }
+                          className="border border-gray-300 rounded px-3 py-0.5 text-sm focus:outline-none focus:ring-1 focus:ring-gray-500 w-full appearance-none bg-white"
+                        >
+                          <option value="">-- Responsable --</option>
+                          <option value="RESPONSABLE 0">Responsable 0</option>
+                          <option value="RESPONSABLE 1">Responsable 1</option>
+                          <option value="RESPONSABLE 2">Responsable 2</option>
+                          <option value="RESPONSABLE 3">Responsable 3</option>
+                          <option value="RESPONSABLE RAPHIA">
+                            Responsable Raphia
+                          </option>
+                        </select>
+                      </div>
                     </div>
                   ) : (
-                    <span className="text-sm text-gray-900 py-2">
-                      {data.section || "-"}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-900 py-2">
+                        {data.section || "-"}
+                      </span>
+                      {data.responsable && (
+                        <>
+                          <span className="text-gray-400">/</span>
+                          <span className="text-sm text-gray-600 py-2">
+                            {data.responsable}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
 
@@ -730,14 +807,7 @@ const EmployeeBlock = ({
                     </span>
                   )}
                 </div>
-                {/* <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    Statut retraite
-                  </label>
-                  <span className="text-sm text-gray-900 py-2">
-                    {data.retraite || "Non spécifié"}
-                  </span>
-                </div> */}
+
                 {/* CHAMP STATUT RETRAITE - Oui ou Non basé sur l'âge */}
                 <div className="flex flex-col">
                   <label className="text-sm font-medium text-gray-700 mb-1">
@@ -807,346 +877,6 @@ const EmployeeBlock = ({
             </div>
           </div>
         );
-
-      // case "salaire":
-      //   return (
-      //     <div className="bg-gray-200 p-6 rounded-md border border-gray-200">
-      //       {isAddMode && (
-      //         <div className="flex items-center gap-2 mb-6 pb-4 border-b border-gray-200">
-      //           <Briefcase className="w-5 h-5 text-gray-600" />
-      //           <h3 className="text-lg font-semibold text-gray-900">
-      //             Informations Salariales
-      //           </h3>
-      //         </div>
-      //       )}
-
-      //       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      //         {/* Colonne 1 */}
-      //         <div className="space-y-4">
-      //           <div className="flex flex-col">
-      //             <label className="text-sm font-medium text-gray-700 mb-1">
-      //               Date d'embauche
-      //             </label>
-      //             {editMode ? (
-      //               <input
-      //                 type="date"
-      //                 value={data.salaire_personnel?.date_embauche || ""}
-      //                 onChange={(e) =>
-      //                   handleSectionChange(
-      //                     "salaire_personnel",
-      //                     "date_embauche",
-      //                     e.target.value
-      //                   )
-      //                 }
-      //                 className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-      //               />
-      //             ) : (
-      //               <span className="text-sm text-gray-900 py-2">
-      //                 {data.salaire_personnel?.date_embauche || "-"}
-      //               </span>
-      //             )}
-      //           </div>
-
-      //           <div className="flex flex-col">
-      //             <label className="text-sm font-medium text-gray-700 mb-1">
-      //               Responsable section
-      //             </label>
-      //             {editMode ? (
-      //               <input
-      //                 type="text"
-      //                 value={data.salaire_personnel?.responsable_section || ""}
-      //                 onChange={(e) =>
-      //                   handleSectionChange(
-      //                     "salaire_personnel",
-      //                     "responsable_section",
-      //                     e.target.value
-      //                   )
-      //                 }
-      //                 className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-      //               />
-      //             ) : (
-      //               <span className="text-sm text-gray-900 py-2">
-      //                 {data.salaire_personnel?.responsable_section || "-"}
-      //               </span>
-      //             )}
-      //           </div>
-
-      //           <div className="flex flex-col">
-      //             <label className="text-sm font-medium text-gray-700 mb-1">
-      //               Catégorie
-      //             </label>
-      //             {editMode ? (
-      //               <select
-      //                 value={data.salaire_personnel?.categorie || ""}
-      //                 onChange={(e) =>
-      //                   handleSectionChange(
-      //                     "salaire_personnel",
-      //                     "categorie",
-      //                     e.target.value
-      //                   )
-      //                 }
-      //                 className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-      //               >
-      //                 <option value="">-- Sélectionnez une catégorie --</option>
-      //                 <option value="M1">M1</option>
-      //                 <option value="M2">M2</option>
-      //                 <option value="0S1">0S1</option>
-      //                 <option value="0S2">0S2</option>
-      //                 <option value="0S3">0S3</option>
-      //                 <option value="0P1A">0P1A</option>
-      //                 <option value="0P1B">0P1B</option>
-      //                 <option value="0P2A">0P2A</option>
-      //                 <option value="0P2B">0P2B</option>
-      //                 <option value="0P3">0P3</option>
-      //                 <option value="H.C">H.C</option>
-      //               </select>
-      //             ) : (
-      //               <span className="text-sm text-gray-900 py-2">
-      //                 {data.salaire_personnel?.categorie || "-"}
-      //               </span>
-      //             )}
-      //           </div>
-
-      //           <div className="flex flex-col">
-      //             <label className="text-sm font-medium text-gray-700 mb-1">
-      //               Indice
-      //             </label>
-      //             {editMode ? (
-      //               <input
-      //                 type="text"
-      //                 value={data.salaire_personnel?.indice || ""}
-      //                 onChange={(e) =>
-      //                   handleSectionChange(
-      //                     "salaire_personnel",
-      //                     "indice",
-      //                     e.target.value
-      //                   )
-      //                 }
-      //                 className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-      //               />
-      //             ) : (
-      //               <span className="text-sm text-gray-900 py-2">
-      //                 {data.salaire_personnel?.indice || "-"}
-      //               </span>
-      //             )}
-      //           </div>
-
-      //           <div className="flex flex-col">
-      //             <label className="text-sm font-medium text-gray-700 mb-1">
-      //               Taux horaire (Ar)
-      //             </label>
-      //             {editMode ? (
-      //               <input
-      //                 type="number"
-      //                 step="0.01"
-      //                 value={data.salaire_personnel?.taux_horaire || ""}
-      //                 onChange={(e) =>
-      //                   handleSectionChange(
-      //                     "salaire_personnel",
-      //                     "taux_horaire",
-      //                     e.target.value
-      //                   )
-      //                 }
-      //                 className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-      //               />
-      //             ) : (
-      //               <span className="text-sm text-gray-900 py-2">
-      //                 {data.salaire_personnel?.taux_horaire
-      //                   ? `${Number(
-      //                       data.salaire_personnel.taux_horaire
-      //                     ).toLocaleString("fr-FR")} Ar`
-      //                   : "-"}
-      //               </span>
-      //             )}
-      //           </div>
-
-      //           <div className="flex flex-col">
-      //             <label className="text-sm font-medium text-gray-700 mb-1">
-      //               Salaire de base (Ar)
-      //             </label>
-      //             {editMode ? (
-      //               <input
-      //                 type="number"
-      //                 step="0.01"
-      //                 value={data.salaire_personnel?.salaire_base || ""}
-      //                 onChange={(e) =>
-      //                   handleSectionChange(
-      //                     "salaire_personnel",
-      //                     "salaire_base",
-      //                     e.target.value
-      //                   )
-      //                 }
-      //                 className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-      //               />
-      //             ) : (
-      //               <span className="text-sm text-gray-900 py-2">
-      //                 {data.salaire_personnel?.salaire_base
-      //                   ? `${Number(
-      //                       data.salaire_personnel.salaire_base
-      //                     ).toLocaleString("fr-FR")} Ar`
-      //                   : "-"}
-      //               </span>
-      //             )}
-      //           </div>
-      //         </div>
-
-      //         {/* Colonne 2 */}
-      //         <div className="space-y-4">
-      //           <div className="flex flex-col">
-      //             <label className="text-sm font-medium text-gray-700 mb-1">
-      //               Prime ancienneté (Ar)
-      //             </label>
-      //             {editMode ? (
-      //               <input
-      //                 type="number"
-      //                 step="0.01"
-      //                 value={data.salaire_personnel?.prime_anciennete || ""}
-      //                 onChange={(e) =>
-      //                   handleSectionChange(
-      //                     "salaire_personnel",
-      //                     "prime_anciennete",
-      //                     e.target.value
-      //                   )
-      //                 }
-      //                 className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-      //               />
-      //             ) : (
-      //               <span className="text-sm text-gray-900 py-2">
-      //                 {data.salaire_personnel?.prime_anciennete
-      //                   ? `${Number(
-      //                       data.salaire_personnel.prime_anciennete
-      //                     ).toLocaleString("fr-FR")} Ar`
-      //                   : "-"}
-      //               </span>
-      //             )}
-      //           </div>
-
-      //           <div className="flex flex-col">
-      //             <label className="text-sm font-medium text-gray-700 mb-1">
-      //               Indemnité déplacement (Ar)
-      //             </label>
-      //             {editMode ? (
-      //               <input
-      //                 type="number"
-      //                 step="0.01"
-      //                 value={
-      //                   data.salaire_personnel?.indemnite_deplacement || ""
-      //                 }
-      //                 onChange={(e) =>
-      //                   handleSectionChange(
-      //                     "salaire_personnel",
-      //                     "indemnite_deplacement",
-      //                     e.target.value
-      //                   )
-      //                 }
-      //                 className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-      //               />
-      //             ) : (
-      //               <span className="text-sm text-gray-900 py-2">
-      //                 {data.salaire_personnel?.indemnite_deplacement
-      //                   ? `${Number(
-      //                       data.salaire_personnel.indemnite_deplacement
-      //                     ).toLocaleString("fr-FR")} Ar`
-      //                   : "-"}
-      //               </span>
-      //             )}
-      //           </div>
-
-      //           <div className="flex flex-col">
-      //             <label className="text-sm font-medium text-gray-700 mb-1">
-      //               Autre indemnité (Ar)
-      //             </label>
-      //             {editMode ? (
-      //               <input
-      //                 type="number"
-      //                 step="0.01"
-      //                 value={data.salaire_personnel?.autre_indemnite || ""}
-      //                 onChange={(e) =>
-      //                   handleSectionChange(
-      //                     "salaire_personnel",
-      //                     "autre_indemnite",
-      //                     e.target.value
-      //                   )
-      //                 }
-      //                 className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-      //               />
-      //             ) : (
-      //               <span className="text-sm text-gray-900 py-2">
-      //                 {data.salaire_personnel?.autre_indemnite
-      //                   ? `${Number(
-      //                       data.salaire_personnel.autre_indemnite
-      //                     ).toLocaleString("fr-FR")} Ar`
-      //                   : "-"}
-      //               </span>
-      //             )}
-      //           </div>
-
-      //           <div className="flex flex-col">
-      //             <label className="text-sm font-medium text-gray-700 mb-1">
-      //               Dernier augmentation indice
-      //             </label>
-      //             {editMode ? (
-      //               <input
-      //                 type="text"
-      //                 value={data.salaire_personnel?.dernier_aug_indice || ""}
-      //                 onChange={(e) =>
-      //                   handleSectionChange(
-      //                     "salaire_personnel",
-      //                     "dernier_aug_indice",
-      //                     e.target.value
-      //                   )
-      //                 }
-      //                 className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-      //               />
-      //             ) : (
-      //               <span className="text-sm text-gray-900 py-2">
-      //                 {data.salaire_personnel?.dernier_aug_indice || "-"}
-      //               </span>
-      //             )}
-      //           </div>
-
-      //           <div className="flex flex-col">
-      //             <label className="text-sm font-medium text-gray-700 mb-1">
-      //               Salaire total (Ar)
-      //             </label>
-      //             {editMode ? (
-      //               <input
-      //                 type="number"
-      //                 step="0.01"
-      //                 value={data.salaire_personnel?.salaire_total || ""}
-      //                 onChange={(e) =>
-      //                   handleSectionChange(
-      //                     "salaire_personnel",
-      //                     "salaire_total",
-      //                     e.target.value
-      //                   )
-      //                 }
-      //                 className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-      //               />
-      //             ) : (
-      //               <span className="text-sm text-gray-900 py-2">
-      //                 {data.salaire_personnel?.salaire_total
-      //                   ? `${Number(
-      //                       data.salaire_personnel.salaire_total
-      //                     ).toLocaleString("fr-FR")} Ar`
-      //                   : "-"}
-      //               </span>
-      //             )}
-      //           </div>
-      //         </div>
-      //       </div>
-      //       <div>
-      //               {/* 🔹 NOUVEAU : Historique en bas, seulement en mode visualisation */}
-      //         {!editMode && employee && data.salaire_personnel?.id && (
-      //           <HistoriqueSalaire
-      //             employeId={employee.id}
-      //             salaireId={data.salaire_personnel.id}
-      //           />
-      //         )}
-      //       </div>
-
-      //     </div>
-      //   );
 
       case "salaire":
         return (
