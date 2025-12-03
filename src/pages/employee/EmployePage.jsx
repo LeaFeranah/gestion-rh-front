@@ -30,6 +30,8 @@ import {
   createEnfant,
   updateEnfant,
   deleteEnfant,
+  createInformationProfessionnelle,
+  updateInformationProfessionnelle,
 } from "../../services/employeeService";
 
 const EmployeesPage = () => {
@@ -85,8 +87,12 @@ const EmployeesPage = () => {
       emp.numero_matricule?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesFilters =
-      (!filters.section || emp.section === filters.section) &&
-      (!filters.fonction || emp.fonction === filters.fonction) &&
+      // (!filters.section || emp.section === filters.section) &&
+      // (!filters.fonction || emp.fonction === filters.fonction) &&
+      (!filters.section ||
+        emp.information_professionnelle?.section === filters.section) &&
+      (!filters.fonction ||
+        emp.information_professionnelle?.fonction === filters.fonction) &&
       (!filters.sexe || emp.sexe === filters.sexe);
 
     return matchesSearch && matchesFilters;
@@ -106,6 +112,7 @@ const EmployeesPage = () => {
       ...emp,
       bancaire: emp.bancaire || {},
       salaire_personnel: emp.salaire_personnel || {},
+      information_professionnelle: emp.information_professionnelle || {},
       familiale: emp.familiale || { enfants: [] },
     };
 
@@ -296,6 +303,36 @@ const EmployeesPage = () => {
         }
       }
 
+      // Mise à jour des informations professionnelles
+      if (formData.information_professionnelle) {
+        const professionnelleData = {
+          date_embauche:
+            formData.information_professionnelle.date_embauche || "",
+          fonction: formData.information_professionnelle.fonction || "",
+          categorie: formData.information_professionnelle.categorie || "",
+          section: formData.information_professionnelle.section || "",
+          responsable_section:
+            formData.information_professionnelle.responsable_section || "",
+          numero_cnaps: formData.information_professionnelle.numero_cnaps || "",
+          numero_ostie: formData.information_professionnelle.numero_ostie || "",
+          employe: selectedEmployee.id,
+        };
+
+        // Nettoyage des données
+        Object.keys(professionnelleData).forEach((key) => {
+          if (professionnelleData[key] === "") professionnelleData[key] = null;
+        });
+
+        if (formData.information_professionnelle.id) {
+          await updateInformationProfessionnelle(
+            formData.information_professionnelle.id,
+            professionnelleData
+          );
+        } else if (hasValidData(professionnelleData)) {
+          await createInformationProfessionnelle(professionnelleData);
+        }
+      }
+
       // Mise à jour des informations salaire
       if (formData.salaire_personnel) {
         const salaireData = {
@@ -377,7 +414,7 @@ const EmployeesPage = () => {
       setEditMode(false);
       //setSelectedEmployee(null);
       // resetForm();
-      
+
       alert("Employé mis à jour avec succès !");
     } catch (error) {
       console.error("Erreur détaillée:", error);
@@ -450,6 +487,34 @@ const EmployeesPage = () => {
       }
 
       const newEmp = await createEmployee(persoData);
+
+      // Création des informations professionnelles
+      if (
+        formData.information_professionnelle &&
+        hasValidData(formData.information_professionnelle)
+      ) {
+        const professionnelleData = {
+          date_embauche:
+            formData.information_professionnelle?.date_embauche || "",
+          fonction: formData.information_professionnelle?.fonction || "",
+          categorie: formData.information_professionnelle?.categorie || "",
+          section: formData.information_professionnelle?.section || "",
+          responsable_section:
+            formData.information_professionnelle?.responsable_section || "",
+          numero_cnaps:
+            formData.information_professionnelle?.numero_cnaps || "",
+          numero_ostie:
+            formData.information_professionnelle?.numero_ostie || "",
+          employe: newEmp.id,
+        };
+
+        // Nettoyage des données
+        Object.keys(professionnelleData).forEach((key) => {
+          if (professionnelleData[key] === "") professionnelleData[key] = null;
+        });
+
+        await createInformationProfessionnelle(professionnelleData);
+      }
 
       // Création des informations bancaires
       if (formData.bancaire && hasValidData(formData.bancaire)) {
@@ -544,13 +609,12 @@ const EmployeesPage = () => {
 
       await fetchEmployees();
 
-          // NOUVEAU : Calculer la dernière page pour le nouvel employé
-    const totalItemsAfterAdd = employees.length + 1; // +1 car l'employé vient d'être ajouté
-    const lastPage = Math.ceil(totalItemsAfterAdd / itemsPerPage);
+      // NOUVEAU : Calculer la dernière page pour le nouvel employé
+      const totalItemsAfterAdd = employees.length + 1; // +1 car l'employé vient d'être ajouté
+      const lastPage = Math.ceil(totalItemsAfterAdd / itemsPerPage);
 
-     // Aller à la dernière page
-    setCurrentPage(lastPage);
-
+      // Aller à la dernière page
+      setCurrentPage(lastPage);
 
       setShowForm(false);
       setEditMode(false);
@@ -625,7 +689,7 @@ const EmployeesPage = () => {
   // Options pour les filtres
   //const sections = [...new Set(employees.map(emp => emp.section).filter(Boolean))];
   const fonctions = [
-    ...new Set(employees.map((emp) => emp.fonction).filter(Boolean)),
+    ...new Set(employees.map((emp) => emp.information_professionnelle?.fonction).filter(Boolean)),
   ];
 
   return (
@@ -642,11 +706,6 @@ const EmployeesPage = () => {
                 Gérez efficacement les informations de votre personnel
               </p>
             </div>
-
-            {/* <button className="flex items-center gap-2 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-              <Download className="w-4 h-4" />
-              Exporter
-            </button> */}
           </div>
 
           {/* Stats Cards améliorées */}
@@ -793,7 +852,6 @@ const EmployeesPage = () => {
                   </div>
                 </div>
 
-           
                 {/* Filtres avancés */}
                 {showFilters && (
                   <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
@@ -971,7 +1029,7 @@ const EmployeesPage = () => {
                           className="hover:bg-gray-50 transition-colors duration-150"
                         >
                           {/* Colonne Employé */}
-                          <td className="w-1/5 px-6 py-4">
+                          <td className="w-1/5 px-6">
                             <div className="flex items-center space-x-3">
                               <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center border">
                                 {emp.photo ? (
@@ -997,7 +1055,7 @@ const EmployeesPage = () => {
                           </td>
 
                           {/* Colonne Matricule */}
-                          <td className="w-1/5 px-6 py-4">
+                          <td className="w-1/5 px-6">
                             <div className="flex items-center">
                               <span className="text-sm font-bold text-gray-900 px-2 py-1 rounded">
                                 {emp.numero_matricule}
@@ -1006,27 +1064,21 @@ const EmployeesPage = () => {
                           </td>
 
                           {/* Colonne Fonction */}
-                          <td className="w-1/5 px-6 py-4">
+                          <td className="w-1/5 px-6">
                             <div className="text-sm text-gray-900">
-                              {emp.fonction || "Non spécifié"}
+                              {emp.information_professionnelle?.fonction ||
+                                emp.fonction ||
+                                "Non spécifié"}
                             </div>
-                            {emp.categorie && (
-                              <div className="text-xs text-gray-500 mt-1">
-                                {emp.categorie}
-                              </div>
-                            )}
                           </td>
 
                           {/* Colonne Section */}
-                          <td className="w-1/5 px-6 py-4">
+                          <td className="w-1/5 px-6">
                             <div className="text-sm text-gray-900">
-                              {emp.section || "Non spécifié"}
+                              {emp.information_professionnelle?.section ||
+                                emp.section ||
+                                "Non spécifié"}
                             </div>
-                            {emp.responsable_section && (
-                              <div className="text-xs text-gray-500 mt-1">
-                                {emp.responsable_section}
-                              </div>
-                            )}
                           </td>
 
                           {/* Colonne Actions */}
@@ -1082,7 +1134,6 @@ const EmployeesPage = () => {
                             <div className="min-w-0 flex-1">
                               <h3 className="font-bold text-gray-900 text-lg truncate">
                                 {emp.nom_complet || "Nom non spécifié"}{" "}
-                                {/* CHANGEMENT ICI */}
                               </h3>
                               <p className="text-sm text-gray-500 truncate">
                                 {emp.appellation || "Non spécifié"}
@@ -1099,7 +1150,9 @@ const EmployeesPage = () => {
                                 Fonction
                               </span>
                               <span className="text-gray-900 text-right">
-                                {emp.fonction || "Non spécifié"}
+                                {emp.information_professionnelle?.fonction ||
+                                  emp.fonction ||
+                                  "Non spécifié"}
                               </span>
                             </div>
                             <div className="flex justify-between items-center">
@@ -1107,19 +1160,11 @@ const EmployeesPage = () => {
                                 Section
                               </span>
                               <span className="text-gray-900 text-right">
-                                {emp.section || "Non spécifié"}
+                                {emp.information_professionnelle?.section ||
+                                  emp.section ||
+                                  "Non spécifié"}
                               </span>
                             </div>
-                            {emp.responsable_section && (
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs font-medium text-gray-500">
-                                  Responsable
-                                </span>
-                                <span className="text-gray-900 text-right">
-                                  {emp.responsable_section}
-                                </span>
-                              </div>
-                            )}
                           </div>
                         </div>
 

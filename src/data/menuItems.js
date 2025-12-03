@@ -14,7 +14,7 @@ import { Home,Building2 , Users, UserPlus, Clock, DollarSign, TrendingUp, Calend
 // ];
 export const MENU_ITEMS = [
   { id: 'dashboard', icon: Home, label: 'Tableau de bord', color: 'gray' },
-  { id: 'company', icon: Building2 , label: 'Sociétés', color: 'gray' },
+  // { id: 'company', icon: Building2 , label: 'Sociétés', color: 'gray' },
   { id: 'employees', icon: Users, label: 'Employés', color: 'gray' },
   { id: 'recruitment', icon: UserPlus, label: 'Recrutement', color: 'gray' },
   { id: 'attendance', icon: Clock, label: 'Présence', color: 'gray' },

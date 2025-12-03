@@ -42,6 +42,11 @@ export const deleteEmployee = async (id) => {
   return response.data;
 };
 
+export const deleteInformationProfessionnelle = async (id) => {
+  const response = await api.delete(`api/personnel/professionnelle/${id}/`);
+  return response.data;
+};
+
 // ==================== INFORMATIONS BANCAIRES ====================
 export const createBancaire = async (bancaireData) => {
   const response = await api.post('api/personnel/bancaire/', bancaireData);
@@ -232,3 +237,66 @@ export const getHistoriqueSalaireParEmploye = async (employeId) => {
   );
   return response.data;
 };
+
+
+
+
+
+
+// ==================== INFORMATIONS PROFESSIONNELLES ====================
+
+/**
+ * Récupère toutes les informations professionnelles
+ * @returns {Promise} - Liste des informations professionnelles
+ */
+export const getAllInformationsProfessionnelles = async () => {
+  const response = await api.get('api/personnel/professionnelle/');
+  return response.data;
+};
+
+/**
+ * Récupère les informations professionnelles d'un employé spécifique
+ * @param {number} employeId - L'ID de l'employé
+ * @returns {Promise} - Informations professionnelles de l'employé
+ */
+export const getInformationProfessionnelleByEmploye = async (employeId) => {
+  const response = await api.get(`api/personnel/professionnelle/?employe=${employeId}`);
+  return response.data;
+};
+
+/**
+ * Récupère une information professionnelle par son ID
+ * @param {number} id - L'ID de l'information professionnelle
+ * @returns {Promise} - Information professionnelle
+ */
+export const getInformationProfessionnelle = async (id) => {
+  const response = await api.get(`api/personnel/professionnelle/${id}/`);
+  return response.data;
+};
+
+/**
+ * Crée une nouvelle information professionnelle
+ * @param {Object} professionnelleData - Données de l'information professionnelle
+ * @returns {Promise} - Information professionnelle créée
+ */
+export const createInformationProfessionnelle = async (professionnelleData) => {
+  const response = await api.post('api/personnel/professionnelle/', professionnelleData);
+  return response.data;
+};
+
+/**
+ * Met à jour une information professionnelle existante
+ * @param {number} id - L'ID de l'information professionnelle
+ * @param {Object} professionnelleData - Données à mettre à jour
+ * @returns {Promise} - Information professionnelle mise à jour
+ */
+export const updateInformationProfessionnelle = async (id, professionnelleData) => {
+  const response = await api.put(`api/personnel/professionnelle/${id}/`, professionnelleData);
+  return response.data;
+};
+
+/**
+ * Supprime une information professionnelle
+ * @param {number} id - L'ID de l'information professionnelle
+ * @returns {Promise} - Confirmation de suppression
+ */
