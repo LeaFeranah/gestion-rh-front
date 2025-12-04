@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import "/src/styles/custom.css";
+import HistoriqueSalaire from "./HistoriqueSalaire";
 import {
   ArrowLeft,
   User,
@@ -16,7 +17,7 @@ import {
   ChevronRight,
   ChevronLeft,
 } from "lucide-react";
-import HistoriqueSalaire from "./HistoriqueSalaire";
+
 const EmployeeBlock = ({
   employee,
   formData,
@@ -35,6 +36,55 @@ const EmployeeBlock = ({
     x: 0,
     y: 0,
   });
+
+  // États pour les checkboxes
+  const [showDuplicata, setShowDuplicata] = useState(false);
+  const [showPassport, setShowPassport] = useState(false);
+  const [showPermis, setShowPermis] = useState(false);
+
+  // États pour les catégories de permis
+  const [permisChecked, setPermisChecked] = useState({
+    a: false,
+    b: false,
+    c: false,
+    d: false,
+    e: false,
+    f: false,
+  });
+
+  // Initialiser les checkboxes en fonction des données existantes
+  useEffect(() => {
+    if (formData) {
+      setShowDuplicata(!!(formData.date_duplicata || formData.lieu_duplicata));
+      setShowPassport(
+        !!(
+          formData.code_pays_passport ||
+          formData.type_passport ||
+          formData.numero_passport ||
+          formData.date_expiration_passport
+        )
+      );
+      setShowPermis(
+        !!(
+          formData.permis_categorie_a ||
+          formData.permis_categorie_b ||
+          formData.permis_categorie_c ||
+          formData.permis_categorie_d ||
+          formData.permis_categorie_e ||
+          formData.permis_categorie_f
+        )
+      );
+    }
+    // Initialiser les checkboxes des catégories de permis
+    setPermisChecked({
+      a: !!formData.permis_categorie_a,
+      b: !!formData.permis_categorie_b,
+      c: !!formData.permis_categorie_c,
+      d: !!formData.permis_categorie_d,
+      e: !!formData.permis_categorie_e,
+      f: !!formData.permis_categorie_f,
+    });
+  }, [formData]);
 
   // Gestion de la navigation au clavier - VERSION FINALE
   useEffect(() => {
@@ -306,11 +356,11 @@ const EmployeeBlock = ({
       label: "Informations Personnelles",
       icon: User,
     },
-      {
-    id: "professionnel",
-    label: "Informations Professionnelles", // NOUVEAU
-    icon: Briefcase,
-  },
+    {
+      id: "professionnel",
+      label: "Informations Professionnelles", // NOUVEAU
+      icon: Briefcase,
+    },
     {
       id: "salaire",
       label: "Informations Salariales",
@@ -628,47 +678,307 @@ const EmployeeBlock = ({
                   )}
                 </div>
 
-                {/* <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    N° CNAPS
-                  </label>
+                {/* DUPLICATA SECTION */}
+                <div className="border-t pt-4">
                   {editMode ? (
-                    <input
-                      type="text"
-                      value={data.numero_cnaps || ""}
-                      onChange={(e) =>
-                        handlePersonalChange("numero_cnaps", e.target.value)
-                      }
-                      className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-                    />
+                    <div className="flex items-center gap-2 mb-3">
+                      <input
+                        type="checkbox"
+                        id="duplicata-cb"
+                        checked={showDuplicata}
+                        onChange={(e) => setShowDuplicata(e.target.checked)}
+                        className="w-4 h-4 text-blue-600 rounded"
+                      />
+                      <label
+                        htmlFor="duplicata-cb"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Duplicata CIN
+                      </label>
+                    </div>
                   ) : (
-                    <span className="text-sm text-gray-900 py-2">
-                      {data.numero_cnaps || "-"}
-                    </span>
+                    (data.date_duplicata || data.lieu_duplicata) && (
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                        Duplicata CIN
+                      </h4>
+                    )
                   )}
-                </div> */}
 
-                {/* <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    Fonction
-                  </label>
+                  {(showDuplicata ||
+                    (!editMode &&
+                      (data.date_duplicata || data.lieu_duplicata))) && (
+                    <div className="space-y-3 ml-6">
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-gray-700 mb-1">
+                          Date duplicata
+                        </label>
+                        {editMode ? (
+                          <input
+                            type="date"
+                            value={data.date_duplicata || ""}
+                            onChange={(e) =>
+                              handlePersonalChange(
+                                "date_duplicata",
+                                e.target.value
+                              )
+                            }
+                            className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                          />
+                        ) : (
+                          <span className="text-sm text-gray-900 py-2">
+                            {data.date_duplicata || "-"}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-gray-700 mb-1">
+                          Lieu duplicata
+                        </label>
+                        {editMode ? (
+                          <input
+                            type="text"
+                            value={data.lieu_duplicata || ""}
+                            onChange={(e) =>
+                              handlePersonalChange(
+                                "lieu_duplicata",
+                                e.target.value
+                              )
+                            }
+                            className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                          />
+                        ) : (
+                          <span className="text-sm text-gray-900 py-2">
+                            {data.lieu_duplicata || "-"}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* PASSPORT SECTION */}
+                <div className="border-t pt-4">
                   {editMode ? (
-                    <input
-                      type="text"
-                      value={data.fonction || ""}
-                      onChange={(e) =>
-                        handlePersonalChange("fonction", e.target.value)
-                      }
-                      className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-                    />
+                    <div className="flex items-center gap-2 mb-3">
+                      <input
+                        type="checkbox"
+                        id="passport-cb"
+                        checked={showPassport}
+                        onChange={(e) => setShowPassport(e.target.checked)}
+                        className="w-4 h-4 text-blue-600 rounded"
+                      />
+                      <label
+                        htmlFor="passport-cb"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Passport
+                      </label>
+                    </div>
                   ) : (
-                    <span className="text-sm text-gray-900 py-2">
-                      {data.fonction || "-"}
-                    </span>
+                    data.numero_passport && (
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                        Passport
+                      </h4>
+                    )
                   )}
-                </div> */}
 
-                
+                  {(showPassport || (!editMode && data.numero_passport)) && (
+                    <div className="space-y-3 ml-6">
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-gray-700 mb-1">
+                          Code pays
+                        </label>
+                        {editMode ? (
+                          <input
+                            type="text"
+                            value={data.code_pays_passport || ""}
+                            onChange={(e) =>
+                              handlePersonalChange(
+                                "code_pays_passport",
+                                e.target.value
+                              )
+                            }
+                            placeholder="Ex: MDG"
+                            className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                          />
+                        ) : (
+                          <span className="text-sm text-gray-900 py-2">
+                            {data.code_pays_passport || "-"}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-gray-700 mb-1">
+                          Type
+                        </label>
+                        {editMode ? (
+                          <input
+                            type="text"
+                            value={data.type_passport || ""}
+                            onChange={(e) =>
+                              handlePersonalChange(
+                                "type_passport",
+                                e.target.value
+                              )
+                            }
+                            className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                          />
+                        ) : (
+                          <span className="text-sm text-gray-900 py-2">
+                            {data.type_passport || "-"}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-gray-700 mb-1">
+                          Numéro
+                        </label>
+                        {editMode ? (
+                          <input
+                            type="text"
+                            value={data.numero_passport || ""}
+                            onChange={(e) =>
+                              handlePersonalChange(
+                                "numero_passport",
+                                e.target.value
+                              )
+                            }
+                            className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                          />
+                        ) : (
+                          <span className="text-sm text-gray-900 py-2">
+                            {data.numero_passport || "-"}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-gray-700 mb-1">
+                          Date expiration
+                        </label>
+                        {editMode ? (
+                          <input
+                            type="date"
+                            value={data.date_expiration_passport || ""}
+                            onChange={(e) =>
+                              handlePersonalChange(
+                                "date_expiration_passport",
+                                e.target.value
+                              )
+                            }
+                            className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                          />
+                        ) : (
+                          <span className="text-sm text-gray-900 py-2">
+                            {data.date_expiration_passport || "-"}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* PERMIS SECTION */}
+                <div className="border-t pt-4">
+                  {editMode ? (
+                    <div className="flex items-center gap-2 mb-3">
+                      <input
+                        type="checkbox"
+                        id="permis-cb"
+                        checked={showPermis}
+                        onChange={(e) => setShowPermis(e.target.checked)}
+                        className="w-4 h-4 text-blue-600 rounded"
+                      />
+                      <label
+                        htmlFor="permis-cb"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Permis de conduire
+                      </label>
+                    </div>
+                  ) : (
+                    (data.permis_categorie_a ||
+                      data.permis_categorie_b ||
+                      data.permis_categorie_c ||
+                      data.permis_categorie_d ||
+                      data.permis_categorie_e ||
+                      data.permis_categorie_f) && (
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                        Permis de conduire
+                      </h4>
+                    )
+                  )}
+
+                  {(showPermis ||
+                    (!editMode &&
+                      (data.permis_categorie_a ||
+                        data.permis_categorie_b ||
+                        data.permis_categorie_c ||
+                        data.permis_categorie_d ||
+                        data.permis_categorie_e ||
+                        data.permis_categorie_f))) && (
+                    <div className="grid grid-cols-2 gap-3 ml-6">
+                      {["a", "b", "c", "d", "e", "f"].map((cat) => (
+                        <div key={cat} className="border rounded p-2 bg-white">
+                          {editMode ? (
+                            <>
+                              <div className="flex items-center gap-2 mb-2">
+                                <input
+                                  type="checkbox"
+                                  id={`permis-${cat}-cb`}
+                                  checked={permisChecked[cat]}
+                                  onChange={(e) => {
+                                    setPermisChecked((prev) => ({
+                                      ...prev,
+                                      [cat]: e.target.checked,
+                                    }));
+                                    if (!e.target.checked) {
+                                      handlePersonalChange(
+                                        `permis_categorie_${cat}`,
+                                        ""
+                                      );
+                                    }
+                                  }}
+                                  className="w-3 h-3 text-blue-600 rounded"
+                                />
+                                <label
+                                  htmlFor={`permis-${cat}-cb`}
+                                  className="text-xs font-medium text-gray-700"
+                                >
+                                  Catégorie {cat.toUpperCase()}
+                                </label>
+                              </div>
+
+                              {permisChecked[cat] && (
+                                <input
+                                  type="date"
+                                  value={data[`permis_categorie_${cat}`] || ""}
+                                  onChange={(e) =>
+                                    handlePersonalChange(
+                                      `permis_categorie_${cat}`,
+                                      e.target.value
+                                    )
+                                  }
+                                  className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] w-full focus:ring-1 focus:outline-none focus:ring-gray-500"
+                                />
+                              )}
+                            </>
+                          ) : (
+                            data[`permis_categorie_${cat}`] && (
+                              <>
+                                <label className="text-xs font-medium text-gray-700 mb-1 block">
+                                  Catégorie {cat.toUpperCase()}
+                                </label>
+                                <span className="text-xs text-gray-900">
+                                  {data[`permis_categorie_${cat}`]}
+                                </span>
+                              </>
+                            )
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 <div className="flex flex-col">
                   <label className="text-sm font-medium text-gray-700 mb-1">
@@ -764,349 +1074,276 @@ const EmployeeBlock = ({
         );
 
       case "professionnel":
-  return (
-    <div className="bg-gray-200 p-6 rounded-md border border-gray-200">
-      {isAddMode && (
-        <div className="flex items-center gap-2 mb-6 pb-4 border-b border-gray-200">
-          <Briefcase className="w-5 h-5 text-gray-600" />
-          <h3 className="text-lg font-semibold text-gray-900">
-            Informations Professionnelles
-          </h3>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Colonne 1 */}
-        <div className="space-y-4">
-          <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">
-              Date d'embauche
-            </label>
-            {editMode ? (
-              <input
-                type="date"
-                value={data.information_professionnelle?.date_embauche || ""}
-                onChange={(e) =>
-                  handleSectionChange(
-                    "information_professionnelle",
-                    "date_embauche",
-                    e.target.value
-                  )
-                }
-                className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-              />
-            ) : (
-              <span className="text-sm text-gray-900 py-2">
-                {data.information_professionnelle?.date_embauche || "-"}
-              </span>
+        return (
+          <div className="bg-gray-200 p-6 rounded-md border border-gray-200">
+            {isAddMode && (
+              <div className="flex items-center gap-2 mb-6 pb-4 border-b border-gray-200">
+                <Briefcase className="w-5 h-5 text-gray-600" />
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Informations Professionnelles
+                </h3>
+              </div>
             )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Colonne 1 */}
+              <div className="space-y-4">
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-700 mb-1">
+                    Date d'embauche
+                  </label>
+                  {editMode ? (
+                    <input
+                      type="date"
+                      value={
+                        data.information_professionnelle?.date_embauche || ""
+                      }
+                      onChange={(e) =>
+                        handleSectionChange(
+                          "information_professionnelle",
+                          "date_embauche",
+                          e.target.value
+                        )
+                      }
+                      className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                    />
+                  ) : (
+                    <span className="text-sm text-gray-900 py-2">
+                      {data.information_professionnelle?.date_embauche || "-"}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-700 mb-1">
+                    Fonction
+                  </label>
+                  {editMode ? (
+                    <input
+                      type="text"
+                      value={data.information_professionnelle?.fonction || ""}
+                      onChange={(e) =>
+                        handleSectionChange(
+                          "information_professionnelle",
+                          "fonction",
+                          e.target.value
+                        )
+                      }
+                      className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                    />
+                  ) : (
+                    <span className="text-sm text-gray-900 py-2">
+                      {data.information_professionnelle?.fonction || "-"}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-700 mb-1">
+                    Catégorie
+                  </label>
+                  {editMode ? (
+                    <select
+                      value={data.information_professionnelle?.categorie || ""}
+                      onChange={(e) =>
+                        handleSectionChange(
+                          "information_professionnelle",
+                          "categorie",
+                          e.target.value
+                        )
+                      }
+                      className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                    >
+                      <option value="">-- Sélectionnez une catégorie --</option>
+                      <option value="M1">M1</option>
+                      <option value="M2">M2</option>
+                      <option value="0S1">0S1</option>
+                      <option value="0S2">0S2</option>
+                      <option value="0S3">0S3</option>
+                      <option value="0P1A">0P1A</option>
+                      <option value="0P1B">0P1B</option>
+                      <option value="0P2A">0P2A</option>
+                      <option value="0P2B">0P2B</option>
+                      <option value="0P3">0P3</option>
+                      <option value="H.C">H.C</option>
+                    </select>
+                  ) : (
+                    <span className="text-sm text-gray-900 py-2">
+                      {data.information_professionnelle?.categorie || "-"}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-700 mb-1">
+                    Section
+                  </label>
+                  {editMode ? (
+                    <select
+                      value={data.information_professionnelle?.section || ""}
+                      onChange={(e) =>
+                        handleSectionChange(
+                          "information_professionnelle",
+                          "section",
+                          e.target.value
+                        )
+                      }
+                      className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                    >
+                      <option value="">-- Sélectionnez une section --</option>
+                      <option value="ADMINISTRATION">ADMINISTRATION</option>
+                      <option value="BRODERIE MACHINE">BRODERIE MACHINE</option>
+                      <option value="BRODERIE MAIN AK17">
+                        BRODERIE MAIN AK17
+                      </option>
+                      <option value="BRODERIE MAIN DEV">
+                        BRODERIE MAIN DEV
+                      </option>
+                      <option value="BUREAU DE METHODE">
+                        BUREAU DE METHODE
+                      </option>
+                      <option value="CONTROLE QUALITE AS">
+                        CONTROLE QUALITE AS
+                      </option>
+                      <option value="CHAINE 1">CHAINE 1</option>
+                      <option value="CHAINE 2">CHAINE 2</option>
+                      <option value="CHAINE 3">CHAINE 3</option>
+                      <option value="CHAINE 4">CHAINE 4</option>
+                      <option value="CHAINE 5">CHAINE 5</option>
+                      <option value="CHAINE 6">CHAINE 6</option>
+                      <option value="CHAINE 7">CHAINE 7</option>
+                      <option value="CHAINE 8">CHAINE 8</option>
+                      <option value="CHAINE 9">CHAINE 9</option>
+                      <option value="CHAINE 10">CHAINE 10</option>
+                      <option value="CHAINE 11">CHAINE 11</option>
+                      <option value="CHAINE 12">CHAINE 12</option>
+                      <option value="CHAINE CUIR">CHAINE CUIR</option>
+                      <option value="COLLECTION">COLLECTION</option>
+                      <option value="COUPE">COUPE</option>
+                      <option value="COUPE COLLECTION">COUPE COLLECTION</option>
+                      <option value="FINITION D">FINITION D</option>
+                      <option value="FINITION M">FINITION M</option>
+                      <option value="FINITION P">FINITION P</option>
+                      <option value="FINITION Q">FINITION Q</option>
+                      <option value="FINITION R">FINITION R</option>
+                      <option value="LECTRA">LECTRA</option>
+                      <option value="LEMARIE HVA">LEMARIE HVA</option>
+                      <option value="MAINTENANCE">MAINTENANCE</option>
+                      <option value="MAISON">MAISON</option>
+                      <option value="PACKING/EXPEDITION">
+                        PACKING/EXPEDITION
+                      </option>
+                      <option value="PLISSE">PLISSE</option>
+                      <option value="POLE QUALITE 1">POLE QUALITE 1</option>
+                      <option value="POLE QUALITE 2">POLE QUALITE 2</option>
+                      <option value="RAPHIA 1">RAPHIA 1</option>
+                      <option value="RAPHIA 2">RAPHIA 2</option>
+                      <option value="RAPHIA 3">RAPHIA 3</option>
+                      <option value="RAPHIA 4">RAPHIA 4</option>
+                      <option value="RAPHIA 5">RAPHIA 5</option>
+                      <option value="RAPHIA 6">RAPHIA 6</option>
+                      <option value="RESPONSABLE 0">RESPONSABLE 0</option>
+                      <option value="RESPONSABLE 1">RESPONSABLE 1</option>
+                      <option value="RESPONSABLE 2">RESPONSABLE 2</option>
+                      <option value="RESPONSABLE 3">RESPONSABLE 3</option>
+                      <option value="RESPONSABLE RAPHIA">
+                        RESPONSABLE RAPHIA
+                      </option>
+                      <option value="SECURITE">SECURITE</option>
+                    </select>
+                  ) : (
+                    <span className="text-sm text-gray-900 py-2">
+                      {data.information_professionnelle?.section || "-"}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Colonne 2 */}
+              <div className="space-y-4">
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-700 mb-1">
+                    Responsable section
+                  </label>
+                  {editMode ? (
+                    <input
+                      type="text"
+                      value={
+                        data.information_professionnelle?.responsable_section ||
+                        ""
+                      }
+                      onChange={(e) =>
+                        handleSectionChange(
+                          "information_professionnelle",
+                          "responsable_section",
+                          e.target.value
+                        )
+                      }
+                      className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                    />
+                  ) : (
+                    <span className="text-sm text-gray-900 py-2">
+                      {data.information_professionnelle?.responsable_section ||
+                        "-"}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-700 mb-1">
+                    Numéro CNAPS
+                  </label>
+                  {editMode ? (
+                    <input
+                      type="text"
+                      value={
+                        data.information_professionnelle?.numero_cnaps || ""
+                      }
+                      onChange={(e) =>
+                        handleSectionChange(
+                          "information_professionnelle",
+                          "numero_cnaps",
+                          e.target.value
+                        )
+                      }
+                      className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                    />
+                  ) : (
+                    <span className="text-sm text-gray-900 py-2">
+                      {data.information_professionnelle?.numero_cnaps || "-"}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-700 mb-1">
+                    Numéro OSTIE
+                  </label>
+                  {editMode ? (
+                    <input
+                      type="text"
+                      value={
+                        data.information_professionnelle?.numero_ostie || ""
+                      }
+                      onChange={(e) =>
+                        handleSectionChange(
+                          "information_professionnelle",
+                          "numero_ostie",
+                          e.target.value
+                        )
+                      }
+                      className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
+                    />
+                  ) : (
+                    <span className="text-sm text-gray-900 py-2">
+                      {data.information_professionnelle?.numero_ostie || "-"}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
-
-          <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">
-              Fonction
-            </label>
-            {editMode ? (
-              <input
-                type="text"
-                value={data.information_professionnelle?.fonction || ""}
-                onChange={(e) =>
-                  handleSectionChange(
-                    "information_professionnelle",
-                    "fonction",
-                    e.target.value
-                  )
-                }
-                className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-              />
-            ) : (
-              <span className="text-sm text-gray-900 py-2">
-                {data.information_professionnelle?.fonction || "-"}
-              </span>
-            )}
-          </div>
-
-          <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">
-              Catégorie
-            </label>
-            {editMode ? (
-              <select
-                value={data.information_professionnelle?.categorie || ""}
-                onChange={(e) =>
-                  handleSectionChange(
-                    "information_professionnelle",
-                    "categorie",
-                    e.target.value
-                  )
-                }
-                className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-              >
-                <option value="">-- Sélectionnez une catégorie --</option>
-                <option value="M1">M1</option>
-                <option value="M2">M2</option>
-                <option value="0S1">0S1</option>
-                <option value="0S2">0S2</option>
-                <option value="0S3">0S3</option>
-                <option value="0P1A">0P1A</option>
-                <option value="0P1B">0P1B</option>
-                <option value="0P2A">0P2A</option>
-                <option value="0P2B">0P2B</option>
-                <option value="0P3">0P3</option>
-                <option value="H.C">H.C</option>
-              </select>
-            ) : (
-              <span className="text-sm text-gray-900 py-2">
-                {data.information_professionnelle?.categorie || "-"}
-              </span>
-            )}
-          </div>
-
-          <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">
-              Section
-            </label>
-            {editMode ? (
-              <select
-                value={data.information_professionnelle?.section || ""}
-                onChange={(e) =>
-                  handleSectionChange(
-                    "information_professionnelle",
-                    "section",
-                    e.target.value
-                  )
-                }
-                className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-              >
-                <option value="">-- Sélectionnez une section --</option>
-                <option value="ADMINISTRATION">ADMINISTRATION</option>
-                <option value="BRODERIE MACHINE">BRODERIE MACHINE</option>
-                <option value="BRODERIE MAIN AK17">BRODERIE MAIN AK17</option>
-                <option value="BRODERIE MAIN DEV">BRODERIE MAIN DEV</option>
-                <option value="BUREAU DE METHODE">BUREAU DE METHODE</option>
-                <option value="CONTROLE QUALITE AS">CONTROLE QUALITE AS</option>
-                <option value="CHAINE 1">CHAINE 1</option>
-                <option value="CHAINE 2">CHAINE 2</option>
-                <option value="CHAINE 3">CHAINE 3</option>
-                <option value="CHAINE 4">CHAINE 4</option>
-                <option value="CHAINE 5">CHAINE 5</option>
-                <option value="CHAINE 6">CHAINE 6</option>
-                <option value="CHAINE 7">CHAINE 7</option>
-                <option value="CHAINE 8">CHAINE 8</option>
-                <option value="CHAINE 9">CHAINE 9</option>
-                <option value="CHAINE 10">CHAINE 10</option>
-                <option value="CHAINE 11">CHAINE 11</option>
-                <option value="CHAINE 12">CHAINE 12</option>
-                <option value="CHAINE CUIR">CHAINE CUIR</option>
-                <option value="COLLECTION">COLLECTION</option>
-                <option value="COUPE">COUPE</option>
-                <option value="COUPE COLLECTION">COUPE COLLECTION</option>
-                <option value="FINITION D">FINITION D</option>
-                <option value="FINITION M">FINITION M</option>
-                <option value="FINITION P">FINITION P</option>
-                <option value="FINITION Q">FINITION Q</option>
-                <option value="FINITION R">FINITION R</option>
-                <option value="LECTRA">LECTRA</option>
-                <option value="LEMARIE HVA">LEMARIE HVA</option>
-                <option value="MAINTENANCE">MAINTENANCE</option>
-                <option value="MAISON">MAISON</option>
-                <option value="PACKING/EXPEDITION">PACKING/EXPEDITION</option>
-                <option value="PLISSE">PLISSE</option>
-                <option value="POLE QUALITE 1">POLE QUALITE 1</option>
-                <option value="POLE QUALITE 2">POLE QUALITE 2</option>
-                <option value="RAPHIA 1">RAPHIA 1</option>
-                <option value="RAPHIA 2">RAPHIA 2</option>
-                <option value="RAPHIA 3">RAPHIA 3</option>
-                <option value="RAPHIA 4">RAPHIA 4</option>
-                <option value="RAPHIA 5">RAPHIA 5</option>
-                <option value="RAPHIA 6">RAPHIA 6</option>
-                <option value="RESPONSABLE 0">RESPONSABLE 0</option>
-                <option value="RESPONSABLE 1">RESPONSABLE 1</option>
-                <option value="RESPONSABLE 2">RESPONSABLE 2</option>
-                <option value="RESPONSABLE 3">RESPONSABLE 3</option>
-                <option value="RESPONSABLE RAPHIA">RESPONSABLE RAPHIA</option>
-                <option value="SECURITE">SECURITE</option>
-              </select>
-            ) : (
-              <span className="text-sm text-gray-900 py-2">
-                {data.information_professionnelle?.section || "-"}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Colonne 2 */}
-        <div className="space-y-4">
-          <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">
-              Responsable section
-            </label>
-            {editMode ? (
-              <input
-                type="text"
-                value={data.information_professionnelle?.responsable_section || ""}
-                onChange={(e) =>
-                  handleSectionChange(
-                    "information_professionnelle",
-                    "responsable_section",
-                    e.target.value
-                  )
-                }
-                className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-              />
-            ) : (
-              <span className="text-sm text-gray-900 py-2">
-                {data.information_professionnelle?.responsable_section || "-"}
-              </span>
-            )}
-          </div>
-
-          <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">
-              Numéro CNAPS
-            </label>
-            {editMode ? (
-              <input
-                type="text"
-                value={data.information_professionnelle?.numero_cnaps || ""}
-                onChange={(e) =>
-                  handleSectionChange(
-                    "information_professionnelle",
-                    "numero_cnaps",
-                    e.target.value
-                  )
-                }
-                className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-              />
-            ) : (
-              <span className="text-sm text-gray-900 py-2">
-                {data.information_professionnelle?.numero_cnaps || "-"}
-              </span>
-            )}
-          </div>
-
-          <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">
-              Numéro OSTIE
-            </label>
-            {editMode ? (
-              <input
-                type="text"
-                value={data.information_professionnelle?.numero_ostie || ""}
-                onChange={(e) =>
-                  handleSectionChange(
-                    "information_professionnelle",
-                    "numero_ostie",
-                    e.target.value
-                  )
-                }
-                className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-              />
-            ) : (
-              <span className="text-sm text-gray-900 py-2">
-                {data.information_professionnelle?.numero_ostie || "-"}
-              </span>
-            )}
-          </div>
-
-          {/* <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">
-              Ancienneté
-            </label>
-            <span className="text-sm text-gray-900 py-2">
-              {data.information_professionnelle?.date_embauche
-                ? (() => {
-                    const today = new Date();
-                    const hireDate = new Date(data.information_professionnelle.date_embauche);
-                    let years = today.getFullYear() - hireDate.getFullYear();
-                    const monthDiff = today.getMonth() - hireDate.getMonth();
-                    
-                    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < hireDate.getDate())) {
-                      years--;
-                    }
-                    
-                    return `${years} ans`;
-                  })()
-                : "-"}
-            </span>
-          </div> */}
-
-          {/* <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">
-              Statut
-            </label>
-            {editMode ? (
-              <input
-                type="text"
-                value={data.information_professionnelle?.statut || ""}
-                onChange={(e) =>
-                  handleSectionChange(
-                    "information_professionnelle",
-                    "statut",
-                    e.target.value
-                  )
-                }
-                className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-                placeholder="CDI, CDD, etc."
-              />
-            ) : (
-              <span className="text-sm text-gray-900 py-2">
-                {data.information_professionnelle?.statut || "-"}
-              </span>
-            )}
-          </div> */}
-
-          {/* <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">
-              Type de contrat
-            </label>
-            {editMode ? (
-              <input
-                type="text"
-                value={data.information_professionnelle?.type_contrat || ""}
-                onChange={(e) =>
-                  handleSectionChange(
-                    "information_professionnelle",
-                    "type_contrat",
-                    e.target.value
-                  )
-                }
-                className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-              />
-            ) : (
-              <span className="text-sm text-gray-900 py-2">
-                {data.information_professionnelle?.type_contrat || "-"}
-              </span>
-            )}
-          </div> */}
-
-          {/* <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">
-              Date fin contrat
-            </label>
-            {editMode ? (
-              <input
-                type="date"
-                value={data.information_professionnelle?.date_fin_contrat || ""}
-                onChange={(e) =>
-                  handleSectionChange(
-                    "information_professionnelle",
-                    "date_fin_contrat",
-                    e.target.value
-                  )
-                }
-                className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-              />
-            ) : (
-              <span className="text-sm text-gray-900 py-2">
-                {data.information_professionnelle?.date_fin_contrat || "-"}
-              </span>
-            )}
-          </div> */}
-        </div>
-      </div>
-    </div>
-  );
+        );
 
       case "salaire":
         return (
@@ -1124,94 +1361,6 @@ const EmployeeBlock = ({
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Colonne 1 */}
                 <div className="space-y-4">
-                  {/* <div className="flex flex-col">
-                    <label className="text-sm font-medium text-gray-700 mb-1">
-                      Date d'embauche
-                    </label>
-                    {editMode ? (
-                      <input
-                        type="date"
-                        value={data.salaire_personnel?.date_embauche || ""}
-                        onChange={(e) =>
-                          handleSectionChange(
-                            "salaire_personnel",
-                            "date_embauche",
-                            e.target.value
-                          )
-                        }
-                        className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-                      />
-                    ) : (
-                      <span className="text-sm text-gray-900 py-2">
-                        {data.salaire_personnel?.date_embauche || "-"}
-                      </span>
-                    )}
-                  </div> */}
-
-                  {/* <div className="flex flex-col">
-                    <label className="text-sm font-medium text-gray-700 mb-1">
-                      Responsable section
-                    </label>
-                    {editMode ? (
-                      <input
-                        type="text"
-                        value={
-                          data.salaire_personnel?.responsable_section || ""
-                        }
-                        onChange={(e) =>
-                          handleSectionChange(
-                            "salaire_personnel",
-                            "responsable_section",
-                            e.target.value
-                          )
-                        }
-                        className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-                      />
-                    ) : (
-                      <span className="text-sm text-gray-900 py-2">
-                        {data.salaire_personnel?.responsable_section || "-"}
-                      </span>
-                    )}
-                  </div> */}
-
-                  {/* <div className="flex flex-col">
-                    <label className="text-sm font-medium text-gray-700 mb-1">
-                      Catégorie
-                    </label>
-                    {editMode ? (
-                      <select
-                        value={data.salaire_personnel?.categorie || ""}
-                        onChange={(e) =>
-                          handleSectionChange(
-                            "salaire_personnel",
-                            "categorie",
-                            e.target.value
-                          )
-                        }
-                        className="border border-gray-300 rounded px-2 py-0.5 text-xs h-[25px] focus:ring-1 focus:outline-none focus:ring-gray-500"
-                      >
-                        <option value="">
-                          -- Sélectionnez une catégorie --
-                        </option>
-                        <option value="M1">M1</option>
-                        <option value="M2">M2</option>
-                        <option value="0S1">0S1</option>
-                        <option value="0S2">0S2</option>
-                        <option value="0S3">0S3</option>
-                        <option value="0P1A">0P1A</option>
-                        <option value="0P1B">0P1B</option>
-                        <option value="0P2A">0P2A</option>
-                        <option value="0P2B">0P2B</option>
-                        <option value="0P3">0P3</option>
-                        <option value="H.C">H.C</option>
-                      </select>
-                    ) : (
-                      <span className="text-sm text-gray-900 py-2">
-                        {data.salaire_personnel?.categorie || "-"}
-                      </span>
-                    )}
-                  </div> */}
-
                   <div className="flex flex-col">
                     <label className="text-sm font-medium text-gray-700 mb-1">
                       Indice

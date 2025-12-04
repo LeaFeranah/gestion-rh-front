@@ -279,7 +279,7 @@ const HistoriqueSalaire = ({ employeId, salaireId }) => {
   }
 
   return (
-    <div className="bg-white rounded-md border border-gray-200 mt-6">
+    <div className="bg-white border border-gray-200 mt-6">
       {/* En-tête */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-6 pb-4 border-b border-gray-200 mb-4">
         <div>

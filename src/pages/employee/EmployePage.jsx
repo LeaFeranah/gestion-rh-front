@@ -266,6 +266,24 @@ const EmployeesPage = () => {
         quartier: formData.quartier,
         telephone: formData.telephone,
         email: formData.email,
+
+        // 🔹 DUPLICATA
+        date_duplicata: formData.date_duplicata,
+        lieu_duplicata: formData.lieu_duplicata,
+
+        // 🔹 PASSPORT
+        code_pays_passport: formData.code_pays_passport,
+        type_passport: formData.type_passport,
+        numero_passport: formData.numero_passport,
+        date_expiration_passport: formData.date_expiration_passport,
+
+        // 🔹 PERMIS DE CONDUIRE
+        permis_categorie_a: formData.permis_categorie_a,
+        permis_categorie_b: formData.permis_categorie_b,
+        permis_categorie_c: formData.permis_categorie_c,
+        permis_categorie_d: formData.permis_categorie_d,
+        permis_categorie_e: formData.permis_categorie_e,
+        permis_categorie_f: formData.permis_categorie_f,
       };
 
       Object.entries(personalFields).forEach(([key, value]) => {
@@ -474,6 +492,24 @@ const EmployeesPage = () => {
         quartier: formData.quartier,
         telephone: formData.telephone,
         email: formData.email,
+
+        // 🔹 DUPLICATA
+        date_duplicata: formData.date_duplicata,
+        lieu_duplicata: formData.lieu_duplicata,
+
+        // 🔹 PASSPORT
+        code_pays_passport: formData.code_pays_passport,
+        type_passport: formData.type_passport,
+        numero_passport: formData.numero_passport,
+        date_expiration_passport: formData.date_expiration_passport,
+
+        // 🔹 PERMIS DE CONDUIRE
+        permis_categorie_a: formData.permis_categorie_a,
+        permis_categorie_b: formData.permis_categorie_b,
+        permis_categorie_c: formData.permis_categorie_c,
+        permis_categorie_d: formData.permis_categorie_d,
+        permis_categorie_e: formData.permis_categorie_e,
+        permis_categorie_f: formData.permis_categorie_f,
       };
 
       Object.entries(optionalFields).forEach(([key, value]) => {
@@ -679,8 +715,23 @@ const EmployeesPage = () => {
       quartier: "",
       telephone: "",
       email: "",
+      // 🔹 NOUVEAUX CHAMPS
+      date_duplicata: "",
+      lieu_duplicata: "",
+      code_pays_passport: "",
+      type_passport: "",
+      numero_passport: "",
+      date_expiration_passport: "",
+      permis_categorie_a: "",
+      permis_categorie_b: "",
+      permis_categorie_c: "",
+      permis_categorie_d: "",
+      permis_categorie_e: "",
+      permis_categorie_f: "",
+
       photo: null,
       bancaire: {},
+      information_professionnelle: {},
       salaire_personnel: {},
       familiale: { enfants: [] },
     });
@@ -689,7 +740,11 @@ const EmployeesPage = () => {
   // Options pour les filtres
   //const sections = [...new Set(employees.map(emp => emp.section).filter(Boolean))];
   const fonctions = [
-    ...new Set(employees.map((emp) => emp.information_professionnelle?.fonction).filter(Boolean)),
+    ...new Set(
+      employees
+        .map((emp) => emp.information_professionnelle?.fonction)
+        .filter(Boolean)
+    ),
   ];
 
   return (
