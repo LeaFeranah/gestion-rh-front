@@ -79,16 +79,16 @@ const EmployeesPage = () => {
     }
   };
 
-  // Filtrage et pagination
   const filteredEmployees = employees.filter((emp) => {
+    // Vérifier d'abord si les champs existent
+    const nomComplet = emp.nom_complet || "";
+    const numeroMatricule = emp.numero_matricule || "";
+
     const matchesSearch =
-      emp.nom_complet?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      //emp.prenoms?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.numero_matricule?.toLowerCase().includes(searchTerm.toLowerCase());
+      nomComplet.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      numeroMatricule.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesFilters =
-      // (!filters.section || emp.section === filters.section) &&
-      // (!filters.fonction || emp.fonction === filters.fonction) &&
       (!filters.section ||
         emp.information_professionnelle?.section === filters.section) &&
       (!filters.fonction ||
