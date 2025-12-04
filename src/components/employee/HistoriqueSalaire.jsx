@@ -154,21 +154,6 @@ const HistoriqueSalaire = ({ employeId, salaireId }) => {
     })} Ar`;
   };
 
-  // Formater la catégorie
-  const formatCategorie = (categorie) => {
-    if (!categorie) return "Non spécifiée";
-
-    const categoriesMap = {
-      promotion: "Promotion",
-      augmentation: "Augmentation",
-      changement_poste: "Changement de poste",
-      ajustement: "Ajustement",
-      autre: "Autre",
-    };
-
-    return categoriesMap[categorie] || categorie;
-  };
-
   // Préparer les données pour le tableau
   const prepareTableData = () => {
     if (!historiques || historiques.length === 0) return [];
@@ -189,8 +174,6 @@ const HistoriqueSalaire = ({ employeId, salaireId }) => {
       dateTime: formatDateTime(
         hist.date_modification || hist.created_at || hist.dateModification
       ),
-      categorie:
-        hist.nouvelle_categorie || hist.nouvelleCategorie || hist.categorie,
       indice: hist.nouvelle_indice || hist.nouvelleIndice || hist.indice || "-",
       tauxHoraire:
         hist.nouveau_taux_horaire ||
@@ -377,9 +360,6 @@ const HistoriqueSalaire = ({ employeId, salaireId }) => {
                     <div className="flex items-center gap-1">Date & Heure</div>
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 border-t border-gray-300">
-                    Catégorie
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 border-t border-gray-300">
                     <div className="flex items-center gap-1">Indice</div>
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 border-t border-gray-300">
@@ -415,11 +395,7 @@ const HistoriqueSalaire = ({ employeId, salaireId }) => {
                         {item.dateTime}
                       </div>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap border-r border-gray-300">
-                      <div className="text-sm text-gray-900">
-                        {formatCategorie(item.categorie)}
-                      </div>
-                    </td>
+                    
                     <td className="px-4 py-3 whitespace-nowrap border-r border-gray-300">
                       <div className="text-sm font-medium text-gray-900">
                         {item.indice}
