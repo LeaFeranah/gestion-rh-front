@@ -193,6 +193,132 @@ export const logout = async () => {
 
 
 
+// ==================== ÉVOLUTION DE POSTE ====================
+
+/**
+ * Récupère toutes les évolutions de poste
+ * @returns {Promise} - Liste de toutes les évolutions
+ */
+export const getAllEvolutionsPoste = async () => {
+  const response = await api.get('api/personnel/evolution-poste/');
+  return response.data;
+};
+
+/**
+ * Récupère une évolution de poste par son ID
+ * @param {number} id - L'ID de l'évolution
+ * @returns {Promise} - Évolution de poste
+ */
+export const getEvolutionPoste = async (id) => {
+  const response = await api.get(`api/personnel/evolution-poste/${id}/`);
+  return response.data;
+};
+
+/**
+ * Crée une nouvelle évolution de poste
+ * @param {Object} evolutionData - Données de l'évolution
+ * @returns {Promise} - Évolution créée
+ */
+export const createEvolutionPoste = async (evolutionData) => {
+  const response = await api.post('api/personnel/evolution-poste/', evolutionData);
+  return response.data;
+};
+
+/**
+ * Met à jour une évolution de poste
+ * @param {number} id - L'ID de l'évolution
+ * @param {Object} evolutionData - Données à mettre à jour
+ * @returns {Promise} - Évolution mise à jour
+ */
+export const updateEvolutionPoste = async (id, evolutionData) => {
+  const response = await api.put(`api/personnel/evolution-poste/${id}/`, evolutionData);
+  return response.data;
+};
+
+/**
+ * Supprime une évolution de poste
+ * @param {number} id - L'ID de l'évolution
+ * @returns {Promise} - Confirmation de suppression
+ */
+export const deleteEvolutionPoste = async (id) => {
+  const response = await api.delete(`api/personnel/evolution-poste/${id}/`);
+  return response.data;
+};
+
+/**
+ * Récupère toutes les évolutions d'un employé (via URL param)
+ * @param {number} employeId - L'ID de l'employé
+ * @returns {Promise} - { employe, information_actuelle, total_evolutions, evolutions: [] }
+ */
+export const getEvolutionsByEmploye = async (employeId) => {
+  const response = await api.get(`api/personnel/evolution-poste/employe/${employeId}`);
+  return response.data;
+};
+
+/**
+ * Récupère toutes les évolutions d'un employé (via query param)
+ * @param {number} employeId - L'ID de l'employé
+ * @returns {Promise} - Liste des évolutions
+ */
+export const getEvolutionsParEmploye = async (employeId) => {
+  const response = await api.get(`api/personnel/evolution-poste/par-employe/?employe_id=${employeId}`);
+  return response.data;
+};
+
+/**
+ * Récupère les statistiques des évolutions de poste
+ * @returns {Promise} - Statistiques
+ */
+export const getStatistiquesEvolutions = async () => {
+  const response = await api.get('api/personnel/evolution-poste/statistiques/');
+  return response.data;
+};
+
+/**
+ * Récupère les évolutions filtrées par section
+ * @param {string} section - Nom de la section
+ * @returns {Promise} - { section, count, evolutions: [] }
+ */
+export const getEvolutionsBySection = async (section) => {
+  const response = await api.get(`api/personnel/evolution-poste/par-section/?section=${encodeURIComponent(section)}`);
+  return response.data;
+};
+
+/**
+ * Récupère les évolutions filtrées par type
+ * @param {string} type - Type d'évolution (PROMOTION, MUTATION, etc.)
+ * @returns {Promise} - { type, type_display, count, evolutions: [] }
+ */
+export const getEvolutionsByType = async (type) => {
+  const response = await api.get(`api/personnel/evolution-poste/par-type/?type=${type}`);
+  return response.data;
+};
+
+/**
+ * Récupère les évolutions récentes
+ * @param {number} limit - Nombre d'évolutions à récupérer (par défaut 20)
+ * @returns {Promise} - { count, limit, evolutions: [] }
+ */
+export const getEvolutionsRecentes = async (limit = 20) => {
+  const response = await api.get(`api/personnel/evolution-poste/recentes/?limit=${limit}`);
+  return response.data;
+};
+
+/**
+ * Récupère l'historique des évolutions pour une information professionnelle
+ * @param {number} infoProfId - L'ID de l'information professionnelle
+ * @returns {Promise} - Historique des évolutions
+ */
+export const getHistoriqueEvolutionByInfoProf = async (infoProfId) => {
+  const response = await api.get(`api/personnel/professionnelle/${infoProfId}/historique-evolution/`);
+  return response.data;
+};
+
+
+
+
+
+
 
 
 // ==================== HISTORIQUE DES SALAIRES ====================

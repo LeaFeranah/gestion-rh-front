@@ -356,6 +356,7 @@ const EmployeesPage = () => {
         const salaireData = {
           date_embauche: formData.salaire_personnel.date_embauche || "",
           //fonction: formData.salaire_personnel.fonction || "",
+          //categorie: formData.salaire_personnel.categorie || "",
           indice: formData.salaire_personnel.indice || "",
           taux_horaire: formData.salaire_personnel.taux_horaire || "",
           salaire_base: formData.salaire_personnel.salaire_base || "",
@@ -577,6 +578,7 @@ const EmployeesPage = () => {
       ) {
         const salaireData = {
           date_embauche: formData.salaire_personnel?.date_embauche || "",
+          //categorie: formData.salaire_personnel?.categorie || "",
           responsable_section:
             formData.salaire_personnel?.responsable_section || "",
           indice: formData.salaire_personnel?.indice || "",

@@ -5,10 +5,6 @@ import {
   RefreshCw,
   ChevronLeft,
   ChevronRight,
-  Calendar,
-  Clock,
-  DollarSign,
-  Hash,
 } from "lucide-react";
 import {
   LineChart,
@@ -66,12 +62,56 @@ const HistoriqueSalaire = ({ employeId, salaireId }) => {
     }
   }, [salaireId, employeId, loadHistorique]);
 
+  // Fonction pour comparer si deux objets ont les mêmes valeurs de salaire
+  const haveSameSalaireValues = (a, b) => {
+    const fieldsToCompare = [
+      "nouveau_salaire_total",
+      "nouveauSalaireTotal",
+      "nouveau_taux_horaire",
+      "nouveauTauxHoraire",
+      "nouveau_salaire_base",
+      "nouveauSalaireBase",
+      "nouvelle_categorie",
+      "nouvelleCategorie",
+      "nouvelle_indice",
+      "nouvelleIndice",
+      "nouvelle_prime_anciennete",
+      "nouvellePrimeAnciennete",
+      "nouvelle_indemnite_deplacement",
+      "nouvelleIndemniteDeplacement",
+      "nouvelle_autre_indemnite",
+      "nouvelleAutreIndemnite",
+    ];
 
-  // Préparer les données pour le graphique
-  const prepareChartData = () => {
+    for (const field of fieldsToCompare) {
+      const valA = a[field];
+      const valB = b[field];
+
+      // Si les deux sont undefined, null ou vides, on continue
+      if ((!valA && !valB) || (valA === undefined && valB === undefined)) {
+        continue;
+      }
+
+      // Si un seul a une valeur
+      if ((valA && !valB) || (!valA && valB)) {
+        return false;
+      }
+
+      // Si les deux ont des valeurs mais différentes
+      if (valA !== valB) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  // Fonction pour détecter les vraies modifications de salaire
+  const getVraiesModificationsSalaire = (historiques) => {
     if (!historiques || historiques.length === 0) return [];
 
-    const sortedHistoriques = [...historiques].sort((a, b) => {
+    // Trier par date (du plus ancien au plus récent)
+    const sorted = [...historiques].sort((a, b) => {
       const dateA = new Date(
         a.date_modification || a.created_at || a.dateModification
       );
@@ -81,7 +121,36 @@ const HistoriqueSalaire = ({ employeId, salaireId }) => {
       return dateA - dateB;
     });
 
-    return sortedHistoriques.map((hist) => {
+    const vraiesModifications = [];
+
+    // Toujours ajouter le premier enregistrement
+    if (sorted.length > 0) {
+      vraiesModifications.push(sorted[0]);
+    }
+
+    // Parcourir les enregistrements suivants
+    for (let i = 1; i < sorted.length; i++) {
+      const current = sorted[i];
+      const previous = vraiesModifications[vraiesModifications.length - 1];
+
+      // Vérifier si les valeurs de salaire ont changé
+      const salaireChanged = !haveSameSalaireValues(current, previous);
+
+      if (salaireChanged) {
+        vraiesModifications.push(current);
+      }
+    }
+
+    return vraiesModifications;
+  };
+
+  // Préparer les données pour le graphique
+  const prepareChartData = () => {
+    const vraiesModifications = getVraiesModificationsSalaire(historiques);
+
+    if (!vraiesModifications || vraiesModifications.length === 0) return [];
+
+    return vraiesModifications.map((hist) => {
       const salaireTotal = Number(
         hist.nouveau_salaire_total ||
           hist.nouveauSalaireTotal ||
@@ -96,13 +165,11 @@ const HistoriqueSalaire = ({ employeId, salaireId }) => {
       const date = new Date(fullDate);
 
       return {
-        // Utiliser date ET heure pour différencier les modifications du même jour
         date: date.toLocaleTimeString("fr-FR", {
           hour: "2-digit",
           minute: "2-digit",
           second: "2-digit",
         }),
-        // Stocker aussi la date complète pour le tooltip
         fullDateTime: date.toLocaleString("fr-FR", {
           day: "2-digit",
           month: "2-digit",
@@ -156,10 +223,12 @@ const HistoriqueSalaire = ({ employeId, salaireId }) => {
 
   // Préparer les données pour le tableau
   const prepareTableData = () => {
-    if (!historiques || historiques.length === 0) return [];
+    const vraiesModifications = getVraiesModificationsSalaire(historiques);
+
+    if (!vraiesModifications || vraiesModifications.length === 0) return [];
 
     // Trier du plus récent au plus ancien
-    const sortedHistoriques = [...historiques].sort((a, b) => {
+    const sortedHistoriques = [...vraiesModifications].sort((a, b) => {
       const dateA = new Date(
         a.date_modification || a.created_at || a.dateModification
       );
@@ -174,6 +243,8 @@ const HistoriqueSalaire = ({ employeId, salaireId }) => {
       dateTime: formatDateTime(
         hist.date_modification || hist.created_at || hist.dateModification
       ),
+      categorie:
+        hist.nouvelle_categorie || hist.nouvelleCategorie || hist.categorie,
       indice: hist.nouvelle_indice || hist.nouvelleIndice || hist.indice || "-",
       tauxHoraire:
         hist.nouveau_taux_horaire ||
@@ -261,6 +332,8 @@ const HistoriqueSalaire = ({ employeId, salaireId }) => {
     );
   }
 
+  const vraiesModifications = getVraiesModificationsSalaire(historiques);
+
   return (
     <div className="bg-white border border-gray-200 mt-6">
       {/* En-tête */}
@@ -270,8 +343,15 @@ const HistoriqueSalaire = ({ employeId, salaireId }) => {
             Historique des Salaires
           </h3>
           <p className="text-sm text-gray-500">
-            {historiques.length} modification(s) enregistrée(s)
+            {vraiesModifications.length} modification(s) de salaire détectée(s)
+            sur {historiques.length} enregistrement(s)
           </p>
+          {historiques.length > vraiesModifications.length && (
+            <p className="text-xs text-gray-400 mt-1">
+              (Seules les modifications avec changement de salaire sont
+              affichées)
+            </p>
+          )}
         </div>
 
         {historiques.length > 0 && (
@@ -344,10 +424,14 @@ const HistoriqueSalaire = ({ employeId, salaireId }) => {
         <div className="text-center py-8">
           <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
           <p className="text-gray-500 text-sm">
-            Aucun historique de salaire disponible
+            {historiques.length > 0
+              ? "Aucune modification de salaire détectée"
+              : "Aucun historique disponible"}
           </p>
           <p className="text-gray-400 text-xs mt-1">
-            Les modifications de salaire apparaîtront ici
+            {historiques.length > 0
+              ? "Les modifications d'autres informations ne sont pas affichées ici"
+              : "Les modifications de salaire apparaîtront ici"}
           </p>
         </div>
       ) : (
@@ -358,6 +442,9 @@ const HistoriqueSalaire = ({ employeId, salaireId }) => {
                 <tr className="bg-gray-50">
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 border-t border-gray-300">
                     <div className="flex items-center gap-1">Date & Heure</div>
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 border-t border-gray-300">
+                    Catégorie
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 border-t border-gray-300">
                     <div className="flex items-center gap-1">Indice</div>
@@ -395,7 +482,12 @@ const HistoriqueSalaire = ({ employeId, salaireId }) => {
                         {item.dateTime}
                       </div>
                     </td>
-                    
+                    <td className="px-4 py-3 whitespace-nowrap border-r border-gray-300">
+                      <div className="text-sm font-medium text-gray-900">
+                        {item.categorie}
+                      </div>
+                    </td>
+
                     <td className="px-4 py-3 whitespace-nowrap border-r border-gray-300">
                       <div className="text-sm font-medium text-gray-900">
                         {item.indice}
