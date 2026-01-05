@@ -96,6 +96,7 @@ import Register from "./pages/Register";
 import DashboardPage from './pages/Dashboard/DashboardPage';
 import SocietePage from './components/societe/SocietePage';
 import EmployePage from './pages/employee/EmployePage';
+import AttendancePage from './pages/presence/AttendancePage';
 
 function LayoutWithSidebar() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -116,7 +117,7 @@ function LayoutWithSidebar() {
         {activeMenu === "employees" && <EmployePage />}
         {activeMenu === "company" && <SocietePage />}
         {activeMenu === "recruitment" && <div className="p-6">Page du recrutement</div>}
-        {activeMenu === "attendance" && <div className="p-6">Page présence</div>}
+        {activeMenu === "attendance" && <AttendancePage />}
         {activeMenu === "payroll" && <div className="p-6">Page paie</div>}
         {activeMenu === "performance" && <div className="p-6">Page performance</div>}
         {activeMenu === "leave" && <div className="p-6">Page des congés</div>}

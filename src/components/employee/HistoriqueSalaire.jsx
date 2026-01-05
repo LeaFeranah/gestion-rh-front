@@ -346,12 +346,7 @@ const HistoriqueSalaire = ({ employeId, salaireId }) => {
             {vraiesModifications.length} modification(s) de salaire détectée(s)
             sur {historiques.length} enregistrement(s)
           </p>
-          {historiques.length > vraiesModifications.length && (
-            <p className="text-xs text-gray-400 mt-1">
-              (Seules les modifications avec changement de salaire sont
-              affichées)
-            </p>
-          )}
+          
         </div>
 
         {historiques.length > 0 && (
@@ -443,9 +438,9 @@ const HistoriqueSalaire = ({ employeId, salaireId }) => {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 border-t border-gray-300">
                     <div className="flex items-center gap-1">Date & Heure</div>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 border-t border-gray-300">
+                  {/* <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 border-t border-gray-300">
                     Catégorie
-                  </th>
+                  </th> */}
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300 border-t border-gray-300">
                     <div className="flex items-center gap-1">Indice</div>
                   </th>
@@ -482,11 +477,11 @@ const HistoriqueSalaire = ({ employeId, salaireId }) => {
                         {item.dateTime}
                       </div>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap border-r border-gray-300">
+                    {/* <td className="px-4 py-3 whitespace-nowrap border-r border-gray-300">
                       <div className="text-sm font-medium text-gray-900">
                         {item.categorie}
                       </div>
-                    </td>
+                    </td> */}
 
                     <td className="px-4 py-3 whitespace-nowrap border-r border-gray-300">
                       <div className="text-sm font-medium text-gray-900">

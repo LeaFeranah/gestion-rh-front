@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import "/src/styles/custom.css";
 import HistoriqueSalaire from "./HistoriqueSalaire";
+import EvolutionPoste from "./EvolutionPoste";
 import {
   ArrowLeft,
   User,
@@ -16,6 +17,7 @@ import {
   Edit2,
   ChevronRight,
   ChevronLeft,
+  TrendingUp,
 } from "lucide-react";
 
 const EmployeeBlock = ({
@@ -1553,6 +1555,20 @@ const EmployeeBlock = ({
                   )}
                 </div>
               </div>
+              {/* Évolutions de poste - seulement en mode visualisation */}
+              {!editMode &&
+                employee &&
+                data.information_professionnelle?.id && (
+                  <div className="bg-white p-6 -mx-6">
+                    <EvolutionPoste
+                      employeId={employee.id}
+                      informationProfessionnelleId={
+                        data.information_professionnelle.id
+                      }
+                      employeNom={data.nom_complet}
+                    />
+                  </div>
+                )}
             </div>
           </div>
         );
