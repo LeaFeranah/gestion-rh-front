@@ -1,43 +1,82 @@
-// import axios from 'axios';
-
-// const API_URL = 'http://localhost:8000/api/presence/';
-
-// class PresenceService {
-//   // Récupérer toutes les présences
-//   getAllPresences() {
-//     return axios.get(API_URL);
-//   }
-
-//   // Récupérer les présences par badge number
-//   getPresenceByBadgeNumber(badgenumber) {
-//     return axios.get(`${API_URL}${badgenumber}/`);
-//   }
-// }
-
-// export default new PresenceService();
-
-
-
-// services/presenceService.js
 import axios from 'axios';
 
 const API_URL = 'http://localhost:8000/api/presence/';
 
 const presenceService = {
-  // Générer les dates du mois
-  genererDates: async (annee, mois) => {
+  // ... méthodes existantes ...
+
+  // ✅ AMÉLIORER updateEvenementByUserDate avec meilleure gestion des erreurs
+  updateEvenementByUserDate: async (userid, date, type_evenement, commentaire = '') => {
     try {
-      const response = await axios.get(`${API_URL}generer-dates/`, {
-        params: { annee, mois }
+      console.log('🔄 Envoi requête événement:', {
+        url: `${API_URL}evenements/user/${userid}/date/${date}/`,
+        data: { type_evenement, commentaire }
       });
+
+      const response = await axios.post(
+        `${API_URL}evenements/user/${userid}/date/${date}/`,
+        {
+          type_evenement: type_evenement,
+          commentaire: commentaire
+        }
+      );
+
+      console.log('✅ Réponse serveur événement:', response.data);
+      
       return response.data;
     } catch (error) {
-      console.error('Erreur lors de la génération des dates:', error);
+      console.error('❌ Erreur détaillée:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
       throw error;
     }
   },
 
-  // Récupérer les dates avec codes
+  // ✅ AJOUTER une méthode pour vérifier qu'un événement est bien enregistré
+  verifierEvenement: async (userid, date) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}evenements/user/${userid}/date/${date}/`
+      );
+      console.log('🔍 Vérification événement:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Erreur vérification événement:', error);
+      return null;
+    }
+  },
+
+  // ✅ AJOUTER une méthode pour récupérer tous les événements d'un mois
+  getEvenementsMois: async (annee, mois) => {
+    try {
+      const response = await axios.get(`${API_URL}evenements/`, {
+        params: { annee, mois }
+      });
+      console.log('📋 Événements du mois récupérés:', response.data.count);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Erreur récupération événements du mois:', error);
+      throw error;
+    }
+  },
+
+  // Toutes les autres méthodes restent identiques...
+  genererDates: async (annee, mois) => {
+    try {
+      console.log('🔄 Génération des dates pour:', { annee, mois });
+      const response = await axios.get(`${API_URL}generer-dates/`, {
+        params: { annee, mois }
+      });
+      console.log('✅ Dates générées:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Erreur lors de la génération des dates:', error);
+      throw error;
+    }
+  },
+
   getDates: async (annee, mois) => {
     try {
       const response = await axios.get(`${API_URL}dates/`, {
@@ -45,12 +84,11 @@ const presenceService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Erreur lors de la récupération des dates:', error);
+      console.error('❌ Erreur lors de la récupération des dates:', error);
       throw error;
     }
   },
 
-  // Récupérer les présences du mois
   getPresencesMois: async (annee, mois, inclureHorsPeriode = true) => {
     try {
       const response = await axios.get(`${API_URL}mois/`, {
@@ -62,31 +100,119 @@ const presenceService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Erreur lors de la récupération des présences:', error);
+      console.error('❌ Erreur lors de la récupération des présences:', error);
       throw error;
     }
   },
 
-  // Optionnel: Récupérer les présences d'un employé spécifique
-  getPresencesEmploye: async (userId, annee, mois) => {
+  getPresencesMoisCalculee: async (annee, mois, inclureHorsPeriode = false) => {
     try {
-      const response = await axios.get(`${API_URL}employe/${userId}/`, {
-        params: { annee, mois }
+      console.log('🔄 Récupération présences calculées:', { annee, mois });
+      const response = await axios.get(`${API_URL}mois/detail/calculee/`, {
+        params: { 
+          annee, 
+          mois, 
+          inclure_hors_periode: inclureHorsPeriode 
+        }
+      });
+      console.log('✅ Présences récupérées:', response.data.presences?.length);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Erreur lors de la récupération des présences calculées:', error);
+      throw error;
+    }
+  },
+
+  getHorairesSection: async () => {
+    try {
+      const response = await axios.get(`${API_URL}horaires-section/`);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Erreur lors de la récupération des horaires:', error);
+      throw error;
+    }
+  },
+
+  createHoraireSection: async (data) => {
+    try {
+      const response = await axios.post(`${API_URL}horaires-section/`, data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Erreur lors de la création de l\'horaire:', error);
+      throw error;
+    }
+  },
+
+  updateHoraireSection: async (section, data) => {
+    try {
+      const response = await axios.put(`${API_URL}horaires-section/${section}/`, data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Erreur lors de la mise à jour de l\'horaire:', error);
+      throw error;
+    }
+  },
+
+  getTypesEvenements: async () => {
+    try {
+      const response = await axios.get(`${API_URL}types-evenements/`);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Erreur lors de la récupération des types d\'événements:', error);
+      throw error;
+    }
+  },
+
+  getEvenements: async (annee = null, mois = null, badgenumber = null) => {
+    try {
+      const params = {};
+      if (annee) params.annee = annee;
+      if (mois) params.mois = mois;
+      if (badgenumber) params.badgenumber = badgenumber;
+      
+      const response = await axios.get(`${API_URL}evenements/`, { params });
+      return response.data;
+    } catch (error) {
+      console.error('❌ Erreur lors de la récupération des événements:', error);
+      throw error;
+    }
+  },
+
+  createEvenement: async (userid, date, type_evenement, commentaire = '') => {
+    try {
+      const response = await axios.post(`${API_URL}evenements/`, {
+        userid: userid,
+        date: date,
+        type_evenement: type_evenement,
+        commentaire: commentaire
       });
       return response.data;
     } catch (error) {
-      console.error(`Erreur lors de la récupération des présences de l'employé ${userId}:`, error);
+      console.error('❌ Erreur lors de la création de l\'événement:', error);
       throw error;
     }
   },
 
-  // Optionnel: Mettre à jour une présence
-  updatePresence: async (presenceId, data) => {
+  deleteEvenementByUserDate: async (userid, date) => {
     try {
-      const response = await axios.put(`${API_URL}${presenceId}/`, data);
+      const response = await axios.delete(
+        `${API_URL}evenements/user/${userid}/date/${date}/`
+      );
       return response.data;
     } catch (error) {
-      console.error('Erreur lors de la mise à jour de la présence:', error);
+      console.error('❌ Erreur lors de la suppression de l\'événement:', error);
+      throw error;
+    }
+  },
+
+  getEvenementByUserDate: async (userid, date) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}evenements/user/${userid}/date/${date}/`
+      );
+      return response.data;
+    } catch (error) {
+      console.error('❌ Erreur lors de la récupération de l\'événement:', error);
       throw error;
     }
   }
