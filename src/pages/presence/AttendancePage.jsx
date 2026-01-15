@@ -14,7 +14,7 @@ const timeToDecimal = (timeStr) => {
   return hours + minutes / 60;
 };
 
-// ✅ FONCTION POUR FORMATER LA DATE CORRECTEMENT
+
 const formatDate = (dateStr) => {
   // Si la date est déjà au bon format YYYY-MM-DD
   if (typeof dateStr === 'string' && dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {

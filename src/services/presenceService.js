@@ -3,9 +3,7 @@ import axios from 'axios';
 const API_URL = 'http://localhost:8000/api/presence/';
 
 const presenceService = {
-  // ... méthodes existantes ...
-
-  // ✅ AMÉLIORER updateEvenementByUserDate avec meilleure gestion des erreurs
+  
   updateEvenementByUserDate: async (userid, date, type_evenement, commentaire = '') => {
     try {
       console.log('🔄 Envoi requête événement:', {
@@ -34,7 +32,7 @@ const presenceService = {
     }
   },
 
-  // ✅ AJOUTER une méthode pour vérifier qu'un événement est bien enregistré
+  
   verifierEvenement: async (userid, date) => {
     try {
       const response = await axios.get(
@@ -48,7 +46,7 @@ const presenceService = {
     }
   },
 
-  // ✅ AJOUTER une méthode pour récupérer tous les événements d'un mois
+  
   getEvenementsMois: async (annee, mois) => {
     try {
       const response = await axios.get(`${API_URL}evenements/`, {
@@ -62,7 +60,7 @@ const presenceService = {
     }
   },
 
-  // Toutes les autres méthodes restent identiques...
+  
   genererDates: async (annee, mois) => {
     try {
       console.log('🔄 Génération des dates pour:', { annee, mois });
