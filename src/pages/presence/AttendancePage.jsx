@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Settings, Edit2, Plus, Save, X, Clock, RefreshCw } from "lucide-react";
+import { Settings, Edit2, Plus, Save, X, Clock, RefreshCw, AlertCircle } from "lucide-react";
 import presenceService from "../../services/presenceService";
 
 // Utilitaires pour conversion heures
@@ -14,14 +14,11 @@ const timeToDecimal = (timeStr) => {
   return hours + minutes / 60;
 };
 
-
 const formatDate = (dateStr) => {
-  // Si la date est déjà au bon format YYYY-MM-DD
   if (typeof dateStr === 'string' && dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
     return dateStr;
   }
   
-  // Si c'est un objet Date
   const date = new Date(dateStr);
   if (isNaN(date.getTime())) {
     console.error('❌ Date invalide:', dateStr);
@@ -65,6 +62,173 @@ const getEvenementTextColor = (type) => {
     A: "text-red-700",
   };
   return textColors[type] || "text-gray-700";
+};
+
+// ✅ NOUVEAU MODAL POUR MODIFIER LES HEURES COMPTABILISÉES
+const ModifierHeuresModal = ({ employee, dateStr, attendance, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    heure_entree: attendance?.heure_entree_comptabilisee?.slice(0, 5) || "",
+    heure_sortie: attendance?.heure_sortie_comptabilisee?.slice(0, 5) || "",
+    motif: attendance?.motif_anomalie || "",
+  });
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!formData.heure_entree && !formData.heure_sortie) {
+      alert("Veuillez entrer au moins une heure (entrée ou sortie)");
+      return;
+    }
+
+    // ✅ MOTIF NON OBLIGATOIRE
+    setSaving(true);
+    try {
+      await onSave(formData);
+    } catch (err) {
+      console.error("Erreur:", err);
+      alert("Erreur lors de l'enregistrement");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSupprimer = async () => {
+    if (window.confirm("Supprimer cette modification d'heures ?")) {
+      setSaving(true);
+      try {
+        await presenceService.deleteAnomalieByUserDate(employee.userid, dateStr);
+        alert("Anomalie supprimée avec succès");
+        onClose();
+        window.location.reload();
+      } catch (err) {
+        console.error("Erreur:", err);
+        alert("Erreur lors de la suppression");
+      } finally {
+        setSaving(false);
+      }
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div className="flex items-center justify-between p-6 border-b-2 border-gray-800">
+          <div className="flex items-center gap-2">
+            <Edit2 className="w-5 h-5" />
+            <h3 className="text-xl font-bold">Modifier les heures comptabilisées</h3>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div className="bg-yellow-50 border-2 border-yellow-200 p-4 rounded flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+            <div className="text-sm text-yellow-800">
+              <p className="font-bold mb-1">Attention :</p>
+              <p>Vous modifiez les <strong>heures comptabilisées</strong>, pas les heures réelles de pointage.</p>
+              <p className="mt-1">Les modifications seront marquées d'un <strong>*</strong> dans le tableau.</p>
+            </div>
+          </div>
+
+          <div className="bg-gray-50 p-4 rounded">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="font-bold">Employé:</span>
+                <div className="mt-1">{employee.name}</div>
+              </div>
+              <div>
+                <span className="font-bold">Badge:</span>
+                <div className="mt-1">{employee.badgenumber}</div>
+              </div>
+              <div className="col-span-2">
+                <span className="font-bold">Date:</span>
+                <div className="mt-1">{dateStr}</div>
+              </div>
+            </div>
+          </div>
+
+          {attendance?.heure_entree_reelle && (
+            <div className="bg-blue-50 p-3 rounded text-sm">
+              <p className="font-bold mb-2">Heures réelles (pointage) :</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div>Entrée: <strong>{attendance.heure_entree_reelle?.slice(0, 5)}</strong></div>
+                <div>Sortie: <strong>{attendance.heure_sortie_reelle?.slice(0, 5)}</strong></div>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-bold mb-1">
+              Heure d'entrée comptabilisée
+            </label>
+            <input
+              type="time"
+              value={formData.heure_entree}
+              onChange={(e) => setFormData({ ...formData, heure_entree: e.target.value })}
+              className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold mb-1">
+              Heure de sortie comptabilisée
+            </label>
+            <input
+              type="time"
+              value={formData.heure_sortie}
+              onChange={(e) => setFormData({ ...formData, heure_sortie: e.target.value })}
+              className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold mb-1">
+              Motif de la modification
+            </label>
+            <textarea
+              value={formData.motif}
+              onChange={(e) => setFormData({ ...formData, motif: e.target.value })}
+              className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800"
+              rows="3"
+              placeholder="Ex: Oubli de pointage, Pointeuse en panne, etc."
+            />
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            {attendance?.a_anomalie && (
+              <button
+                onClick={handleSupprimer}
+                disabled={saving}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-gray-400"
+              >
+                Supprimer
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border-2 border-gray-300 rounded hover:bg-gray-50"
+              disabled={saving}
+            >
+              Annuler
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={saving}
+              className="flex-1 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 flex items-center justify-center gap-2 disabled:bg-gray-400"
+            >
+              {saving ? "Enregistrement..." : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Enregistrer
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 // Modal de gestion des horaires
@@ -298,14 +462,54 @@ const AttendancePage = () => {
   const [showEvenementModal, setShowEvenementModal] = useState(false);
   const [evenementsMap, setEvenementsMap] = useState({});
 
-  // ✅ FONCTION POUR RECHARGER LES ÉVÉNEMENTS DEPUIS LE SERVEUR
+  // ✅ NOUVEAUX STATES POUR LES ANOMALIES
+  const [showModifierHeuresModal, setShowModifierHeuresModal] = useState(false);
+  const [selectedHeures, setSelectedHeures] = useState(null);
+  const [anomaliesMap, setAnomaliesMap] = useState({});
+  const [anomaliesDetailsMap, setAnomaliesDetailsMap] = useState({}); // ✅ Pour stocker les détails des anomalies
+
+  // ✅ FONCTION POUR CHARGER LES ANOMALIES AVEC DÉTAILS
+  const fetchAnomaliesMois = useCallback(async (annee, mois) => {
+    try {
+      console.log('🔄 Chargement des anomalies pour:', { annee, mois });
+      
+      const anomaliesData = await presenceService.getAnomalies(annee, mois);
+      
+      const newAnomaliesMap = {};
+      const newAnomaliesDetailsMap = {};
+      
+      if (anomaliesData.anomalies && anomaliesData.anomalies.length > 0) {
+        anomaliesData.anomalies.forEach((a) => {
+          const dateFormatted = formatDate(a.date);
+          if (dateFormatted) {
+            const key = `${a.userid}-${dateFormatted}`;
+            newAnomaliesMap[key] = true;
+            
+            // ✅ Stocker les détails pour savoir quelle heure a été modifiée
+            newAnomaliesDetailsMap[key] = {
+              heure_entree_modifiee: a.heure_entree_modifiee,
+              heure_sortie_modifiee: a.heure_sortie_modifiee,
+              motif: a.motif
+            };
+          }
+        });
+        
+        console.log('✅ Anomalies chargées:', Object.keys(newAnomaliesMap).length);
+        setAnomaliesMap(newAnomaliesMap);
+        setAnomaliesDetailsMap(newAnomaliesDetailsMap);
+      }
+      
+    } catch (err) {
+      console.error("❌ Erreur chargement anomalies:", err);
+    }
+  }, []);
+
   const fetchEvenementsMois = useCallback(async (annee, mois) => {
     try {
       console.log('🔄 Chargement des événements pour:', { annee, mois });
       
       const evenementsData = await presenceService.getEvenements(annee, mois);
       
-      // ✅ CONSTRUIRE UNE MAP COMPLÈTE DES ÉVÉNEMENTS
       const newEvenementsMap = {};
       
       if (evenementsData.evenements && evenementsData.evenements.length > 0) {
@@ -326,13 +530,12 @@ const AttendancePage = () => {
     }
   }, []);
 
-  // ✅ FONCTION DE CHARGEMENT DES PRÉSENCES AMÉLIORÉE
+  // ✅ FONCTION DE CHARGEMENT DES PRÉSENCES AVEC ANOMALIES
   const fetchPresences = useCallback(async (annee, mois) => {
     try {
       setLoading(true);
       console.log('🔄 Chargement des présences pour:', { annee, mois });
 
-      // 1. Générer les dates (cela créera aussi les événements par défaut)
       try {
         const generationResult = await presenceService.genererDates(annee, mois);
         console.log('✅ Génération:', generationResult);
@@ -340,18 +543,18 @@ const AttendancePage = () => {
         console.log('ℹ️ Génération des dates déjà effectuée:', genErr.message);
       }
 
-      // 2. Récupérer les dates
       const datesData = await presenceService.getDates(annee, mois);
       setDates(datesData);
 
-      // 3. Récupérer les présences calculées
       const presencesData = await presenceService.getPresencesMoisCalculee(annee, mois, false);
 
       setPeriode(presencesData.periode);
       setPresences(presencesData.presences || []);
 
-      // 4. ✅ RECHARGER TOUS LES ÉVÉNEMENTS DU MOIS
       await fetchEvenementsMois(annee, mois);
+      
+      // ✅ CHARGER LES ANOMALIES
+      await fetchAnomaliesMois(annee, mois);
       
     } catch (err) {
       console.error("❌ Erreur lors du chargement:", err);
@@ -360,9 +563,8 @@ const AttendancePage = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [fetchEvenementsMois]);
+  }, [fetchEvenementsMois, fetchAnomaliesMois]);
 
-  // ✅ FONCTION DE RAFRAÎCHISSEMENT
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchPresences(currentYear, currentMonth);
@@ -386,9 +588,81 @@ const AttendancePage = () => {
     }
   }, []);
 
-  // ✅ GESTION DU CLIC SUR UN ÉVÉNEMENT
+  // ✅ GESTION DU DOUBLE-CLIC POUR MODIFIER LES HEURES
+  const handleModifierHeuresClick = useCallback((employee, dateStr, attendance) => {
+    const dateFormatted = formatDate(dateStr);
+    
+    if (!dateFormatted) {
+      console.error('❌ Date invalide:', dateStr);
+      return;
+    }
+    
+    console.log('✏️ Modification heures:', {
+      employee,
+      dateOriginal: dateStr,
+      dateFormatted,
+      attendance
+    });
+
+    const heuresData = {
+      userid: employee.userid,
+      badgenumber: employee.badgenumber,
+      name: employee.name,
+      date: dateFormatted,
+      attendance: attendance,
+    };
+    
+    setSelectedHeures(heuresData);
+    setShowModifierHeuresModal(true);
+  }, []);
+
+  // ✅ SAUVEGARDE DES HEURES MODIFIÉES
+  const handleSaveHeuresModifiees = useCallback(async (formData) => {
+    try {
+      const { userid, date } = selectedHeures;
+
+      console.log('💾 Sauvegarde heures modifiées:', {
+        userid,
+        date,
+        heure_entree: formData.heure_entree,
+        heure_sortie: formData.heure_sortie,
+        motif: formData.motif
+      });
+
+      const response = await presenceService.updateAnomalieByUserDate(
+        userid,
+        date,
+        formData.heure_entree || null,
+        formData.heure_sortie || null,
+        formData.motif,
+        'admin'
+      );
+
+      console.log('✅ Réponse serveur:', response);
+
+      const key = `${userid}-${date}`;
+      setAnomaliesMap(prev => ({
+        ...prev,
+        [key]: true
+      }));
+
+      await fetchAnomaliesMois(currentYear, currentMonth);
+      await fetchPresences(currentYear, currentMonth);
+
+      setShowModifierHeuresModal(false);
+      setSelectedHeures(null);
+
+      alert("Heures modifiées avec succès !");
+      console.log('✅ Heures modifiées et rechargées');
+      
+    } catch (err) {
+      console.error("❌ Erreur lors de la sauvegarde:", err);
+      alert("Erreur lors de la sauvegarde. Veuillez réessayer.");
+      throw err;
+    }
+  }, [selectedHeures, currentYear, currentMonth, fetchAnomaliesMois, fetchPresences]);
+
   const handleEvenementClick = useCallback((employee, dateStr, attendance) => {
-    // ✅ FORMATER LA DATE CORRECTEMENT
     const dateFormatted = formatDate(dateStr);
     
     if (!dateFormatted) {
@@ -403,7 +677,6 @@ const AttendancePage = () => {
       attendance
     });
 
-    // ✅ RÉCUPÉRER L'ÉVÉNEMENT ACTUEL DEPUIS LA MAP
     const key = `${employee.userid}-${dateFormatted}`;
     const currentEvenement = evenementsMap[key] || "X";
 
@@ -420,7 +693,6 @@ const AttendancePage = () => {
     setShowEvenementModal(true);
   }, [evenementsMap]);
 
-  // ✅ SAUVEGARDE D'UN ÉVÉNEMENT AVEC RECHARGEMENT
   const handleSaveEvenement = useCallback(async (formData) => {
     try {
       const { userid, date } = selectedEvenement;
@@ -431,7 +703,6 @@ const AttendancePage = () => {
         type: formData.type_evenement
       });
 
-      // 1. Sauvegarder dans la base
       const response = await presenceService.updateEvenementByUserDate(
         userid,
         date,
@@ -441,17 +712,14 @@ const AttendancePage = () => {
 
       console.log('✅ Réponse serveur:', response);
 
-      // 2. ✅ METTRE À JOUR LA MAP LOCALE IMMÉDIATEMENT
       const key = `${userid}-${date}`;
       setEvenementsMap(prev => ({
         ...prev,
         [key]: formData.type_evenement
       }));
 
-      // 3. ✅ RECHARGER LES ÉVÉNEMENTS DU MOIS POUR SYNCHRONISER
       await fetchEvenementsMois(currentYear, currentMonth);
 
-      // 4. Mettre à jour les présences localement
       setPresences(prev => prev.map(presence => {
         const presenceDate = formatDate(presence.date);
         if (presence.userid === userid && presenceDate === date) {
@@ -507,7 +775,6 @@ const AttendancePage = () => {
           presences: {},
         };
       }
-      // ✅ UTILISER LA DATE FORMATÉE COMME CLÉ
       const dateFormatted = formatDate(presence.date);
       if (dateFormatted) {
         employees[presence.userid].presences[dateFormatted] = presence;
@@ -517,13 +784,11 @@ const AttendancePage = () => {
   }, [presences]);
 
   const getAttendanceData = useCallback((employee, dateStr) => {
-    // ✅ FORMATER LA DATE AVANT DE CHERCHER
     const dateFormatted = formatDate(dateStr);
     return dateFormatted ? employee.presences[dateFormatted] || null : null;
   }, []);
 
   const getEvenementForCell = useCallback((userId, dateStr) => {
-    // ✅ FORMATER LA DATE AVANT DE CHERCHER
     const dateFormatted = formatDate(dateStr);
     if (!dateFormatted) return 'X';
     
@@ -683,7 +948,6 @@ const AttendancePage = () => {
   // ===== VUE PRÉSENCES PRINCIPALE =====
   return (
     <div className="p-4 bg-gray-50 min-h-screen">
-      {/* En-tête */}
       <div className="bg-white border-2 border-gray-800 mb-4 p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
@@ -797,7 +1061,6 @@ const AttendancePage = () => {
         </div>
       </div>
 
-      {/* Tableau calendrier */}
       <div className="bg-white border-2 border-gray-800 overflow-x-auto">
         <table className="w-full border-collapse text-xs">
           <thead>
@@ -883,21 +1146,41 @@ const AttendancePage = () => {
 
                     const attendance = getAttendanceData(employee, dateObj.date);
                     const evenementType = getEvenementForCell(employee.userid, dateObj.date);
+                    const dateFormatted = formatDate(dateObj.date);
+                    const aAnomalie = anomaliesMap[`${employee.userid}-${dateFormatted}`];
+                    
+                    // ✅ Récupérer les détails de l'anomalie pour savoir quelle heure a été modifiée
+                    const anomalieDetails = anomaliesDetailsMap[`${employee.userid}-${dateFormatted}`];
+                    const entreeModifiee = anomalieDetails?.heure_entree_modifiee !== null && anomalieDetails?.heure_entree_modifiee !== undefined;
+                    const sortieModifiee = anomalieDetails?.heure_sortie_modifiee !== null && anomalieDetails?.heure_sortie_modifiee !== undefined;
 
                     return (
                       <td
                         key={dayIdx}
-                        className="border border-gray-600 p-0 text-center"
+                        className="border border-gray-600 p-0 text-center group"
                       >
                         <div className="flex flex-col h-full">
-                          <div className="border-b border-gray-300 px-1 py-0.5 min-h-[20px] text-xs font-medium">
-                            {attendance
-                              ? afficherHeuresReelles
-                                ? (attendance.heure_entree_reelle?.slice(0, 5) || "")
-                                : (attendance.heure_entree_comptabilisee?.slice(0, 5) || "")
-                              : ""}
+                          {/* ✅ HEURE D'ENTRÉE - DOUBLE CLIC UNIQUEMENT EN MODE COMPTABILISÉ */}
+                          <div
+                            onDoubleClick={!afficherHeuresReelles ? () => handleModifierHeuresClick(employee, dateObj.date, attendance) : undefined}
+                            className={`border-b border-gray-300 px-1 py-0.5 min-h-[20px] text-xs font-medium ${
+                              !afficherHeuresReelles ? 'cursor-pointer hover:bg-yellow-50' : 'cursor-default'
+                            } ${aAnomalie && entreeModifiee ? 'bg-yellow-50' : ''}`}
+                            title={!afficherHeuresReelles ? "Double-clic pour modifier les heures comptabilisées" : "Heures réelles (non modifiables)"}
+                          >
+                            {attendance ? (
+                              <span className="flex items-center justify-center gap-0.5">
+                                {afficherHeuresReelles
+                                  ? (attendance.heure_entree_reelle?.slice(0, 5) || "")
+                                  : (attendance.heure_entree_comptabilisee?.slice(0, 5) || "")}
+                                {entreeModifiee && !afficherHeuresReelles && (
+                                  <span className="text-red-600 font-bold">*</span>
+                                )}
+                              </span>
+                            ) : ""}
                           </div>
 
+                          {/* ÉVÉNEMENT */}
                           <button
                             onClick={() => handleEvenementClick(employee, dateObj.date, attendance)}
                             className={`border-b border-gray-300 px-1 py-0.5 min-h-[20px] text-xs font-bold w-full hover:bg-gray-50 transition-colors ${getEvenementTextColor(evenementType)}`}
@@ -910,12 +1193,24 @@ const AttendancePage = () => {
                               : ""}
                           </button>
 
-                          <div className="px-1 py-0.5 min-h-[20px] text-xs font-medium">
-                            {attendance
-                              ? afficherHeuresReelles
-                                ? (attendance.heure_sortie_reelle?.slice(0, 5) || "")
-                                : (attendance.heure_sortie_comptabilisee?.slice(0, 5) || "")
-                              : ""}
+                          {/* ✅ HEURE DE SORTIE - DOUBLE CLIC UNIQUEMENT EN MODE COMPTABILISÉ */}
+                          <div
+                            onDoubleClick={!afficherHeuresReelles ? () => handleModifierHeuresClick(employee, dateObj.date, attendance) : undefined}
+                            className={`px-1 py-0.5 min-h-[20px] text-xs font-medium ${
+                              !afficherHeuresReelles ? 'cursor-pointer hover:bg-yellow-50' : 'cursor-default'
+                            } ${aAnomalie && sortieModifiee ? 'bg-yellow-50' : ''}`}
+                            title={!afficherHeuresReelles ? "Double-clic pour modifier les heures comptabilisées" : "Heures réelles (non modifiables)"}
+                          >
+                            {attendance ? (
+                              <span className="flex items-center justify-center gap-0.5">
+                                {afficherHeuresReelles
+                                  ? (attendance.heure_sortie_reelle?.slice(0, 5) || "")
+                                  : (attendance.heure_sortie_comptabilisee?.slice(0, 5) || "")}
+                                {sortieModifiee && !afficherHeuresReelles && (
+                                  <span className="text-red-600 font-bold">*</span>
+                                )}
+                              </span>
+                            ) : ""}
                           </div>
                         </div>
                       </td>
@@ -947,6 +1242,19 @@ const AttendancePage = () => {
           }}
           onSave={handleSaveEvenement}
           typesEvenement={typesEvenement}
+        />
+      )}
+
+      {showModifierHeuresModal && selectedHeures && (
+        <ModifierHeuresModal
+          employee={selectedHeures}
+          dateStr={selectedHeures.date}
+          attendance={selectedHeures.attendance}
+          onClose={() => {
+            setShowModifierHeuresModal(false);
+            setSelectedHeures(null);
+          }}
+          onSave={handleSaveHeuresModifiees}
         />
       )}
 

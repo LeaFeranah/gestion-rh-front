@@ -213,7 +213,80 @@ const presenceService = {
       console.error('❌ Erreur lors de la récupération de l\'événement:', error);
       throw error;
     }
-  }
+  },
+
+
+
+
+  getAnomalies: async (annee = null, mois = null, badgenumber = null) => {
+    try {
+      const params = {};
+      if (annee) params.annee = annee;
+      if (mois) params.mois = mois;
+      if (badgenumber) params.badgenumber = badgenumber;
+      
+      const response = await axios.get(`${API_URL}anomalies/`, { params });
+      return response.data;
+    } catch (error) {
+      console.error('❌ Erreur lors de la récupération des anomalies:', error);
+      throw error;
+    }
+  },
+
+  getAnomalieByUserDate: async (userid, date) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}anomalies/user/${userid}/date/${date}/`
+      );
+      return response.data;
+    } catch (error) {
+      console.error('❌ Erreur lors de la récupération de l\'anomalie:', error);
+      return null;
+    }
+  },
+
+  updateAnomalieByUserDate: async (userid, date, heure_entree, heure_sortie, motif = '', modifie_par = '') => {
+    try {
+      console.log('🔄 Envoi requête anomalie:', {
+        url: `${API_URL}anomalies/user/${userid}/date/${date}/`,
+        data: { heure_entree_modifiee: heure_entree, heure_sortie_modifiee: heure_sortie, motif, modifie_par }
+      });
+
+      const response = await axios.post(
+        `${API_URL}anomalies/user/${userid}/date/${date}/`,
+        {
+          heure_entree_modifiee: heure_entree,
+          heure_sortie_modifiee: heure_sortie,
+          motif: motif,
+          modifie_par: modifie_par
+        }
+      );
+
+      console.log('✅ Réponse serveur anomalie:', response.data);
+      
+      return response.data;
+    } catch (error) {
+      console.error('❌ Erreur détaillée:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      throw error;
+    }
+  },
+
+  deleteAnomalieByUserDate: async (userid, date) => {
+    try {
+      const response = await axios.delete(
+        `${API_URL}anomalies/user/${userid}/date/${date}/`
+      );
+      return response.data;
+    } catch (error) {
+      console.error('❌ Erreur lors de la suppression de l\'anomalie:', error);
+      throw error;
+    }
+  },
+
 };
 
 export default presenceService;
