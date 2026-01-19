@@ -4,14 +4,20 @@ import presenceService from "../../services/presenceService";
 
 // Utilitaires pour conversion heures
 const decimalToTime = (decimal) => {
-  const hours = Math.floor(decimal);
-  const minutes = Math.round((decimal - hours) * 60);
+  if (!decimal && decimal !== 0) return "00:00";
+  
+  const decimalNum = parseFloat(decimal);
+  const hours = Math.floor(decimalNum);
+  const minutes = Math.round((decimalNum - hours) * 60);
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 };
 
 const timeToDecimal = (timeStr) => {
+  if (!timeStr) return 0;
+  
   const [hours, minutes] = timeStr.split(":").map(Number);
-  return hours + minutes / 60;
+  const decimal = hours + minutes / 60;
+  return Math.round(decimal * 100) / 100;
 };
 
 const formatDate = (dateStr) => {
@@ -166,7 +172,7 @@ const ModifierHeuresModal = ({ employee, dateStr, attendance, onClose, onSave })
               type="time"
               value={formData.heure_entree}
               onChange={(e) => setFormData({ ...formData, heure_entree: e.target.value })}
-              className="w-full px-3 py-2 border-2 border-yellow-300 rounded focus:border-yellow-600 bg-yellow-50"
+              className="w-full px-3 py-2 border-2 border-yellow-300 rounded focus:border-yellow-600"
               required
             />
           </div>
@@ -179,7 +185,7 @@ const ModifierHeuresModal = ({ employee, dateStr, attendance, onClose, onSave })
               type="time"
               value={formData.heure_sortie}
               onChange={(e) => setFormData({ ...formData, heure_sortie: e.target.value })}
-              className="w-full px-3 py-2 border-2 border-yellow-300 rounded focus:border-yellow-600 bg-yellow-50"
+              className="w-full px-3 py-2 border-2 border-yellow-300 rounded focus:border-yellow-600"
               required
             />
           </div>
@@ -233,13 +239,16 @@ const ModifierHeuresModal = ({ employee, dateStr, attendance, onClose, onSave })
   );
 };
 
-// Modal de gestion des horaires
+// Modal de gestion des horaires AVEC JOURS DE PAIEMENT
 const HoraireModal = ({ horaire, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     section: horaire?.section || "",
     heure_entree: horaire ? decimalToTime(horaire.heure_entree) : "07:30",
     heure_sortie: horaire ? decimalToTime(horaire.heure_sortie) : "17:50",
     sortie_samedi: horaire ? decimalToTime(horaire.sortie_samedi) : "15:30",
+    // NOUVEAUX CHAMPS POUR LES JOURS DE PAIEMENT
+    sortie_vendredi_paiement: horaire ? decimalToTime(horaire.sortie_vendredi_paiement) : "17:33",
+    sortie_samedi_paiement: horaire ? decimalToTime(horaire.sortie_samedi_paiement) : "13:00",
   });
   const [saving, setSaving] = useState(false);
 
@@ -256,6 +265,9 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
         heure_entree: timeToDecimal(formData.heure_entree),
         heure_sortie: timeToDecimal(formData.heure_sortie),
         sortie_samedi: timeToDecimal(formData.sortie_samedi),
+        // NOUVEAUX CHAMPS
+        sortie_vendredi_paiement: timeToDecimal(formData.sortie_vendredi_paiement),
+        sortie_samedi_paiement: timeToDecimal(formData.sortie_samedi_paiement),
       };
       await onSave(data);
     } catch (err) {
@@ -302,7 +314,7 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">Heure de sortie *</label>
+            <label className="block text-sm font-bold mb-1">Heure de sortie (lundi-ven normal) *</label>
             <input
               type="time"
               value={formData.heure_sortie}
@@ -312,13 +324,39 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">Sortie samedi *</label>
+            <label className="block text-sm font-bold mb-1">Sortie samedi normal *</label>
             <input
               type="time"
               value={formData.sortie_samedi}
               onChange={(e) => setFormData({ ...formData, sortie_samedi: e.target.value })}
               className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800"
             />
+          </div>
+
+          <div className="border-t-2 border-gray-300 pt-4">
+            <h4 className="font-bold text-gray-700 mb-3">Horaires pour jours de paiement (P)</h4>
+            
+            <div className="mb-3">
+              <label className="block text-sm font-bold mb-1">Sortie vendredi de paiement *</label>
+              <input
+                type="time"
+                value={formData.sortie_vendredi_paiement}
+                onChange={(e) => setFormData({ ...formData, sortie_vendredi_paiement: e.target.value })}
+                className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-yellow-600"
+              />
+              {/* <p className="text-xs text-gray-600 mt-1">Heure de sortie les vendredis marqués "P"</p> */}
+            </div>
+
+            <div className="mb-3">
+              <label className="block text-sm font-bold mb-1">Sortie samedi de paiement *</label>
+              <input
+                type="time"
+                value={formData.sortie_samedi_paiement}
+                onChange={(e) => setFormData({ ...formData, sortie_samedi_paiement: e.target.value })}
+                className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-yellow-600"
+              />
+              {/* <p className="text-xs text-gray-600 mt-1">Heure de sortie les samedis marqués "P"</p> */}
+            </div>
           </div>
 
           <div className="flex gap-3 pt-4">
@@ -389,7 +427,6 @@ const EvenementModal = ({ evenement, onClose, onSave, onDelete, typesEvenement }
     }
   };
 
-  // Vérifier si l'événement peut être supprimé (uniquement si différent de 'X')
   const canDelete = evenement && evenement.type_evenement !== 'X';
 
   return (
@@ -451,7 +488,6 @@ const EvenementModal = ({ evenement, onClose, onSave, onDelete, typesEvenement }
           </div>
 
           <div className="flex gap-3 pt-4">
-            {/* Bouton de suppression - seulement si événement existe et n'est pas 'X' */}
             {canDelete && (
               <button
                 onClick={handleDelete}
@@ -503,7 +539,7 @@ const AttendancePage = () => {
   const [horaires, setHoraires] = useState([]);
   const [selectedHoraire, setSelectedHoraire] = useState(null);
   const [showHoraireModal, setShowHoraireModal] = useState(false);
-  const [modeHeures, setModeHeures] = useState("comptabilisees"); // "reelles" ou "comptabilisees"
+  const [modeHeures, setModeHeures] = useState("comptabilisees");
   const [refreshing, setRefreshing] = useState(false);
 
   const [typesEvenement, setTypesEvenement] = useState([]);
@@ -511,13 +547,27 @@ const AttendancePage = () => {
   const [showEvenementModal, setShowEvenementModal] = useState(false);
   const [evenementsMap, setEvenementsMap] = useState({});
 
-  // States pour les anomalies
   const [showModifierHeuresModal, setShowModifierHeuresModal] = useState(false);
   const [selectedHeures, setSelectedHeures] = useState(null);
   const [anomaliesMap, setAnomaliesMap] = useState({});
   const [anomaliesDetailsMap, setAnomaliesDetailsMap] = useState({});
 
-  // Fonction pour charger les anomalies
+  // Dictionnaire des horaires par section
+  const horairesDict = React.useMemo(() => {
+    const dict = {};
+    horaires.forEach(h => {
+      dict[h.section] = {
+        ...h,
+        heure_entree_normale: decimalToTime(h.heure_entree),
+        heure_sortie_normale: decimalToTime(h.heure_sortie),
+        sortie_samedi_normale: decimalToTime(h.sortie_samedi),
+        sortie_vendredi_paiement_normale: decimalToTime(h.sortie_vendredi_paiement),
+        sortie_samedi_paiement_normale: decimalToTime(h.sortie_samedi_paiement)
+      };
+    });
+    return dict;
+  }, [horaires]);
+
   const fetchAnomaliesMois = useCallback(async (annee, mois) => {
     try {
       const anomaliesData = await presenceService.getAnomalies(annee, mois);
@@ -555,7 +605,6 @@ const AttendancePage = () => {
     }
   }, []);
 
-  // Fonction pour charger les événements
   const fetchEvenementsMois = useCallback(async (annee, mois) => {
     try {
       const evenementsData = await presenceService.getEvenements(annee, mois);
@@ -579,12 +628,10 @@ const AttendancePage = () => {
     }
   }, []);
 
-  // Fonction principale de chargement
   const fetchPresences = useCallback(async (annee, mois) => {
     try {
       setLoading(true);
 
-      // Générer les dates si nécessaire
       try {
         await presenceService.genererDates(annee, mois);
       } catch {
@@ -599,7 +646,6 @@ const AttendancePage = () => {
       setPeriode(presencesData.periode);
       setPresences(presencesData.presences || []);
 
-      // Charger les événements et anomalies
       await Promise.all([
         fetchEvenementsMois(annee, mois),
         fetchAnomaliesMois(annee, mois)
@@ -613,11 +659,6 @@ const AttendancePage = () => {
       setRefreshing(false);
     }
   }, [fetchEvenementsMois, fetchAnomaliesMois]);
-
-  // const handleRefresh = useCallback(async () => {
-  //   setRefreshing(true);
-  //   await fetchPresences(currentYear, currentMonth);
-  // }, [fetchPresences, currentYear, currentMonth]);
 
   const fetchTypesEvenements = useCallback(async () => {
     try {
@@ -637,9 +678,7 @@ const AttendancePage = () => {
     }
   }, []);
 
-  // Gestion du double-clic pour modifier les heures comptabilisées
   const handleModifierHeuresClick = useCallback((employee, dateStr, attendance) => {
-    // NE JAMAIS MODIFIER LES HEURES RÉELLES
     if (modeHeures === "reelles") {
       alert("⚠️ Impossible de modifier en mode Heures Réelles.\nPassez en mode Heures Comptabilisées.");
       return;
@@ -664,7 +703,6 @@ const AttendancePage = () => {
     setShowModifierHeuresModal(true);
   }, [modeHeures]);
 
-  // Sauvegarde des heures modifiées
   const handleSaveHeuresModifiees = useCallback(async (formData) => {
     try {
       const { userid, date } = selectedHeures;
@@ -678,7 +716,6 @@ const AttendancePage = () => {
         'admin'
       );
 
-      // Mettre à jour les maps d'anomalies
       const key = `${userid}-${date}`;
       setAnomaliesMap(prev => ({
         ...prev,
@@ -706,7 +743,6 @@ const AttendancePage = () => {
     }
   }, [selectedHeures]);
 
-  // Gestion des événements
   const handleEvenementClick = useCallback((employee, dateStr, attendance) => {
     const dateFormatted = formatDate(dateStr);
     
@@ -761,14 +797,12 @@ const AttendancePage = () => {
     }
   }, [selectedEvenement, currentYear, currentMonth, fetchEvenementsMois]);
 
-  // Fonction pour supprimer un événement
   const handleDeleteEvenement = useCallback(async () => {
     try {
       const { userid, date } = selectedEvenement;
       
       await presenceService.deleteEvenementByUserDate(userid, date);
       
-      // Mettre à jour la map des événements
       const key = `${userid}-${date}`;
       setEvenementsMap(prev => ({
         ...prev,
@@ -777,7 +811,6 @@ const AttendancePage = () => {
       
       alert("Événement supprimé avec succès !");
       
-      // Recharger les événements du mois
       await fetchEvenementsMois(currentYear, currentMonth);
       
       setShowEvenementModal(false);
@@ -790,17 +823,28 @@ const AttendancePage = () => {
   }, [selectedEvenement, currentYear, currentMonth, fetchEvenementsMois]);
 
   const handleSaveHoraire = useCallback(async (data) => {
-    if (selectedHoraire) {
-      await presenceService.updateHoraireSection(selectedHoraire.section, data);
-    } else {
-      await presenceService.createHoraireSection(data);
+    try {
+      if (selectedHoraire) {
+        // Mise à jour
+        const result = await presenceService.updateHoraireSection(selectedHoraire.section, data);
+        console.log('✅ Horaire mis à jour:', result);
+      } else {
+        // Création
+        const result = await presenceService.createHoraireSection(data);
+        console.log('✅ Horaire créé:', result);
+      }
+      
+      setShowHoraireModal(false);
+      setSelectedHoraire(null);
+      await fetchHoraires();
+      
+      alert("Horaire enregistré avec succès !");
+    } catch (err) {
+      console.error("❌ Erreur détaillée lors de la sauvegarde de l'horaire:", err);
+      alert(`Erreur lors de la sauvegarde: ${err.response?.data?.message || err.message}`);
     }
-    setShowHoraireModal(false);
-    setSelectedHoraire(null);
-    await fetchHoraires();
   }, [selectedHoraire, fetchHoraires]);
 
-  // Fonction pour obtenir les heures à afficher selon le mode
   const getHeuresAffichees = useCallback((employee, dateStr, attendance) => {
     const dateFormatted = formatDate(dateStr);
     const key = `${employee.userid}-${dateFormatted}`;
@@ -808,11 +852,13 @@ const AttendancePage = () => {
     const anomalie = anomaliesDetailsMap[key];
     const aAnomalie = anomaliesMap[key] || attendance?.a_anomalie;
     
+    // Récupérer l'horaire de la section
+    const horaire = horairesDict[employee.section] || horairesDict["ADMINISTRATION"] || {};
+    
     let heureEntreeAffichee = "";
     let heureSortieAffichee = "";
     
     if (modeHeures === "reelles") {
-      // Mode heures réelles : TOUJOURS les heures brutes du pointage
       heureEntreeAffichee = attendance?.heure_entree_reelle 
         ? attendance.heure_entree_reelle.slice(0, 5)
         : "";
@@ -820,9 +866,7 @@ const AttendancePage = () => {
         ? attendance.heure_sortie_reelle.slice(0, 5)
         : "";
     } else {
-      // Mode heures comptabilisées : utiliser les heures modifiées si anomalie, sinon les heures calculées
       if (aAnomalie && anomalie) {
-        // Utiliser les heures modifiées par anomalie
         heureEntreeAffichee = anomalie.heure_entree_modifiee 
           ? anomalie.heure_entree_modifiee.slice(0, 5)
           : (attendance?.heure_entree_comptabilisee?.slice(0, 5) || "");
@@ -830,7 +874,6 @@ const AttendancePage = () => {
           ? anomalie.heure_sortie_modifiee.slice(0, 5)
           : (attendance?.heure_sortie_comptabilisee?.slice(0, 5) || "");
       } else {
-        // Utiliser les heures calculées normalement
         heureEntreeAffichee = attendance?.heure_entree_comptabilisee 
           ? attendance.heure_entree_comptabilisee.slice(0, 5)
           : "";
@@ -845,20 +888,21 @@ const AttendancePage = () => {
       heureSortieAffichee,
       aAnomalie,
       anomalie,
-      modeHeures
+      modeHeures,
+      horaire
     };
-  }, [anomaliesMap, anomaliesDetailsMap, modeHeures]);
+  }, [anomaliesMap, anomaliesDetailsMap, modeHeures, horairesDict]);
 
   useEffect(() => {
     fetchPresences(currentYear, currentMonth);
     fetchTypesEvenements();
+    fetchHoraires(); // Charger les horaires même quand on n'est pas dans la vue de gestion
 
     if (showHoraires) {
       fetchHoraires();
     }
   }, [currentYear, currentMonth, showHoraires, fetchPresences, fetchTypesEvenements, fetchHoraires]);
 
-  // Fonctions utilitaires pour les données
   const getEmployeeData = useCallback(() => {
     const employees = {};
     presences.forEach((presence) => {
@@ -868,6 +912,7 @@ const AttendancePage = () => {
           badgenumber: presence.badgenumber,
           name: presence.name,
           section: presence.section || "ADMINISTRATION",
+          horaire: horairesDict[presence.section] || horairesDict["ADMINISTRATION"] || {},
           presences: {},
         };
       }
@@ -877,7 +922,7 @@ const AttendancePage = () => {
       }
     });
     return Object.values(employees);
-  }, [presences]);
+  }, [presences, horairesDict]);
 
   const getAttendanceData = useCallback((employee, dateStr) => {
     const dateFormatted = formatDate(dateStr);
@@ -917,6 +962,25 @@ const AttendancePage = () => {
     return monthNames[date.getMonth()];
   }, []);
 
+  // Déterminer la couleur de fond en fonction du type de jour
+  const getCellBackgroundColor = useCallback((attendance) => {
+    if (!attendance) return 'transparent';
+    
+    if (attendance.a_anomalie) {
+      return ''; // Rouge pâle pour anomalies
+    }
+    
+    if (attendance.est_jour_paiement) {
+      return ''; // Jaune pâle pour jours de paiement
+    }
+    
+    if (attendance.est_samedi) {
+      return ''; // Gris très clair pour samedis
+    }
+    
+    return 'transparent';
+  }, []);
+
   const employees = getEmployeeData();
   const weeks = groupDatesByWeek();
   const weekNumbers = Object.keys(weeks).sort();
@@ -930,7 +994,6 @@ const AttendancePage = () => {
     );
   }
 
-  // Vue gestion des horaires
   if (showHoraires) {
     return (
       <div className="p-4 bg-gray-50 min-h-screen">
@@ -965,7 +1028,7 @@ const AttendancePage = () => {
           </div>
         </div>
 
-        <div className="bg-white border-2 border-gray-800">
+        <div className="bg-white border-2 border-gray-800 overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-gray-100">
@@ -976,10 +1039,16 @@ const AttendancePage = () => {
                   HEURE ENTRÉE
                 </th>
                 <th className="border-2 border-gray-800 p-3 font-bold">
-                  HEURE SORTIE
+                  SORTIE NORMALE
                 </th>
                 <th className="border-2 border-gray-800 p-3 font-bold">
-                  SORTIE SAMEDI
+                  SORTIE SAMEDI NORMAL
+                </th>
+                <th className="border-2 border-gray-800 p-3 font-bold">
+                  SORTIE VENDREDI P
+                </th>
+                <th className="border-2 border-gray-800 p-3 font-bold">
+                  SORTIE SAMEDI P
                 </th>
                 <th className="border-2 border-gray-800 p-3 font-bold">
                   ACTIONS
@@ -994,20 +1063,27 @@ const AttendancePage = () => {
                   </td>
                   <td className="border-2 border-gray-800 p-3 text-center">
                     <div className="flex items-center justify-center gap-2">
-                      {/* <Clock className="w-4 h-4" /> */}
                       {decimalToTime(horaire.heure_entree)}
                     </div>
                   </td>
                   <td className="border-2 border-gray-800 p-3 text-center">
                     <div className="flex items-center justify-center gap-2">
-                      {/* <Clock className="w-4 h-4" /> */}
                       {decimalToTime(horaire.heure_sortie)}
                     </div>
                   </td>
                   <td className="border-2 border-gray-800 p-3 text-center">
                     <div className="flex items-center justify-center gap-2">
-                      {/* <Clock className="w-4 h-4" /> */}
                       {decimalToTime(horaire.sortie_samedi)}
+                    </div>
+                  </td>
+                  <td className="border-2 border-gray-800 p-3 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      {decimalToTime(horaire.sortie_vendredi_paiement)}
+                    </div>
+                  </td>
+                  <td className="border-2 border-gray-800 p-3 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      {decimalToTime(horaire.sortie_samedi_paiement)}
                     </div>
                   </td>
                   <td className="border-2 border-gray-800 p-3 text-center">
@@ -1041,7 +1117,6 @@ const AttendancePage = () => {
     );
   }
 
-  // Vue présences principale
   return (
     <div className="p-4 bg-gray-50 min-h-screen">
       <div className="bg-white border-2 border-gray-800 mb-4 p-6">
@@ -1121,42 +1196,30 @@ const AttendancePage = () => {
             onClick={() => setShowHoraires(true)}
             className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700"
           >
-            {/* <Settings className="w-4 h-4" /> */}
             Gérer les horaires
           </button>
           
           <button
             onClick={() => setModeHeures("reelles")}
-            className={`flex items-center gap-2 px-4 py-2 border-2 rounded border-gray-800 rounded hover:bg-gray-100 disabled:bg-gray-100${
+            className={`flex items-center gap-2 px-4 py-2 border-2 rounded ${
               modeHeures === "reelles" 
                 ? "border-gray-500 bg-gray-50 text-gray-700 font-bold" 
                 : "border-gray-300 text-gray-700 hover:bg-gray-100"
             }`}
           >
-            {/* <Clock className="w-4 h-4" /> */}
             Heures Brutes
           </button>
           
           <button
             onClick={() => setModeHeures("comptabilisees")}
-            className={`flex items-center gap-2 px-4 py-2 border-2 rounded border-gray-800 rounded hover:bg-gray-100 disabled:bg-gray-100${
+            className={`flex items-center gap-2 px-4 py-2 border-2 rounded ${
               modeHeures === "comptabilisees" 
                 ? "border-gray-500 bg-gray-50 text-gray-700 font-bold" 
                 : "border-gray-300 text-gray-700 hover:bg-gray-100"
             }`}
           >
-            {/* <Edit2 className="w-4 h-4" /> */}
             Heures Rectifiées
           </button>
-          
-          {/* <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="flex items-center gap-2 px-4 py-2 border-2 border-gray-800 rounded hover:bg-gray-100 disabled:bg-gray-100"
-          >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-            {refreshing ? "Rafraîchissement..." : "Rafraîchir"}
-          </button> */}
         </div>
 
         <div className="mt-4 border-t-2 border-gray-800 pt-4">
@@ -1171,17 +1234,6 @@ const AttendancePage = () => {
               </div>
             ))}
           </div>
-          
-          {/* <div className="mt-3 text-xs">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-red-600 font-bold">*</span>
-              <span>Heure modifiée manuellement (uniquement en mode Heures Comptabilisées)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="bg-yellow-50 px-2 py-1 rounded border border-yellow-200">Cellule jaune</span>
-              <span>Heure comptabilisée modifiée</span>
-            </div>
-          </div> */}
         </div>
       </div>
 
@@ -1271,7 +1323,6 @@ const AttendancePage = () => {
                     const attendance = getAttendanceData(employee, dateObj.date);
                     const evenementType = getEvenementForCell(employee.userid, dateObj.date);
                     
-                    // Obtenir les heures à afficher selon le mode
                     const { 
                       heureEntreeAffichee, 
                       heureSortieAffichee, 
@@ -1280,14 +1331,15 @@ const AttendancePage = () => {
                       modeHeures: currentMode 
                     } = getHeuresAffichees(employee, dateObj.date, attendance);
                     
-                    // Seulement marquer comme modifié en mode heures comptabilisées
                     const entreeModifiee = currentMode === "comptabilisees" && aAnomalie && anomalie?.heure_entree_modifiee;
                     const sortieModifiee = currentMode === "comptabilisees" && aAnomalie && anomalie?.heure_sortie_modifiee;
+                    const backgroundColor = getCellBackgroundColor(attendance);
 
                     return (
                       <td
                         key={dayIdx}
                         className="border border-gray-600 p-0 text-center group"
+                        style={{ backgroundColor }}
                       >
                         <div className="flex flex-col h-full">
                           {/* HEURE D'ENTRÉE */}
@@ -1295,7 +1347,7 @@ const AttendancePage = () => {
                             onDoubleClick={currentMode === "comptabilisees" ? () => handleModifierHeuresClick(employee, dateObj.date, attendance) : undefined}
                             className={`border-b border-gray-300 px-1 py-0.5 min-h-[20px] text-xs font-medium ${
                               currentMode === "comptabilisees" ? 'cursor-pointer hover:bg-yellow-50' : 'cursor-default'
-                            } ${entreeModifiee ? 'bg-yellow-50' : ''}`}
+                            } ${entreeModifiee ? '' : ''}`}
                             title={currentMode === "comptabilisees" 
                               ? "Double-clic pour modifier les heures comptabilisées" 
                               : "Heures réelles (non modifiables)"}
@@ -1304,7 +1356,7 @@ const AttendancePage = () => {
                               <span className="flex items-center justify-center gap-0.5">
                                 {heureEntreeAffichee}
                                 {entreeModifiee && (
-                                  <span className="text-red-600 font-bold" title="Heure modifiée manuellement">*</span>
+                                  <span className="text-gray-600 font-bold" title="Heure modifiée manuellement">*</span>
                                 )}
                               </span>
                             )}
@@ -1328,7 +1380,7 @@ const AttendancePage = () => {
                             onDoubleClick={currentMode === "comptabilisees" ? () => handleModifierHeuresClick(employee, dateObj.date, attendance) : undefined}
                             className={`px-1 py-0.5 min-h-[20px] text-xs font-medium ${
                               currentMode === "comptabilisees" ? 'cursor-pointer hover:bg-yellow-50' : 'cursor-default'
-                            } ${sortieModifiee ? 'bg-yellow-50' : ''}`}
+                            } ${sortieModifiee ? '' : ''}`}
                             title={currentMode === "comptabilisees" 
                               ? "Double-clic pour modifier les heures comptabilisées" 
                               : "Heures réelles (non modifiables)"}
@@ -1337,7 +1389,7 @@ const AttendancePage = () => {
                               <span className="flex items-center justify-center gap-0.5">
                                 {heureSortieAffichee}
                                 {sortieModifiee && (
-                                  <span className="text-red-600 font-bold" title="Heure modifiée manuellement">*</span>
+                                  <span className="text-gray-600 font-bold" title="Heure modifiée manuellement">*</span>
                                 )}
                               </span>
                             )}
