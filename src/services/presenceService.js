@@ -1,6 +1,4 @@
-import axios from "axios";
-
-const API_URL = "http://localhost:8000/api/presence/";
+import api from '../api/api'; 
 
 const presenceService = {
   updateEvenementByUserDate: async (
@@ -11,12 +9,12 @@ const presenceService = {
   ) => {
     try {
       console.log("🔄 Envoi requête événement:", {
-        url: `${API_URL}evenements/user/${userid}/date/${date}/`,
+        url: `api/presence/evenements/user/${userid}/date/${date}/`,
         data: { type_evenement, commentaire },
       });
 
-      const response = await axios.post(
-        `${API_URL}evenements/user/${userid}/date/${date}/`,
+      const response = await api.post(
+        `api/presence/evenements/user/${userid}/date/${date}/`,
         {
           type_evenement: type_evenement,
           commentaire: commentaire,
@@ -38,8 +36,8 @@ const presenceService = {
 
   verifierEvenement: async (userid, date) => {
     try {
-      const response = await axios.get(
-        `${API_URL}evenements/user/${userid}/date/${date}/`
+      const response = await api.get(
+        `api/presence/evenements/user/${userid}/date/${date}/`
       );
       console.log("🔍 Vérification événement:", response.data);
       return response.data;
@@ -51,7 +49,7 @@ const presenceService = {
 
   getEvenementsMois: async (annee, mois) => {
     try {
-      const response = await axios.get(`${API_URL}evenements/`, {
+      const response = await api.get(`api/presence/evenements/`, {
         params: { annee, mois },
       });
       console.log("📋 Événements du mois récupérés:", response.data.count);
@@ -65,7 +63,7 @@ const presenceService = {
   genererDates: async (annee, mois) => {
     try {
       console.log("🔄 Génération des dates pour:", { annee, mois });
-      const response = await axios.get(`${API_URL}generer-dates/`, {
+      const response = await api.get(`api/presence/generer-dates/`, {
         params: { annee, mois },
       });
       console.log("✅ Dates générées:", response.data);
@@ -78,7 +76,7 @@ const presenceService = {
 
   getDates: async (annee, mois) => {
     try {
-      const response = await axios.get(`${API_URL}dates/`, {
+      const response = await api.get(`api/presence/dates/`, {
         params: { annee, mois },
       });
       return response.data;
@@ -90,7 +88,7 @@ const presenceService = {
 
   getPresencesMois: async (annee, mois, inclureHorsPeriode = true) => {
     try {
-      const response = await axios.get(`${API_URL}mois/`, {
+      const response = await api.get(`api/presence/mois/`, {
         params: {
           annee,
           mois,
@@ -107,7 +105,7 @@ const presenceService = {
   getPresencesMoisCalculee: async (annee, mois, inclureHorsPeriode = false) => {
     try {
       console.log("🔄 Récupération présences calculées:", { annee, mois });
-      const response = await axios.get(`${API_URL}mois/detail/calculee/`, {
+      const response = await api.get(`api/presence/mois/detail/calculee/`, {
         params: {
           annee,
           mois,
@@ -127,7 +125,7 @@ const presenceService = {
 
   getHorairesSection: async () => {
     try {
-      const response = await axios.get(`${API_URL}horaires-section/`);
+      const response = await api.get(`api/presence/horaires-section/`);
       return response.data;
     } catch (error) {
       console.error("❌ Erreur lors de la récupération des horaires:", error);
@@ -137,7 +135,7 @@ const presenceService = {
 
   createHoraireSection: async (data) => {
     try {
-      const response = await axios.post(`${API_URL}horaires-section/`, data);
+      const response = await api.post(`api/presence/horaires-section/`, data);
       return response.data;
     } catch (error) {
       console.error("❌ Erreur lors de la création de l'horaire:", error);
@@ -147,8 +145,8 @@ const presenceService = {
 
   updateHoraireSection: async (section, data) => {
     try {
-      const response = await axios.put(
-        `${API_URL}horaires-section/${section}/`,
+      const response = await api.put(
+        `api/presence/horaires-section/${section}/`,
         data
       );
       return response.data;
@@ -160,7 +158,7 @@ const presenceService = {
 
   getTypesEvenements: async () => {
     try {
-      const response = await axios.get(`${API_URL}types-evenements/`);
+      const response = await api.get(`api/presence/types-evenements/`);
       return response.data;
     } catch (error) {
       console.error(
@@ -180,7 +178,7 @@ const presenceService = {
 
       console.log("🔄 Récupération événements avec params:", params);
 
-      const response = await axios.get(`${API_URL}evenements/`, { params });
+      const response = await api.get(`api/presence/evenements/`, { params });
       console.log("✅ Événements récupérés:", response.data.count);
       return response.data;
     } catch (error) {
@@ -189,12 +187,11 @@ const presenceService = {
     }
   },
 
-  // Ajoutez cette méthode dans presenceService
   deleteEvenementByUserDate: async (userid, date) => {
     try {
       console.log("🔄 Suppression événement:", { userid, date });
-      const response = await axios.delete(
-        `${API_URL}evenements/user/${userid}/date/${date}/`
+      const response = await api.delete(
+        `api/presence/evenements/user/${userid}/date/${date}/`
       );
       console.log("✅ Événement supprimé:", response.data);
       return response.data;
@@ -213,7 +210,7 @@ const presenceService = {
 
       console.log("🔄 Récupération anomalies avec params:", params);
 
-      const response = await axios.get(`${API_URL}anomalies/`, { params });
+      const response = await api.get(`api/presence/anomalies/`, { params });
       console.log("✅ Anomalies récupérées:", response.data.count);
       console.log(
         "📋 Détails anomalies:",
@@ -233,8 +230,8 @@ const presenceService = {
   getAnomalieByUserDate: async (userid, date) => {
     try {
       console.log("🔄 Récupération anomalie spécifique:", { userid, date });
-      const response = await axios.get(
-        `${API_URL}anomalies/user/${userid}/date/${date}/`
+      const response = await api.get(
+        `api/presence/anomalies/user/${userid}/date/${date}/`
       );
       console.log("✅ Anomalie récupérée:", response.data);
       return response.data;
@@ -254,7 +251,7 @@ const presenceService = {
   ) => {
     try {
       console.log("🔄 Envoi requête anomalie:", {
-        url: `${API_URL}anomalies/user/${userid}/date/${date}/`,
+        url: `api/presence/anomalies/user/${userid}/date/${date}/`,
         data: {
           heure_entree_modifiee: heure_entree,
           heure_sortie_modifiee: heure_sortie,
@@ -263,8 +260,8 @@ const presenceService = {
         },
       });
 
-      const response = await axios.post(
-        `${API_URL}anomalies/user/${userid}/date/${date}/`,
+      const response = await api.post(
+        `api/presence/anomalies/user/${userid}/date/${date}/`,
         {
           heure_entree_modifiee: heure_entree,
           heure_sortie_modifiee: heure_sortie,
@@ -289,8 +286,8 @@ const presenceService = {
   deleteAnomalieByUserDate: async (userid, date) => {
     try {
       console.log("🔄 Suppression anomalie:", { userid, date });
-      const response = await axios.delete(
-        `${API_URL}anomalies/user/${userid}/date/${date}/`
+      const response = await api.delete(
+        `api/presence/anomalies/user/${userid}/date/${date}/`
       );
       console.log("✅ Anomalie supprimée:", response.data);
       return response.data;
