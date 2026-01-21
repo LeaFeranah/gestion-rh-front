@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Settings, Edit2, Plus, Save, X, Clock, RefreshCw, AlertCircle, Trash2 } from "lucide-react";
+import { useReactToPrint } from 'react-to-print';
 import presenceService from "../../services/presenceService";
 
 // Utilitaires pour conversion heures
@@ -985,6 +986,14 @@ const AttendancePage = () => {
   const weeks = groupDatesByWeek();
   const weekNumbers = Object.keys(weeks).sort();
 
+  const componentRef = useRef(); // 3. Créer la référence
+
+  // 4. Configurer la fonction d'impression
+  const handlePrint = useReactToPrint({
+    contentRef: componentRef, // Correction pour les versions récentes
+    documentTitle: `Fiche_Presence_${periode?.mois}_${periode?.annee}`,
+  });
+
   if (loading && !refreshing) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
@@ -1119,300 +1128,309 @@ const AttendancePage = () => {
 
   return (
     <div className="p-4 bg-gray-50 min-h-screen">
-      <div className="bg-white border-2 border-gray-800 mb-4 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
-            <div className="bg-gray-800 text-white px-6 py-3 font-bold text-lg">
-              AKANJO
+      <div ref={componentRef} className="print-container">
+        <div className="bg-white border-2 border-gray-800 mb-4 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-gray-800 text-white px-6 py-3 font-bold text-lg">
+                AKANJO
+              </div>
+              <h1 className="text-2xl font-bold uppercase">FICHE DE PRESENCE:</h1>
             </div>
-            <h1 className="text-2xl font-bold uppercase">FICHE DE PRESENCE:</h1>
-          </div>
-          <div className="text-right">
-            <h2 className="text-xl font-bold mb-3">
-              {periode?.mois} {periode?.annee}
-            </h2>
-            <div className="flex gap-3">
-              <div>
-                <label className="block text-xs text-gray-600 mb-1">Mois</label>
-                <select
-                  value={currentMonth}
-                  onChange={(e) => setCurrentMonth(parseInt(e.target.value))}
-                  className="px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value={1}>Janvier</option>
-                  <option value={2}>Février</option>
-                  <option value={3}>Mars</option>
-                  <option value={4}>Avril</option>
-                  <option value={5}>Mai</option>
-                  <option value={6}>Juin</option>
-                  <option value={7}>Juillet</option>
-                  <option value={8}>Août</option>
-                  <option value={9}>Septembre</option>
-                  <option value={10}>Octobre</option>
-                  <option value={11}>Novembre</option>
-                  <option value={12}>Décembre</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-600 mb-1">Année</label>
-                <select
-                  value={currentYear}
-                  onChange={(e) => setCurrentYear(parseInt(e.target.value))}
-                  className="px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                >
-                  {[...Array(11)].map((_, i) => {
-                    const year = 2020 + i;
-                    return (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-8 border-t-2 border-gray-800 pt-4">
-          <div>
-            <span className="font-bold italic">SECTION:</span>
-            <span className="ml-4 font-semibold">
-              {employees.length > 0 && employees[0].section
-                ? employees[0].section
-                : "ADMINISTRATION"}
-            </span>
-          </div>
-          <div>
-            <span className="font-bold italic">Période du:</span>
-            <span className="ml-2">{periode?.du}</span>
-            <span className="mx-2 font-bold">au:</span>
-            <span>{periode?.au}</span>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-3 mt-4 border-t-2 border-gray-800 pt-4">
-          <button
-            onClick={() => setShowHoraires(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700"
-          >
-            Gérer les horaires
-          </button>
-          
-          <button
-            onClick={() => setModeHeures("reelles")}
-            className={`flex items-center gap-2 px-4 py-2 border-2 rounded ${
-              modeHeures === "reelles" 
-                ? "border-gray-500 bg-gray-50 text-gray-700 font-bold" 
-                : "border-gray-300 text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            Heures Brutes
-          </button>
-          
-          <button
-            onClick={() => setModeHeures("comptabilisees")}
-            className={`flex items-center gap-2 px-4 py-2 border-2 rounded ${
-              modeHeures === "comptabilisees" 
-                ? "border-gray-500 bg-gray-50 text-gray-700 font-bold" 
-                : "border-gray-300 text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            Heures Rectifiées
-          </button>
-        </div>
-
-        <div className="mt-4 border-t-2 border-gray-800 pt-4">
-          <div className="text-sm font-bold mb-2">Légende des événements:</div>
-          <div className="flex flex-wrap gap-2">
-            {typesEvenement.map((type) => (
-              <div
-                key={type.code}
-                className={`px-3 py-1 rounded text-xs font-medium ${getEvenementColor(type.code)}`}
-              >
-                {type.code}: {type.libelle}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white border-2 border-gray-800 overflow-x-auto">
-        <table className="w-full border-collapse text-xs">
-          <thead>
-            <tr className="bg-gray-100">
-              <th
-                className="border-2 border-gray-800 p-2 sticky left-0 bg-gray-100 z-10"
-                rowSpan="4"
-              >
-                <div className="font-bold text-sm w-32">N° / NOM</div>
-              </th>
-              {weekNumbers.map((weekNum) => (
-                <th
-                  key={weekNum}
-                  colSpan={weeks[weekNum].length}
-                  className="border border-gray-600 p-1 font-bold"
-                >
-                  Semaine {weekNum}
-                </th>
-              ))}
-            </tr>
-
-            <tr className="bg-gray-100">
-              {dates.map((date, idx) => (
-                <th key={idx} className="border border-gray-600 p-1 min-w-16">
-                  <div className="font-bold">{date.code_affichage}</div>
-                </th>
-              ))}
-            </tr>
-
-            <tr className="bg-gray-100">
-              {dates.map((date, idx) => (
-                <th key={idx} className="border border-gray-600 p-1">
-                  <div className="text-xs">
-                    {new Date(date.date).toLocaleDateString("fr-FR", {
-                      weekday: "short",
+            <div className="text-right">
+              <h2 className="text-xl font-bold mb-3">
+                {periode?.mois} {periode?.annee}
+              </h2>
+              <div className="flex gap-3 print:hidden">
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Mois</label>
+                  <select
+                    value={currentMonth}
+                    onChange={(e) => setCurrentMonth(parseInt(e.target.value))}
+                    className="px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value={1}>Janvier</option>
+                    <option value={2}>Février</option>
+                    <option value={3}>Mars</option>
+                    <option value={4}>Avril</option>
+                    <option value={5}>Mai</option>
+                    <option value={6}>Juin</option>
+                    <option value={7}>Juillet</option>
+                    <option value={8}>Août</option>
+                    <option value={9}>Septembre</option>
+                    <option value={10}>Octobre</option>
+                    <option value={11}>Novembre</option>
+                    <option value={12}>Décembre</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Année</label>
+                  <select
+                    value={currentYear}
+                    onChange={(e) => setCurrentYear(parseInt(e.target.value))}
+                    className="px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                  >
+                    {[...Array(11)].map((_, i) => {
+                      const year = 2020 + i;
+                      return (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      );
                     })}
-                  </div>
-                  <div className="text-xs text-gray-600">
-                    {new Date(date.date).getDate()}
-                  </div>
-                </th>
-              ))}
-            </tr>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
 
-            <tr className="bg-gray-100">
-              {dates.map((date, idx) => (
-                <th key={idx} className="border border-gray-600 p-1">
-                  <div className="text-xs font-bold text-gray-700">
-                    {getMonthAbbreviation(date.date)}
-                  </div>
-                </th>
-              ))}
-            </tr>
-          </thead>
+          <div className="grid grid-cols-2 gap-8 border-t-2 border-gray-800 pt-4">
+            <div>
+              <span className="font-bold italic">SECTION:</span>
+              <span className="ml-4 font-semibold">
+                {employees.length > 0 && employees[0].section
+                  ? employees[0].section
+                  : "ADMINISTRATION"}
+              </span>
+            </div>
+            <div className="print:text-right">
+              <span className="font-bold italic">Période du:</span>
+              <span className="ml-2">{periode?.du}</span>
+              <span className="mx-2 font-bold">au:</span>
+              <span>{periode?.au}</span>
+            </div>
+          </div>
 
-          <tbody>
-            {employees.map((employee, empIdx) => (
-              <React.Fragment key={empIdx}>
-                <tr className="border-b-2 border-gray-800">
-                  <td className="border-2 border-gray-800 p-2 sticky left-0 bg-white z-10">
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-bold text-sm">
-                        {employee.badgenumber}
-                      </span>
-                      <span className="italic text-sm">{employee.name}</span>
+          <div className="flex flex-wrap gap-3 mt-4 border-t-2 border-gray-800 pt-4 print:hidden">
+            <button
+              onClick={() => setShowHoraires(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700"
+            >
+              Gérer les horaires
+            </button>
+            
+            <button
+              onClick={() => setModeHeures("reelles")}
+              className={`flex items-center gap-2 px-4 py-2 border-2 rounded ${
+                modeHeures === "reelles" 
+                  ? "border-gray-500 bg-gray-50 text-gray-700 font-bold" 
+                  : "border-gray-300 text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              Heures Brutes
+            </button>
+            
+            <button
+              onClick={() => setModeHeures("comptabilisees")}
+              className={`flex items-center gap-2 px-4 py-2 border-2 rounded ${
+                modeHeures === "comptabilisees" 
+                  ? "border-gray-500 bg-gray-50 text-gray-700 font-bold" 
+                  : "border-gray-300 text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              Heures Rectifiées
+            </button>
+
+            <button
+              onClick={() => handlePrint()}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Imprimer la fiche
+            </button>
+          </div>
+
+          <div className="mt-4 border-t-2 border-gray-800 pt-4 print:hidden">
+            <div className="text-sm font-bold mb-2">Légende des événements:</div>
+            <div className="flex flex-wrap gap-2">
+              {typesEvenement.map((type) => (
+                <div
+                  key={type.code}
+                  className={`px-3 py-1 rounded text-xs font-medium ${getEvenementColor(type.code)}`}
+                >
+                  {type.code}: {type.libelle}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white border-2 border-gray-800 overflow-x-auto print:overflow-visible">
+          <table className="w-full border-collapse text-xs table-fixed md:table-auto">
+            <thead>
+              <tr className="bg-gray-100">
+                <th
+                  className="border-2 border-gray-800 p-2 sticky left-0 bg-gray-100 z-10"
+                  rowSpan="4"
+                >
+                  <div className="font-bold text-sm w-32">N° / NOM</div>
+                </th>
+                {weekNumbers.map((weekNum) => (
+                  <th
+                    key={weekNum}
+                    colSpan={weeks[weekNum].length}
+                    className="border border-gray-600 p-1 font-bold"
+                  >
+                    Semaine {weekNum}
+                  </th>
+                ))}
+              </tr>
+
+              <tr className="bg-gray-100">
+                {dates.map((date, idx) => (
+                  <th key={idx} className="border border-gray-600 p-1 min-w-16">
+                    <div className="font-bold">{date.code_affichage}</div>
+                  </th>
+                ))}
+              </tr>
+
+              <tr className="bg-gray-100">
+                {dates.map((date, idx) => (
+                  <th key={idx} className="border border-gray-600 p-1">
+                    <div className="text-xs">
+                      {new Date(date.date).toLocaleDateString("fr-FR", {
+                        weekday: "short",
+                      })}
                     </div>
-                  </td>
-                  {dates.map((dateObj, dayIdx) => {
-                    if (dateObj.hors_periode) {
+                    <div className="text-xs text-gray-600">
+                      {new Date(date.date).getDate()}
+                    </div>
+                  </th>
+                ))}
+              </tr>
+
+              <tr className="bg-gray-100">
+                {dates.map((date, idx) => (
+                  <th key={idx} className="border border-gray-600 p-1">
+                    <div className="text-xs font-bold text-gray-700">
+                      {getMonthAbbreviation(date.date)}
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+
+            <tbody>
+              {employees.map((employee, empIdx) => (
+                <React.Fragment key={empIdx}>
+                  <tr className="border-b-2 border-gray-800">
+                    <td className="border-2 border-gray-800 p-2 sticky left-0 bg-white z-10">
+                      <div className="flex items-baseline gap-2">
+                        <span className="font-bold text-sm">
+                          {employee.badgenumber}
+                        </span>
+                        <span className="italic text-sm">{employee.name}</span>
+                      </div>
+                    </td>
+                    {dates.map((dateObj, dayIdx) => {
+                      if (dateObj.hors_periode) {
+                        return (
+                          <td
+                            key={dayIdx}
+                            className="border border-gray-600 p-0 text-center bg-gray-100"
+                          >
+                            <div className="flex flex-col h-full">
+                              <div className="border-b border-gray-300 px-1 py-0.5 min-h-[20px] text-xs font-medium"></div>
+                              <div className="border-b border-gray-300 px-1 py-0.5 min-h-[20px] text-xs font-bold"></div>
+                              <div className="px-1 py-0.5 min-h-[20px] text-xs font-medium"></div>
+                            </div>
+                          </td>
+                        );
+                      }
+
+                      const attendance = getAttendanceData(employee, dateObj.date);
+                      const evenementType = getEvenementForCell(employee.userid, dateObj.date);
+                      
+                      const { 
+                        heureEntreeAffichee, 
+                        heureSortieAffichee, 
+                        aAnomalie, 
+                        anomalie,
+                        modeHeures: currentMode 
+                      } = getHeuresAffichees(employee, dateObj.date, attendance);
+                      
+                      const entreeModifiee = currentMode === "comptabilisees" && aAnomalie && anomalie?.heure_entree_modifiee;
+                      const sortieModifiee = currentMode === "comptabilisees" && aAnomalie && anomalie?.heure_sortie_modifiee;
+                      const backgroundColor = getCellBackgroundColor(attendance);
+
                       return (
                         <td
                           key={dayIdx}
-                          className="border border-gray-600 p-0 text-center bg-gray-100"
+                          className="border border-gray-600 p-0 text-center group"
+                          style={{ backgroundColor }}
                         >
                           <div className="flex flex-col h-full">
-                            <div className="border-b border-gray-300 px-1 py-0.5 min-h-[20px] text-xs font-medium"></div>
-                            <div className="border-b border-gray-300 px-1 py-0.5 min-h-[20px] text-xs font-bold"></div>
-                            <div className="px-1 py-0.5 min-h-[20px] text-xs font-medium"></div>
+                            {/* HEURE D'ENTRÉE */}
+                            <div
+                              onDoubleClick={currentMode === "comptabilisees" ? () => handleModifierHeuresClick(employee, dateObj.date, attendance) : undefined}
+                              className={`border-b border-gray-300 px-1 py-0.5 min-h-[20px] text-xs font-medium ${
+                                currentMode === "comptabilisees" ? 'cursor-pointer hover:bg-yellow-50' : 'cursor-default'
+                              } ${entreeModifiee ? '' : ''}`}
+                              title={currentMode === "comptabilisees" 
+                                ? "Double-clic pour modifier les heures comptabilisées" 
+                                : "Heures réelles (non modifiables)"}
+                            >
+                              {heureEntreeAffichee && (
+                                <span className="flex items-center justify-center gap-0.5">
+                                  {heureEntreeAffichee}
+                                  {entreeModifiee && (
+                                    <span className="text-gray-600 font-bold" title="Heure modifiée manuellement">*</span>
+                                  )}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* ÉVÉNEMENT */}
+                            <button
+                              onClick={() => handleEvenementClick(employee, dateObj.date, attendance)}
+                              className={`border-b border-gray-300 px-1 py-0.5 min-h-[20px] text-xs font-bold w-full hover:bg-gray-50 transition-colors ${getEvenementTextColor(evenementType)}`}
+                              title={`Modifier l'événement (${evenementType})`}
+                            >
+                              {evenementType !== "X" ||
+                              attendance?.heure_entree_reelle ||
+                              attendance?.heure_sortie_reelle
+                                ? evenementType
+                                : ""}
+                            </button>
+
+                            {/* HEURE DE SORTIE */}
+                            <div
+                              onDoubleClick={currentMode === "comptabilisees" ? () => handleModifierHeuresClick(employee, dateObj.date, attendance) : undefined}
+                              className={`px-1 py-0.5 min-h-[20px] text-xs font-medium ${
+                                currentMode === "comptabilisees" ? 'cursor-pointer hover:bg-yellow-50' : 'cursor-default'
+                              } ${sortieModifiee ? '' : ''}`}
+                              title={currentMode === "comptabilisees" 
+                                ? "Double-clic pour modifier les heures comptabilisées" 
+                                : "Heures réelles (non modifiables)"}
+                            >
+                              {heureSortieAffichee && (
+                                <span className="flex items-center justify-center gap-0.5">
+                                  {heureSortieAffichee}
+                                  {sortieModifiee && (
+                                    <span className="text-gray-600 font-bold" title="Heure modifiée manuellement">*</span>
+                                  )}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </td>
                       );
-                    }
+                    })}
+                  </tr>
 
-                    const attendance = getAttendanceData(employee, dateObj.date);
-                    const evenementType = getEvenementForCell(employee.userid, dateObj.date);
-                    
-                    const { 
-                      heureEntreeAffichee, 
-                      heureSortieAffichee, 
-                      aAnomalie, 
-                      anomalie,
-                      modeHeures: currentMode 
-                    } = getHeuresAffichees(employee, dateObj.date, attendance);
-                    
-                    const entreeModifiee = currentMode === "comptabilisees" && aAnomalie && anomalie?.heure_entree_modifiee;
-                    const sortieModifiee = currentMode === "comptabilisees" && aAnomalie && anomalie?.heure_sortie_modifiee;
-                    const backgroundColor = getCellBackgroundColor(attendance);
-
-                    return (
+                  <tr className="border-b border-gray-400">
+                    <td className="border-r-2 border-gray-800 p-1 sticky left-0 bg-gray-50 z-10"></td>
+                    {dates.map((date, dayIdx) => (
                       <td
                         key={dayIdx}
-                        className="border border-gray-600 p-0 text-center group"
-                        style={{ backgroundColor }}
-                      >
-                        <div className="flex flex-col h-full">
-                          {/* HEURE D'ENTRÉE */}
-                          <div
-                            onDoubleClick={currentMode === "comptabilisees" ? () => handleModifierHeuresClick(employee, dateObj.date, attendance) : undefined}
-                            className={`border-b border-gray-300 px-1 py-0.5 min-h-[20px] text-xs font-medium ${
-                              currentMode === "comptabilisees" ? 'cursor-pointer hover:bg-yellow-50' : 'cursor-default'
-                            } ${entreeModifiee ? '' : ''}`}
-                            title={currentMode === "comptabilisees" 
-                              ? "Double-clic pour modifier les heures comptabilisées" 
-                              : "Heures réelles (non modifiables)"}
-                          >
-                            {heureEntreeAffichee && (
-                              <span className="flex items-center justify-center gap-0.5">
-                                {heureEntreeAffichee}
-                                {entreeModifiee && (
-                                  <span className="text-gray-600 font-bold" title="Heure modifiée manuellement">*</span>
-                                )}
-                              </span>
-                            )}
-                          </div>
-
-                          {/* ÉVÉNEMENT */}
-                          <button
-                            onClick={() => handleEvenementClick(employee, dateObj.date, attendance)}
-                            className={`border-b border-gray-300 px-1 py-0.5 min-h-[20px] text-xs font-bold w-full hover:bg-gray-50 transition-colors ${getEvenementTextColor(evenementType)}`}
-                            title={`Modifier l'événement (${evenementType})`}
-                          >
-                            {evenementType !== "X" ||
-                            attendance?.heure_entree_reelle ||
-                            attendance?.heure_sortie_reelle
-                              ? evenementType
-                              : ""}
-                          </button>
-
-                          {/* HEURE DE SORTIE */}
-                          <div
-                            onDoubleClick={currentMode === "comptabilisees" ? () => handleModifierHeuresClick(employee, dateObj.date, attendance) : undefined}
-                            className={`px-1 py-0.5 min-h-[20px] text-xs font-medium ${
-                              currentMode === "comptabilisees" ? 'cursor-pointer hover:bg-yellow-50' : 'cursor-default'
-                            } ${sortieModifiee ? '' : ''}`}
-                            title={currentMode === "comptabilisees" 
-                              ? "Double-clic pour modifier les heures comptabilisées" 
-                              : "Heures réelles (non modifiables)"}
-                          >
-                            {heureSortieAffichee && (
-                              <span className="flex items-center justify-center gap-0.5">
-                                {heureSortieAffichee}
-                                {sortieModifiee && (
-                                  <span className="text-gray-600 font-bold" title="Heure modifiée manuellement">*</span>
-                                )}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                    );
-                  })}
-                </tr>
-
-                <tr className="border-b border-gray-400">
-                  <td className="border-r-2 border-gray-800 p-1 sticky left-0 bg-gray-50 z-10"></td>
-                  {dates.map((date, dayIdx) => (
-                    <td
-                      key={dayIdx}
-                      className="border border-gray-300 p-1 h-8 bg-gray-50"
-                    ></td>
-                  ))}
-                </tr>
-              </React.Fragment>
-            ))}
-          </tbody>
-        </table>
+                        className="border border-gray-300 p-1 h-8 bg-gray-50"
+                      ></td>
+                    ))}
+                  </tr>
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {showEvenementModal && selectedEvenement && (
