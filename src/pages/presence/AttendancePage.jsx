@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Settings, Edit2, Plus, Save, X, Clock, RefreshCw, AlertCircle, Trash2 } from "lucide-react";
-import { useReactToPrint } from 'react-to-print';
+import React, { useState, useEffect, useCallback } from "react";
+import { Settings, Edit2, Plus, Save, X, Trash2 } from "lucide-react";
 import presenceService from "../../services/presenceService";
 
 // Utilitaires pour conversion heures
@@ -69,175 +68,6 @@ const getEvenementTextColor = (type) => {
     A: "text-red-700",
   };
   return textColors[type] || "text-gray-700";
-};
-
-// Modal pour modifier les heures comptabilisées
-const ModifierHeuresModal = ({ employee, dateStr, attendance, onClose, onSave }) => {
-  const [formData, setFormData] = useState({
-    heure_entree: attendance?.heure_entree_comptabilisee?.slice(0, 5) || "",
-    heure_sortie: attendance?.heure_sortie_comptabilisee?.slice(0, 5) || "",
-    motif: attendance?.motif_anomalie || "",
-  });
-  const [saving, setSaving] = useState(false);
-
-  const handleSubmit = async () => {
-    if (!formData.heure_entree && !formData.heure_sortie) {
-      alert("Veuillez entrer au moins une heure (entrée ou sortie)");
-      return;
-    }
-
-    setSaving(true);
-    try {
-      await onSave(formData);
-    } catch (err) {
-      console.error("Erreur:", err);
-      alert("Erreur lors de l'enregistrement");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSupprimer = async () => {
-    if (window.confirm("Supprimer cette modification d'heures ?")) {
-      setSaving(true);
-      try {
-        await presenceService.deleteAnomalieByUserDate(employee.userid, dateStr);
-        alert("Modification supprimée avec succès");
-        onClose();
-        window.location.reload();
-      } catch (err) {
-        console.error("Erreur:", err);
-        alert("Erreur lors de la suppression");
-      } finally {
-        setSaving(false);
-      }
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div className="flex items-center justify-between p-6 border-b-2 border-gray-800">
-          <div className="flex items-center gap-2">
-            <Edit2 className="w-5 h-5" />
-            <h3 className="text-xl font-bold">Modifier les heures comptabilisées</h3>
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-6 space-y-4">
-          <div className="bg-yellow-50 border-2 border-yellow-200 p-4 rounded flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
-            <div className="text-sm text-yellow-800">
-              <p className="font-bold mb-1">⚠️ MODIFICATION DES HEURES COMPTABILISÉES SEULEMENT</p>
-              <p className="mb-1">• Vous modifiez uniquement les <strong>heures comptabilisées</strong></p>
-              <p className="mb-1">• Les <strong>heures réelles de pointage</strong> restent inchangées</p>
-              <p>• Les modifications apparaîtront uniquement en mode "Heures comptabilisées"</p>
-            </div>
-          </div>
-
-          <div className="bg-gray-50 p-4 rounded">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="font-bold">Employé:</span>
-                <div className="mt-1">{employee.name}</div>
-              </div>
-              <div>
-                <span className="font-bold">Badge:</span>
-                <div className="mt-1">{employee.badgenumber}</div>
-              </div>
-              <div className="col-span-2">
-                <span className="font-bold">Date:</span>
-                <div className="mt-1">{dateStr}</div>
-              </div>
-            </div>
-          </div>
-
-          {attendance?.heure_entree_reelle && (
-            <div className="bg-blue-50 p-3 rounded text-sm">
-              <p className="font-bold mb-2">Heures réelles (pointage - NON MODIFIABLES):</p>
-              <div className="grid grid-cols-2 gap-2">
-                <div>Entrée: <strong className="text-blue-700">{attendance.heure_entree_reelle?.slice(0, 5)}</strong></div>
-                <div>Sortie: <strong className="text-blue-700">{attendance.heure_sortie_reelle?.slice(0, 5)}</strong></div>
-              </div>
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-bold mb-1">
-              Heure d'entrée comptabilisée *
-            </label>
-            <input
-              type="time"
-              value={formData.heure_entree}
-              onChange={(e) => setFormData({ ...formData, heure_entree: e.target.value })}
-              className="w-full px-3 py-2 border-2 border-yellow-300 rounded focus:border-yellow-600"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold mb-1">
-              Heure de sortie comptabilisée *
-            </label>
-            <input
-              type="time"
-              value={formData.heure_sortie}
-              onChange={(e) => setFormData({ ...formData, heure_sortie: e.target.value })}
-              className="w-full px-3 py-2 border-2 border-yellow-300 rounded focus:border-yellow-600"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold mb-1">
-              Motif de la modification
-            </label>
-            <textarea
-              value={formData.motif}
-              onChange={(e) => setFormData({ ...formData, motif: e.target.value })}
-              className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800"
-              rows="3"
-              placeholder="Ex: Oubli de pointage, Pointeuse en panne, etc."
-            />
-          </div>
-
-          <div className="flex gap-3 pt-4">
-            {attendance?.a_anomalie && (
-              <button
-                onClick={handleSupprimer}
-                disabled={saving}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-gray-400"
-              >
-                Supprimer
-              </button>
-            )}
-            <button
-              onClick={onClose}
-              className="flex-1 px-4 py-2 border-2 border-gray-300 rounded hover:bg-gray-50"
-              disabled={saving}
-            >
-              Annuler
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={saving}
-              className="flex-1 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 flex items-center justify-center gap-2 disabled:bg-gray-400"
-            >
-              {saving ? "Enregistrement..." : (
-                <>
-                  <Save className="w-4 h-4" />
-                  Enregistrer
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 };
 
 // Modal de gestion des horaires AVEC JOURS DE PAIEMENT
@@ -345,7 +175,6 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
                 onChange={(e) => setFormData({ ...formData, sortie_vendredi_paiement: e.target.value })}
                 className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-yellow-600"
               />
-              {/* <p className="text-xs text-gray-600 mt-1">Heure de sortie les vendredis marqués "P"</p> */}
             </div>
 
             <div className="mb-3">
@@ -356,7 +185,6 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
                 onChange={(e) => setFormData({ ...formData, sortie_samedi_paiement: e.target.value })}
                 className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-yellow-600"
               />
-              {/* <p className="text-xs text-gray-600 mt-1">Heure de sortie les samedis marqués "P"</p> */}
             </div>
           </div>
 
@@ -548,11 +376,6 @@ const AttendancePage = () => {
   const [showEvenementModal, setShowEvenementModal] = useState(false);
   const [evenementsMap, setEvenementsMap] = useState({});
 
-  const [showModifierHeuresModal, setShowModifierHeuresModal] = useState(false);
-  const [selectedHeures, setSelectedHeures] = useState(null);
-  const [anomaliesMap, setAnomaliesMap] = useState({});
-  const [anomaliesDetailsMap, setAnomaliesDetailsMap] = useState({});
-
   // Dictionnaire des horaires par section
   const horairesDict = React.useMemo(() => {
     const dict = {};
@@ -568,43 +391,6 @@ const AttendancePage = () => {
     });
     return dict;
   }, [horaires]);
-
-  const fetchAnomaliesMois = useCallback(async (annee, mois) => {
-    try {
-      const anomaliesData = await presenceService.getAnomalies(annee, mois);
-      
-      const newAnomaliesMap = {};
-      const newAnomaliesDetailsMap = {};
-      
-      if (anomaliesData.anomalies && anomaliesData.anomalies.length > 0) {
-        anomaliesData.anomalies.forEach((a) => {
-          const dateFormatted = formatDate(a.date);
-          if (dateFormatted) {
-            const key = `${a.userid}-${dateFormatted}`;
-            newAnomaliesMap[key] = true;
-            
-            newAnomaliesDetailsMap[key] = {
-              heure_entree_modifiee: a.heure_entree_modifiee,
-              heure_sortie_modifiee: a.heure_sortie_modifiee,
-              motif: a.motif,
-              modifie_par: a.modifie_par
-            };
-          }
-        });
-        
-        setAnomaliesMap(newAnomaliesMap);
-        setAnomaliesDetailsMap(newAnomaliesDetailsMap);
-      } else {
-        setAnomaliesMap({});
-        setAnomaliesDetailsMap({});
-      }
-      
-    } catch (err) {
-      console.error("Erreur chargement anomalies:", err);
-      setAnomaliesMap({});
-      setAnomaliesDetailsMap({});
-    }
-  }, []);
 
   const fetchEvenementsMois = useCallback(async (annee, mois) => {
     try {
@@ -647,10 +433,7 @@ const AttendancePage = () => {
       setPeriode(presencesData.periode);
       setPresences(presencesData.presences || []);
 
-      await Promise.all([
-        fetchEvenementsMois(annee, mois),
-        fetchAnomaliesMois(annee, mois)
-      ]);
+      await fetchEvenementsMois(annee, mois);
       
     } catch (err) {
       console.error("❌ Erreur lors du chargement:", err);
@@ -659,7 +442,7 @@ const AttendancePage = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [fetchEvenementsMois, fetchAnomaliesMois]);
+  }, [fetchEvenementsMois]);
 
   const fetchTypesEvenements = useCallback(async () => {
     try {
@@ -678,71 +461,6 @@ const AttendancePage = () => {
       console.error("Erreur:", err);
     }
   }, []);
-
-  const handleModifierHeuresClick = useCallback((employee, dateStr, attendance) => {
-    if (modeHeures === "reelles") {
-      alert("⚠️ Impossible de modifier en mode Heures Réelles.\nPassez en mode Heures Comptabilisées.");
-      return;
-    }
-
-    const dateFormatted = formatDate(dateStr);
-    
-    if (!dateFormatted) {
-      console.error('❌ Date invalide:', dateStr);
-      return;
-    }
-
-    const heuresData = {
-      userid: employee.userid,
-      badgenumber: employee.badgenumber,
-      name: employee.name,
-      date: dateFormatted,
-      attendance: attendance,
-    };
-    
-    setSelectedHeures(heuresData);
-    setShowModifierHeuresModal(true);
-  }, [modeHeures]);
-
-  const handleSaveHeuresModifiees = useCallback(async (formData) => {
-    try {
-      const { userid, date } = selectedHeures;
-
-      await presenceService.updateAnomalieByUserDate(
-        userid,
-        date,
-        formData.heure_entree || null,
-        formData.heure_sortie || null,
-        formData.motif,
-        'admin'
-      );
-
-      const key = `${userid}-${date}`;
-      setAnomaliesMap(prev => ({
-        ...prev,
-        [key]: true
-      }));
-
-      setAnomaliesDetailsMap(prev => ({
-        ...prev,
-        [key]: {
-          heure_entree_modifiee: formData.heure_entree,
-          heure_sortie_modifiee: formData.heure_sortie,
-          motif: formData.motif,
-          modifie_par: 'admin'
-        }
-      }));
-
-      setShowModifierHeuresModal(false);
-      setSelectedHeures(null);
-
-      alert("Heures comptabilisées modifiées avec succès !");
-      
-    } catch (err) {
-      console.error("❌ Erreur lors de la sauvegarde:", err);
-      alert("Erreur lors de la sauvegarde. Veuillez réessayer.");
-    }
-  }, [selectedHeures]);
 
   const handleEvenementClick = useCallback((employee, dateStr, attendance) => {
     const dateFormatted = formatDate(dateStr);
@@ -846,16 +564,7 @@ const AttendancePage = () => {
     }
   }, [selectedHoraire, fetchHoraires]);
 
-  const getHeuresAffichees = useCallback((employee, dateStr, attendance) => {
-    const dateFormatted = formatDate(dateStr);
-    const key = `${employee.userid}-${dateFormatted}`;
-    
-    const anomalie = anomaliesDetailsMap[key];
-    const aAnomalie = anomaliesMap[key] || attendance?.a_anomalie;
-    
-    // Récupérer l'horaire de la section
-    const horaire = horairesDict[employee.section] || horairesDict["ADMINISTRATION"] || {};
-    
+  const getHeuresAffichees = useCallback((attendance) => {
     let heureEntreeAffichee = "";
     let heureSortieAffichee = "";
     
@@ -867,32 +576,19 @@ const AttendancePage = () => {
         ? attendance.heure_sortie_reelle.slice(0, 5)
         : "";
     } else {
-      if (aAnomalie && anomalie) {
-        heureEntreeAffichee = anomalie.heure_entree_modifiee 
-          ? anomalie.heure_entree_modifiee.slice(0, 5)
-          : (attendance?.heure_entree_comptabilisee?.slice(0, 5) || "");
-        heureSortieAffichee = anomalie.heure_sortie_modifiee 
-          ? anomalie.heure_sortie_modifiee.slice(0, 5)
-          : (attendance?.heure_sortie_comptabilisee?.slice(0, 5) || "");
-      } else {
-        heureEntreeAffichee = attendance?.heure_entree_comptabilisee 
-          ? attendance.heure_entree_comptabilisee.slice(0, 5)
-          : "";
-        heureSortieAffichee = attendance?.heure_sortie_comptabilisee 
-          ? attendance.heure_sortie_comptabilisee.slice(0, 5)
-          : "";
-      }
+      heureEntreeAffichee = attendance?.heure_entree_comptabilisee 
+        ? attendance.heure_entree_comptabilisee.slice(0, 5)
+        : "";
+      heureSortieAffichee = attendance?.heure_sortie_comptabilisee 
+        ? attendance.heure_sortie_comptabilisee.slice(0, 5)
+        : "";
     }
     
     return {
       heureEntreeAffichee,
-      heureSortieAffichee,
-      aAnomalie,
-      anomalie,
-      modeHeures,
-      horaire
+      heureSortieAffichee
     };
-  }, [anomaliesMap, anomaliesDetailsMap, modeHeures, horairesDict]);
+  }, [modeHeures]);
 
   useEffect(() => {
     fetchPresences(currentYear, currentMonth);
@@ -967,16 +663,12 @@ const AttendancePage = () => {
   const getCellBackgroundColor = useCallback((attendance) => {
     if (!attendance) return 'transparent';
     
-    if (attendance.a_anomalie) {
-      return ''; // Rouge pâle pour anomalies
-    }
-    
     if (attendance.est_jour_paiement) {
-      return ''; // Jaune pâle pour jours de paiement
+      return 'bg-yellow-50'; // Jaune pâle pour jours de paiement
     }
     
     if (attendance.est_samedi) {
-      return ''; // Gris très clair pour samedis
+      return 'bg-gray-50'; // Gris très clair pour samedis
     }
     
     return 'transparent';
@@ -1337,47 +1029,33 @@ const AttendancePage = () => {
                         );
                       }
 
-                      const attendance = getAttendanceData(employee, dateObj.date);
-                      const evenementType = getEvenementForCell(employee.userid, dateObj.date);
-                      
-                      const { 
-                        heureEntreeAffichee, 
-                        heureSortieAffichee, 
-                        aAnomalie, 
-                        anomalie,
-                        modeHeures: currentMode 
-                      } = getHeuresAffichees(employee, dateObj.date, attendance);
-                      
-                      const entreeModifiee = currentMode === "comptabilisees" && aAnomalie && anomalie?.heure_entree_modifiee;
-                      const sortieModifiee = currentMode === "comptabilisees" && aAnomalie && anomalie?.heure_sortie_modifiee;
-                      const backgroundColor = getCellBackgroundColor(attendance);
+                    const attendance = getAttendanceData(employee, dateObj.date);
+                    const evenementType = getEvenementForCell(employee.userid, dateObj.date);
+                    
+                    const { 
+                      heureEntreeAffichee, 
+                      heureSortieAffichee 
+                    } = getHeuresAffichees(attendance);
+                    
+                    const backgroundColor = getCellBackgroundColor(attendance);
 
-                      return (
-                        <td
-                          key={dayIdx}
-                          className="border border-gray-600 p-0 text-center group"
-                          style={{ backgroundColor }}
-                        >
-                          <div className="flex flex-col h-full">
-                            {/* HEURE D'ENTRÉE */}
-                            <div
-                              onDoubleClick={currentMode === "comptabilisees" ? () => handleModifierHeuresClick(employee, dateObj.date, attendance) : undefined}
-                              className={`border-b border-gray-300 px-1 py-0.5 min-h-[20px] text-xs font-medium ${
-                                currentMode === "comptabilisees" ? 'cursor-pointer hover:bg-yellow-50' : 'cursor-default'
-                              } ${entreeModifiee ? '' : ''}`}
-                              title={currentMode === "comptabilisees" 
-                                ? "Double-clic pour modifier les heures comptabilisées" 
-                                : "Heures réelles (non modifiables)"}
-                            >
-                              {heureEntreeAffichee && (
-                                <span className="flex items-center justify-center gap-0.5">
-                                  {heureEntreeAffichee}
-                                  {entreeModifiee && (
-                                    <span className="text-gray-600 font-bold" title="Heure modifiée manuellement">*</span>
-                                  )}
-                                </span>
-                              )}
-                            </div>
+                    return (
+                      <td
+                        key={dayIdx}
+                        className="border border-gray-600 p-0 text-center group"
+                        style={{ backgroundColor }}
+                      >
+                        <div className="flex flex-col h-full">
+                          {/* HEURE D'ENTRÉE */}
+                          <div
+                            className={`border-b border-gray-300 px-1 py-0.5 min-h-[20px] text-xs font-medium`}
+                          >
+                            {heureEntreeAffichee && (
+                              <span className="flex items-center justify-center gap-0.5">
+                                {heureEntreeAffichee}
+                              </span>
+                            )}
+                          </div>
 
                             {/* ÉVÉNEMENT */}
                             <button
@@ -1392,30 +1070,21 @@ const AttendancePage = () => {
                                 : ""}
                             </button>
 
-                            {/* HEURE DE SORTIE */}
-                            <div
-                              onDoubleClick={currentMode === "comptabilisees" ? () => handleModifierHeuresClick(employee, dateObj.date, attendance) : undefined}
-                              className={`px-1 py-0.5 min-h-[20px] text-xs font-medium ${
-                                currentMode === "comptabilisees" ? 'cursor-pointer hover:bg-yellow-50' : 'cursor-default'
-                              } ${sortieModifiee ? '' : ''}`}
-                              title={currentMode === "comptabilisees" 
-                                ? "Double-clic pour modifier les heures comptabilisées" 
-                                : "Heures réelles (non modifiables)"}
-                            >
-                              {heureSortieAffichee && (
-                                <span className="flex items-center justify-center gap-0.5">
-                                  {heureSortieAffichee}
-                                  {sortieModifiee && (
-                                    <span className="text-gray-600 font-bold" title="Heure modifiée manuellement">*</span>
-                                  )}
-                                </span>
-                              )}
-                            </div>
+                          {/* HEURE DE SORTIE */}
+                          <div
+                            className={`px-1 py-0.5 min-h-[20px] text-xs font-medium`}
+                          >
+                            {heureSortieAffichee && (
+                              <span className="flex items-center justify-center gap-0.5">
+                                {heureSortieAffichee}
+                              </span>
+                            )}
                           </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
 
                   <tr className="border-b border-gray-400">
                     <td className="border-r-2 border-gray-800 p-1 sticky left-0 bg-gray-50 z-10"></td>
@@ -1443,19 +1112,6 @@ const AttendancePage = () => {
           onSave={handleSaveEvenement}
           onDelete={handleDeleteEvenement}
           typesEvenement={typesEvenement}
-        />
-      )}
-
-      {showModifierHeuresModal && selectedHeures && (
-        <ModifierHeuresModal
-          employee={selectedHeures}
-          dateStr={selectedHeures.date}
-          attendance={selectedHeures.attendance}
-          onClose={() => {
-            setShowModifierHeuresModal(false);
-            setSelectedHeures(null);
-          }}
-          onSave={handleSaveHeuresModifiees}
         />
       )}
 
