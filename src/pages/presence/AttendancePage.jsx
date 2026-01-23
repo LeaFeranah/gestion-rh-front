@@ -700,6 +700,26 @@ const AttendancePage = () => {
   // On filtre pour ne garder que les jours de la période actuelle
   const datesValides = dates.filter(dateObj => !dateObj.hors_periode);
 
+  const getVariableGroups = (array) => {
+  if (!array || array.length === 0) return [];
+
+  const groups = [];
+  
+  // 1. On prend les 5 premiers pour la page 1
+  const firstGroup = array.slice(0, 7);
+  groups.push(firstGroup);
+
+  // 2. On boucle sur le reste par paquets de 8
+  const remainingEmployees = array.slice(7);
+    for (let i = 0; i < remainingEmployees.length; i += 10) {
+      groups.push(remainingEmployees.slice(i, i + 10));
+    }
+
+    return groups;
+  };
+
+  const employeeGroups = getVariableGroups(employees);
+
   if (loading && !refreshing) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
@@ -961,116 +981,130 @@ const AttendancePage = () => {
           </div>
         </div>
 
-        <div className="bg-white border-2 border-gray-800 overflow-x-auto print:overflow-visible">
-          <table className="w-full border-collapse text-xs print:text-[10pt]">
-            <thead>
-              <tr className="bg-gray-100">
-                <th
-                  className="border-2 border-gray-800 p-2 sticky left-0 bg-gray-100 z-10"
-                  rowSpan="4"
-                >
-                  <div className="font-bold text-sm w-32">N° / NOM</div>
-                </th>
-                {weekNumbers.map((weekNum) => (
+        {employeeGroups.map((group, groupIdx) => (
+          <div 
+            key={groupIdx} 
+            className="bg-white border-x-2 border-b-2 border-gray-800 overflow-x-auto print:overflow-visible"
+            style={{ 
+              // Force le saut de page après chaque groupe
+              pageBreakAfter: 'always',
+              // Ajoute une bordure en haut pour les pages suivantes (2, 3, etc.)
+              // La page 1 n'en a pas besoin car elle suit l'en-tête de section
+              borderTop: groupIdx === 0 ? 'none' : '2px solid #1f2937',
+              // Optionnel : ajoute une marge en haut pour les pages suivantes à l'impression
+              marginTop: groupIdx === 0 ? '0' : '20px'
+            }}
+          >
+            <table className="w-full border-collapse text-xs print:text-[7.5pt] print:table-fixed">
+              <thead>
+                <tr className="bg-gray-100">
                   <th
-                    key={weekNum}
-                    colSpan={weeks[weekNum].length}
-                    className="border border-gray-600 p-1 font-bold"
+                    className="border-2 border-gray-800 p-2 sticky left-0 bg-gray-100 z-10 print:w-[150px]"
+                    rowSpan="4"
                   >
-                    Semaine {weekNum}
+                    <div className="font-bold text-sm w-32">N° / NOM</div>
                   </th>
-                ))}
-              </tr>
+                  {weekNumbers.map((weekNum) => (
+                    <th
+                      key={weekNum}
+                      colSpan={weeks[weekNum].length}
+                      className="border border-gray-600 p-1 font-bold"
+                    >
+                      Semaine {weekNum}
+                    </th>
+                  ))}
+                </tr>
 
-              <tr className="bg-gray-100">
-                {datesValides.map((date, idx) => (
-                  <th key={idx} className="border border-gray-600 p-1 min-w-16">
-                    <div className="font-bold">{date.code_affichage}</div>
-                  </th>
-                ))}
-              </tr>
+                <tr className="bg-gray-100">
+                  {datesValides.map((date, idx) => (
+                    <th key={idx} className="border border-gray-600 p-1 min-w-10">
+                      <div className="font-bold">{date.code_affichage}</div>
+                    </th>
+                  ))}
+                </tr>
 
-              <tr className="bg-gray-100">
-                {datesValides.map((date, idx) => (
-                  <th key={idx} className="border border-gray-600 p-1">
-                    <div className="text-xs">
-                      {new Date(date.date).toLocaleDateString("fr-FR", {
-                        weekday: "short",
-                      })}
-                    </div>
-                    <div className="text-xs text-gray-600">
-                      {new Date(date.date).getDate()}
-                    </div>
-                  </th>
-                ))}
-              </tr>
-
-              <tr className="bg-gray-100">
-                {datesValides.map((date, idx) => (
-                  <th key={idx} className="border border-gray-600 p-1">
-                    <div className="text-xs font-bold text-gray-700">
-                      {getMonthAbbreviation(date.date)}
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-
-            <tbody>
-              {employees.map((employee, empIdx) => (
-                <React.Fragment key={empIdx}>
-                  <tr className="border-b-2 border-gray-800">
-                    <td className="border-2 border-gray-800 p-2 sticky left-0 bg-white z-10">
-                      <div className="flex items-baseline gap-2">
-                        <span className="font-bold text-sm">
-                          {employee.badgenumber}
-                        </span>
-                        <span className="italic text-sm">{employee.name}</span>
+                <tr className="bg-gray-100">
+                  {datesValides.map((date, idx) => (
+                    <th key={idx} className="border border-gray-600 p-1">
+                      <div className="text-xs">
+                        {new Date(date.date).toLocaleDateString("fr-FR", {
+                          weekday: "short",
+                        })}
                       </div>
-                    </td>
+                      <div className="text-xs text-gray-600">
+                        {new Date(date.date).getDate()}
+                      </div>
+                    </th>
+                  ))}
+                </tr>
 
-                    {datesValides.map((dateObj, dayIdx) => {
-                      // Plus besoin du "if (dateObj.hors_periode)" ici
-                      const attendance = getAttendanceData(employee, dateObj.date);
-                      const evenementType = getEvenementForCell(employee.userid, dateObj.date);
-                      const { heureEntreeAffichee, heureSortieAffichee } = getHeuresAffichees(attendance);
-                      const backgroundColor = getCellBackgroundColor(attendance);
+                <tr className="bg-gray-100">
+                  {datesValides.map((date, idx) => (
+                    <th key={idx} className="border border-gray-600 p-1">
+                      <div className="text-xs font-bold text-gray-700">
+                        {getMonthAbbreviation(date.date)}
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
 
-                      return (
-                        <td
-                          key={dayIdx}
-                          className="border border-gray-600 p-0 text-center"
-                          style={{ backgroundColor }}
-                        >
-                          <div className="flex flex-col h-full">
-                            <div className="border-b border-gray-300 px-1 py-0.5 min-h-[20px]">
-                              {heureEntreeAffichee}
+              <tbody>
+                {group.map((employee, empIdx) => (
+                  <React.Fragment key={empIdx}>
+                    <tr className="border-b-2 border-gray-800">
+                      <td className="border-2 border-gray-800 p-2 sticky left-0 bg-white z-10">
+                        <div className="flex items-baseline gap-2">
+                          <span className="font-bold text-sm">
+                            {employee.badgenumber}
+                          </span>
+                          <span className="italic text-sm">{employee.name}</span>
+                        </div>
+                      </td>
+
+                      {datesValides.map((dateObj, dayIdx) => {
+                        // Plus besoin du "if (dateObj.hors_periode)" ici
+                        const attendance = getAttendanceData(employee, dateObj.date);
+                        const evenementType = getEvenementForCell(employee.userid, dateObj.date);
+                        const { heureEntreeAffichee, heureSortieAffichee } = getHeuresAffichees(attendance);
+                        const backgroundColor = getCellBackgroundColor(attendance);
+
+                        return (
+                          <td
+                            key={dayIdx}
+                            className="border border-gray-600 p-0 text-center"
+                            style={{ backgroundColor }}
+                          >
+                            <div className="flex flex-col h-full">
+                              <div className="border-b border-gray-300 px-1 py-0.5 min-h-[20px]">
+                                {heureEntreeAffichee}
+                              </div>
+                              {/* ÉVÉNEMENT */}
+                              <button
+                                onClick={() => handleEvenementClick(employee, dateObj.date, attendance)}
+                                className={`print:text-[7pt] border-b border-gray-300 px-1 py-0.5 min-h-[21px] text-xs font-bold w-full hover:bg-gray-50 transition-colors ${getEvenementTextColor(evenementType)}`}
+                                title={`Modifier l'événement (${evenementType})`}
+                              >
+                                {evenementType !== "X" ||
+                                attendance?.heure_entree_reelle ||
+                                attendance?.heure_sortie_reelle
+                                  ? evenementType
+                                  : ""}
+                              </button>
+                              <div className="px-1 py-0.5 min-h-[20px]">
+                                {heureSortieAffichee}
+                              </div>
                             </div>
-                            {/* ÉVÉNEMENT */}
-                            <button
-                              onClick={() => handleEvenementClick(employee, dateObj.date, attendance)}
-                              className={`border-b border-gray-300 px-1 py-0.5 min-h-[20px] text-xs font-bold w-full hover:bg-gray-50 transition-colors ${getEvenementTextColor(evenementType)}`}
-                              title={`Modifier l'événement (${evenementType})`}
-                            >
-                              {evenementType !== "X" ||
-                              attendance?.heure_entree_reelle ||
-                              attendance?.heure_sortie_reelle
-                                ? evenementType
-                                : ""}
-                            </button>
-                            <div className="px-1 py-0.5 min-h-[20px]">
-                              {heureSortieAffichee}
-                            </div>
-                          </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
       </div>
 
       {showEvenementModal && selectedEvenement && (
