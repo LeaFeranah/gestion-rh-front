@@ -1,5 +1,7 @@
+// attendancePage.js
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Settings, Edit2, Plus, Save, X, Trash2 } from "lucide-react";
+import { Settings, Edit2, Plus, Save, X, Trash2, AlertCircle } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
 import presenceService from "../../services/presenceService";
 import { useReactToPrint } from 'react-to-print';
 
@@ -78,7 +80,6 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
     heure_entree: horaire ? decimalToTime(horaire.heure_entree) : "07:30",
     heure_sortie: horaire ? decimalToTime(horaire.heure_sortie) : "17:50",
     sortie_samedi: horaire ? decimalToTime(horaire.sortie_samedi) : "15:30",
-    // NOUVEAUX CHAMPS POUR LES JOURS DE PAIEMENT
     sortie_vendredi_paiement: horaire ? decimalToTime(horaire.sortie_vendredi_paiement) : "17:33",
     sortie_samedi_paiement: horaire ? decimalToTime(horaire.sortie_samedi_paiement) : "13:00",
   });
@@ -97,7 +98,6 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
         heure_entree: timeToDecimal(formData.heure_entree),
         heure_sortie: timeToDecimal(formData.heure_sortie),
         sortie_samedi: timeToDecimal(formData.sortie_samedi),
-        // NOUVEAUX CHAMPS
         sortie_vendredi_paiement: timeToDecimal(formData.sortie_vendredi_paiement),
         sortie_samedi_paiement: timeToDecimal(formData.sortie_samedi_paiement),
       };
@@ -359,6 +359,7 @@ const EvenementModal = ({ evenement, onClose, onSave, onDelete, typesEvenement }
 };
 
 const AttendancePage = () => {
+  const navigate = useNavigate();
   const [presences, setPresences] = useState([]);
   const [periode, setPeriode] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -376,6 +377,8 @@ const AttendancePage = () => {
   const [selectedEvenement, setSelectedEvenement] = useState(null);
   const [showEvenementModal, setShowEvenementModal] = useState(false);
   const [evenementsMap, setEvenementsMap] = useState({});
+
+  const componentRef = useRef();
 
   // Dictionnaire des horaires par section
   const horairesDict = React.useMemo(() => {
@@ -545,11 +548,9 @@ const AttendancePage = () => {
   const handleSaveHoraire = useCallback(async (data) => {
     try {
       if (selectedHoraire) {
-        // Mise à jour
         const result = await presenceService.updateHoraireSection(selectedHoraire.section, data);
         console.log('✅ Horaire mis à jour:', result);
       } else {
-        // Création
         const result = await presenceService.createHoraireSection(data);
         console.log('✅ Horaire créé:', result);
       }
@@ -594,7 +595,7 @@ const AttendancePage = () => {
   useEffect(() => {
     fetchPresences(currentYear, currentMonth);
     fetchTypesEvenements();
-    fetchHoraires(); // Charger les horaires même quand on n'est pas dans la vue de gestion
+    fetchHoraires();
 
     if (showHoraires) {
       fetchHoraires();
@@ -638,12 +639,10 @@ const AttendancePage = () => {
   const groupDatesByWeek = useCallback(() => {
     const weeks = {};
     
-    // On ne travaille que sur les dates qui appartiennent à la période
     const datesDansPeriode = dates.filter(date => !date.hors_periode);
 
     datesDansPeriode.forEach((date) => {
       if (date.code_date && date.code_date.length > 0) {
-        // On récupère le numéro de semaine (ex: "51")
         const semaine = date.code_date[0]; 
         
         if (!weeks[semaine]) {
@@ -667,37 +666,31 @@ const AttendancePage = () => {
     return monthNames[date.getMonth()];
   }, []);
 
-  // Déterminer la couleur de fond en fonction du type de jour
   const getCellBackgroundColor = useCallback((attendance) => {
     if (!attendance) return 'transparent';
     
     if (attendance.est_jour_paiement) {
-      return 'bg-yellow-50'; // Jaune pâle pour jours de paiement
+      return 'bg-yellow-50';
     }
     
     if (attendance.est_samedi) {
-      return 'bg-gray-50'; // Gris très clair pour samedis
+      return 'bg-gray-50';
     }
     
     return 'transparent';
   }, []);
 
-  const employees = getEmployeeData();
-  const weeks = groupDatesByWeek();
-  const weekNumbers = Object.keys(weeks).sort((a, b) => {
-    // Logique simple : si on passe de semaine 52 à 1, il faut adapter le tri
-    return parseInt(a) - parseInt(b); 
-  });
-
-  const componentRef = useRef(); // 3. Créer la référence
-
-  // 4. Configurer la fonction d'impression
   const handlePrint = useReactToPrint({
-    contentRef: componentRef, // Correction pour les versions récentes
+    contentRef: componentRef,
     documentTitle: `Fiche_Presence_${periode?.mois}_${periode?.annee}`,
   });
 
-  // On filtre pour ne garder que les jours de la période actuelle
+  const employees = getEmployeeData();
+  const weeks = groupDatesByWeek();
+  const weekNumbers = Object.keys(weeks).sort((a, b) => {
+    return parseInt(a) - parseInt(b); 
+  });
+
   const datesValides = dates.filter(dateObj => !dateObj.hors_periode);
 
   if (loading && !refreshing) {
@@ -913,7 +906,16 @@ const AttendancePage = () => {
               onClick={() => setShowHoraires(true)}
               className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700"
             >
+              <Settings className="w-4 h-4" />
               Gérer les horaires
+            </button>
+
+            <button
+              onClick={() => navigate('/anomalies')}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              <AlertCircle className="w-4 h-4" />
+              Anomalies
             </button>
             
             <button
@@ -1030,7 +1032,6 @@ const AttendancePage = () => {
                     </td>
 
                     {datesValides.map((dateObj, dayIdx) => {
-                      // Plus besoin du "if (dateObj.hors_periode)" ici
                       const attendance = getAttendanceData(employee, dateObj.date);
                       const evenementType = getEvenementForCell(employee.userid, dateObj.date);
                       const { heureEntreeAffichee, heureSortieAffichee } = getHeuresAffichees(attendance);
@@ -1046,7 +1047,6 @@ const AttendancePage = () => {
                             <div className="border-b border-gray-300 px-1 py-0.5 min-h-[20px]">
                               {heureEntreeAffichee}
                             </div>
-                            {/* ÉVÉNEMENT */}
                             <button
                               onClick={() => handleEvenementClick(employee, dateObj.date, attendance)}
                               className={`border-b border-gray-300 px-1 py-0.5 min-h-[20px] text-xs font-bold w-full hover:bg-gray-50 transition-colors ${getEvenementTextColor(evenementType)}`}
