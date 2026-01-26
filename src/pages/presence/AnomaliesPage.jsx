@@ -506,76 +506,32 @@
 
 
 
-import React, { useState, useEffect, useCallback } from "react";
-import { AlertCircle, CheckCircle, Edit2, Save, X, RefreshCw } from "lucide-react";
-import anomalieService from "../../services/anomalieService";
-import presenceService from "../../services/presenceService";
 
-// Utilitaire pour convertir décimal vers HH:MM
-const decimalToTime = (decimal) => {
-  if (!decimal && decimal !== 0) return "00:00";
-  
-  const decimalNum = parseFloat(decimal);
-  const hours = Math.floor(decimalNum);
-  const minutes = Math.round((decimalNum - hours) * 60);
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-};
+
+import React, { useState, useEffect, useCallback } from "react";
+import { AlertCircle, CheckCircle, Edit2, Save, X, RefreshCw, ArrowLeftRight } from "lucide-react";
+import anomalieService from "../../services/anomalieService";
 
 const getEtatColor = (etat) => {
   const colors = {
-    absence_entree: "bg-red-100 text-red-700 border-red-300",
-    absence_sortie: "bg-orange-100 text-orange-700 border-orange-300",
-    entree_non_conforme: "bg-yellow-100 text-yellow-700 border-yellow-300",
-    sortie_non_conforme: "bg-yellow-100 text-yellow-700 border-yellow-300",
+    pas_entree: "bg-red-100 text-red-700 border-red-300",
+    pas_sortie: "bg-orange-100 text-orange-700 border-orange-300",
+    entree_sortie_non_conformes: "bg-yellow-100 text-yellow-700 border-yellow-300",
     ok: "bg-green-100 text-green-700 border-green-300",
   };
   return colors[etat] || "bg-gray-100 text-gray-700 border-gray-300";
 };
 
-const AnomalieRow = ({ anomalie, onUpdate, horairesDict }) => {
+const AnomalieRow = ({ anomalie, onUpdate }) => {
   const [editing, setEditing] = useState(false);
-  
-  // Récupérer l'horaire de la section avec useMemo pour éviter les re-rendus
-  const horaireSection = React.useMemo(() => {
-    return horairesDict[anomalie.section] || horairesDict["ADMINISTRATION"] || {};
-  }, [horairesDict, anomalie.section]);
-  
-  // Déterminer les heures prévues selon le type de jour avec useMemo
-  const heuresPrevues = React.useMemo(() => {
-    const date = new Date(anomalie.date);
-    const estSamedi = date.getDay() === 6;
-    
-    // Pour l'instant, on utilise les heures normales
-    // TODO: Vérifier si c'est un jour de paiement pour utiliser sortie_vendredi_paiement ou sortie_samedi_paiement
-    const heureEntree = decimalToTime(horaireSection.heure_entree || 7.50);
-    let heureSortie;
-    
-    if (estSamedi) {
-      heureSortie = decimalToTime(horaireSection.sortie_samedi || 15.50);
-    } else {
-      heureSortie = decimalToTime(horaireSection.heure_sortie || 17.50);
-    }
-    
-    return { heureEntree, heureSortie };
-  }, [horaireSection, anomalie.date]);
-  
   const [formData, setFormData] = useState({
-    heure_reelle_entree: anomalie.heure_reelle_entree || heuresPrevues.heureEntree,
-    heure_reelle_sortie: anomalie.heure_reelle_sortie || heuresPrevues.heureSortie,
+    heure_reelle_entree: anomalie.heure_reelle_entree || "",
+    heure_reelle_sortie: anomalie.heure_reelle_sortie || "",
+    heure_rectifiee_entree: anomalie.heure_rectifiee_entree || "",
+    heure_rectifiee_sortie: anomalie.heure_rectifiee_sortie || "",
     commentaire: anomalie.commentaire || "",
   });
   const [saving, setSaving] = useState(false);
-
-  // Mettre à jour formData quand les horaires changent
-  useEffect(() => {
-    if (!editing && !anomalie.heure_reelle_entree) {
-      setFormData(prev => ({
-        ...prev,
-        heure_reelle_entree: heuresPrevues.heureEntree,
-        heure_reelle_sortie: heuresPrevues.heureSortie,
-      }));
-    }
-  }, [heuresPrevues, editing, anomalie.heure_reelle_entree]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -591,6 +547,30 @@ const AnomalieRow = ({ anomalie, onUpdate, horairesDict }) => {
     }
   };
 
+  const handleInverser = () => {
+    setFormData({
+      ...formData,
+      heure_rectifiee_entree: formData.heure_rectifiee_sortie,
+      heure_rectifiee_sortie: formData.heure_rectifiee_entree,
+    });
+  };
+
+  const handleCopierBrut = () => {
+    setFormData({
+      ...formData,
+      heure_rectifiee_entree: anomalie.heure_brute_entree || "",
+      heure_rectifiee_sortie: anomalie.heure_brute_sortie || "",
+    });
+  };
+
+  const handleCopierReel = () => {
+    setFormData({
+      ...formData,
+      heure_rectifiee_entree: formData.heure_reelle_entree,
+      heure_rectifiee_sortie: formData.heure_reelle_sortie,
+    });
+  };
+
   return (
     <tr className="border-b-2 border-gray-300 hover:bg-gray-50">
       <td className="border-2 border-gray-300 p-2 font-semibold">
@@ -600,12 +580,9 @@ const AnomalieRow = ({ anomalie, onUpdate, horairesDict }) => {
         {anomalie.badgenumber}
       </td>
       <td className="border-2 border-gray-300 p-2">{anomalie.user_name}</td>
-      <td className="border-2 border-gray-300 p-2 text-center text-xs">
-        {anomalie.checktype || "-"}
-      </td>
 
-      {/* Code date RÉEL - TOUJOURS affiche les heures prévues par section (modifiable) */}
-      <td className="border-2 border-gray-300 p-2 text-center bg-yellow-50">
+      {/* Code date RÉEL (modifiable) */}
+      <td className="border-2 border-gray-300 p-2 text-center bg-blue-50">
         <div className="space-y-1">
           {editing ? (
             <>
@@ -616,7 +593,6 @@ const AnomalieRow = ({ anomalie, onUpdate, horairesDict }) => {
                   setFormData({ ...formData, heure_reelle_entree: e.target.value })
                 }
                 className="w-full px-2 py-1 border rounded text-sm"
-                placeholder={heuresPrevues.heureEntree}
               />
               <input
                 type="time"
@@ -625,50 +601,96 @@ const AnomalieRow = ({ anomalie, onUpdate, horairesDict }) => {
                   setFormData({ ...formData, heure_reelle_sortie: e.target.value })
                 }
                 className="w-full px-2 py-1 border rounded text-sm"
-                placeholder={heuresPrevues.heureSortie}
               />
             </>
           ) : (
             <>
-              <div className="text-sm font-semibold text-yellow-700">
-                E: {heuresPrevues.heureEntree}
+              <div className="text-sm font-medium">
+                {anomalie.heure_reelle_entree
+                  ? anomalie.heure_reelle_entree.slice(0, 5)
+                  : "-"}
               </div>
-              <div className="text-sm font-semibold text-yellow-700">
-                S: {heuresPrevues.heureSortie}
-              </div>
-              <div className="text-xs text-gray-500 italic mt-1">
-                (Horaire {anomalie.section})
+              <div className="text-sm font-medium">
+                {anomalie.heure_reelle_sortie
+                  ? anomalie.heure_reelle_sortie.slice(0, 5)
+                  : "-"}
               </div>
             </>
           )}
         </div>
       </td>
 
-      {/* Code date P (comptabilisées) */}
-      <td className="border-2 border-gray-300 p-2 text-center bg-blue-50">
+      {/* Code date RECTIFIE (modifiable) */}
+      <td className="border-2 border-gray-300 p-2 text-center bg-green-50">
         <div className="space-y-1">
-          <div className="text-sm">
-            {anomalie.heure_comptabilisee_entree
-              ? anomalie.heure_comptabilisee_entree.slice(0, 5)
-              : "-"}
-          </div>
-          <div className="text-sm">
-            {anomalie.heure_comptabilisee_sortie
-              ? anomalie.heure_comptabilisee_sortie.slice(0, 5)
-              : "-"}
-          </div>
+          {editing ? (
+            <>
+              <input
+                type="time"
+                value={formData.heure_rectifiee_entree}
+                onChange={(e) =>
+                  setFormData({ ...formData, heure_rectifiee_entree: e.target.value })
+                }
+                className="w-full px-2 py-1 border rounded text-sm"
+              />
+              <input
+                type="time"
+                value={formData.heure_rectifiee_sortie}
+                onChange={(e) =>
+                  setFormData({ ...formData, heure_rectifiee_sortie: e.target.value })
+                }
+                className="w-full px-2 py-1 border rounded text-sm"
+              />
+              <div className="flex gap-1 mt-2">
+                <button
+                  onClick={handleInverser}
+                  className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                  title="Inverser entrée et sortie"
+                >
+                  <ArrowLeftRight className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={handleCopierBrut}
+                  className="px-2 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700"
+                  title="Copier depuis brut"
+                >
+                  B
+                </button>
+                <button
+                  onClick={handleCopierReel}
+                  className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                  title="Copier depuis réel"
+                >
+                  R
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-sm font-medium">
+                {anomalie.heure_rectifiee_entree
+                  ? anomalie.heure_rectifiee_entree.slice(0, 5)
+                  : "-"}
+              </div>
+              <div className="text-sm font-medium">
+                {anomalie.heure_rectifiee_sortie
+                  ? anomalie.heure_rectifiee_sortie.slice(0, 5)
+                  : "-"}
+              </div>
+            </>
+          )}
         </div>
       </td>
 
-      {/* Code date B (brutes - NON MODIFIABLE) */}
+      {/* Code date BRUT (non modifiable) */}
       <td className="border-2 border-gray-300 p-2 text-center bg-gray-100">
         <div className="space-y-1">
-          <div className="text-sm">
+          <div className="text-sm text-gray-600">
             {anomalie.heure_brute_entree
               ? anomalie.heure_brute_entree.slice(0, 5)
               : "-"}
           </div>
-          <div className="text-sm">
+          <div className="text-sm text-gray-600">
             {anomalie.heure_brute_sortie
               ? anomalie.heure_brute_sortie.slice(0, 5)
               : "-"}
@@ -721,29 +743,8 @@ const AnomaliesPage = () => {
   const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-  const [selectedSection, setSelectedSection] = useState("all");
-  const [selectedDate, setSelectedDate] = useState("all");
   const [detecting, setDetecting] = useState(false);
   const [stats, setStats] = useState(null);
-  const [horaires, setHoraires] = useState([]);
-
-  // Dictionnaire des horaires par section
-  const horairesDict = React.useMemo(() => {
-    const dict = {};
-    horaires.forEach(h => {
-      dict[h.section] = h;
-    });
-    return dict;
-  }, [horaires]);
-
-  const fetchHoraires = useCallback(async () => {
-    try {
-      const horairesData = await presenceService.getHorairesSection();
-      setHoraires(horairesData.horaires || []);
-    } catch (err) {
-      console.error("Erreur chargement horaires:", err);
-    }
-  }, []);
 
   const fetchAnomalies = useCallback(async () => {
     try {
@@ -754,7 +755,6 @@ const AnomaliesPage = () => {
       );
       setSectionsData(data.sections || []);
 
-      // Récupérer aussi les statistiques globales
       const statsData = await anomalieService.getAnomalies(
         currentYear,
         currentMonth
@@ -762,7 +762,6 @@ const AnomaliesPage = () => {
       setStats(statsData.statistiques);
     } catch (err) {
       console.error("Erreur:", err);
-      alert("Erreur lors du chargement des anomalies");
     } finally {
       setLoading(false);
     }
@@ -794,43 +793,10 @@ const AnomaliesPage = () => {
   };
 
   useEffect(() => {
-    fetchHoraires();
     fetchAnomalies();
-  }, [fetchHoraires, fetchAnomalies]);
+  }, [fetchAnomalies]);
 
-  // Filtrer les données
-  const filteredData = React.useMemo(() => {
-    let result = sectionsData;
 
-    if (selectedSection !== "all") {
-      result = result.filter((s) => s.section === selectedSection);
-    }
-
-    if (selectedDate !== "all") {
-      result = result.map((section) => ({
-        ...section,
-        par_date: {
-          [selectedDate]: section.par_date[selectedDate] || [],
-        },
-      }));
-    }
-
-    return result;
-  }, [sectionsData, selectedSection, selectedDate]);
-
-  // Liste des dates uniques
-  const allDates = React.useMemo(() => {
-    const dates = new Set();
-    sectionsData.forEach((section) => {
-      Object.keys(section.par_date).forEach((date) => dates.add(date));
-    });
-    return Array.from(dates).sort();
-  }, [sectionsData]);
-
-  // Liste des sections uniques
-  const allSections = React.useMemo(() => {
-    return sectionsData.map((s) => s.section).sort();
-  }, [sectionsData]);
 
   if (loading && sectionsData.length === 0) {
     return (
@@ -865,18 +831,11 @@ const AnomaliesPage = () => {
                   onChange={(e) => setCurrentMonth(parseInt(e.target.value))}
                   className="px-3 py-2 border border-gray-300 rounded"
                 >
-                  <option value={1}>Janvier</option>
-                  <option value={2}>Février</option>
-                  <option value={3}>Mars</option>
-                  <option value={4}>Avril</option>
-                  <option value={5}>Mai</option>
-                  <option value={6}>Juin</option>
-                  <option value={7}>Juillet</option>
-                  <option value={8}>Août</option>
-                  <option value={9}>Septembre</option>
-                  <option value={10}>Octobre</option>
-                  <option value={11}>Novembre</option>
-                  <option value={12}>Décembre</option>
+                  {[...Array(12)].map((_, i) => (
+                    <option key={i + 1} value={i + 1}>
+                      {new Date(2000, i).toLocaleDateString('fr-FR', { month: 'long' })}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -945,63 +904,40 @@ const AnomaliesPage = () => {
           </div>
         )}
 
-        {/* Filtres */}
-        <div className="flex gap-4 mt-4 border-t-2 border-gray-800 pt-4">
-          <div className="flex-1">
-            <label className="block text-xs text-gray-600 mb-1">
-              Filtrer par section
-            </label>
-            <select
-              value={selectedSection}
-              onChange={(e) => setSelectedSection(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded"
-            >
-              <option value="all">Toutes les sections</option>
-              {allSections.map((section) => (
-                <option key={section} value={section}>
-                  {section}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex-1">
-            <label className="block text-xs text-gray-600 mb-1">
-              Filtrer par date
-            </label>
-            <select
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded"
-            >
-              <option value="all">Toutes les dates</option>
-              {allDates.map((date) => (
-                <option key={date} value={date}>
-                  {new Date(date).toLocaleDateString("fr-FR")}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
         {/* Légende */}
         <div className="mt-4 border-t-2 border-gray-800 pt-4">
-          <div className="text-sm font-bold mb-2">Légende des colonnes:</div>
-          <div className="grid grid-cols-3 gap-4 text-xs">
-            <div className="bg-yellow-50 p-2 rounded border-2 border-yellow-200">
-              <span className="font-bold">Code date RÉEL:</span> Heures prévues par section (modifiable)
+          <div className="text-sm font-bold mb-2">Règles de gestion:</div>
+          <div className="grid grid-cols-2 gap-4 text-xs bg-gray-50 p-4 rounded">
+            <div>
+              <div className="font-bold text-blue-700 mb-1">Code date RÉEL (R):</div>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Heures prévues par section</li>
+                <li>MODIFIABLE manuellement</li>
+                <li>Objectif: Réel = Rectifié → État OK</li>
+              </ul>
             </div>
-            <div className="bg-blue-50 p-2 rounded border-2 border-blue-200">
-              <span className="font-bold">Code date P:</span> Heures comptabilisées (identiques aux réelles)
+            <div>
+              <div className="font-bold text-green-700 mb-1">Code date RECTIFIE (P):</div>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Heures corrigées</li>
+                <li>MODIFIABLE manuellement</li>
+                <li>Si absent: mettre NULL pour OK</li>
+              </ul>
             </div>
-            <div className="bg-gray-100 p-2 rounded border-2 border-gray-300">
-              <span className="font-bold">Code date B:</span> Heures brutes du pointage (non modifiable)
+            <div className="col-span-2">
+              <div className="font-bold text-gray-700 mb-1">Code date BRUT (B):</div>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Heures de pointage brutes</li>
+                <li>NON MODIFIABLE</li>
+                <li>Source: table CheckInOut (O=entrée, I=sortie)</li>
+              </ul>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Tableau des anomalies par section */}
-      {filteredData.length === 0 ? (
+      {/* Tableau des anomalies */}
+      {sectionsData.length === 0 ? (
         <div className="bg-white border-2 border-gray-800 p-8 text-center">
           <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
           <p className="text-xl font-bold text-gray-700">
@@ -1012,7 +948,7 @@ const AnomaliesPage = () => {
           </p>
         </div>
       ) : (
-        filteredData.map((section) => (
+        sectionsData.map((section) => (
           <div key={section.section} className="mb-6">
             <div className="bg-gray-800 text-white px-4 py-3 font-bold flex items-center justify-between">
               <span>{section.section}</span>
@@ -1042,15 +978,14 @@ const AnomaliesPage = () => {
                         <th className="border-2 border-gray-300 p-2">Section</th>
                         <th className="border-2 border-gray-300 p-2">Badge</th>
                         <th className="border-2 border-gray-300 p-2">Nom</th>
-                        <th className="border-2 border-gray-300 p-2">Type</th>
-                        <th className="border-2 border-gray-300 p-2 bg-yellow-50">
-                          Code date RÉEL
-                        </th>
                         <th className="border-2 border-gray-300 p-2 bg-blue-50">
-                          Code date P
+                          Code date RÉEL (R)
+                        </th>
+                        <th className="border-2 border-gray-300 p-2 bg-green-50">
+                          Code date RECTIFIE (P)
                         </th>
                         <th className="border-2 border-gray-300 p-2 bg-gray-100">
-                          Code date B
+                          Code date BRUT (B)
                         </th>
                         <th className="border-2 border-gray-300 p-2">État</th>
                       </tr>
@@ -1061,7 +996,6 @@ const AnomaliesPage = () => {
                           key={anomalie.id}
                           anomalie={anomalie}
                           onUpdate={fetchAnomalies}
-                          horairesDict={horairesDict}
                         />
                       ))}
                     </tbody>
