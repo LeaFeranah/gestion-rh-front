@@ -759,6 +759,8 @@ const AnomaliesPage = () => {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [detecting, setDetecting] = useState(false);
   const [stats, setStats] = useState(null);
+  const [selectedSection, setSelectedSection] = useState("all");
+  const [selectedDate, setSelectedDate] = useState("all");
 
   const fetchAnomalies = useCallback(async () => {
     try {
@@ -810,7 +812,51 @@ const AnomaliesPage = () => {
     fetchAnomalies();
   }, [fetchAnomalies]);
 
+  // Liste des sections uniques
+  const allSections = React.useMemo(() => {
+    return sectionsData.map((s) => s.section).sort();
+  }, [sectionsData]);
 
+  // Filtrer les données
+  const filteredData = React.useMemo(() => {
+    let result = sectionsData;
+
+    if (selectedSection !== "all") {
+      result = result.filter((s) => s.section === selectedSection);
+    }
+
+    if (selectedDate !== "all") {
+      result = result.map((section) => ({
+        ...section,
+        par_date: {
+          [selectedDate]: section.par_date[selectedDate] || [],
+        },
+      }));
+    }
+
+    return result;
+  }, [sectionsData, selectedSection, selectedDate]);
+
+  // currentMonth : 1 à 12
+  // currentYear : année sélectionnée
+  const getPeriodRange = (month, year) => {
+    // Début : 21 du mois précédent
+    const start = new Date(year, month - 1, 22);
+    if (month === 1) {
+      start.setFullYear(year - 1);
+      start.setMonth(11); // Décembre
+    } else {
+      start.setMonth(month - 2); // mois précédent
+    }
+
+    // Fin : 20 du mois sélectionné
+    const end = new Date(year, month - 1, 21);
+
+    // Retour au format YYYY-MM-DD pour <input type="date">
+    const format = (d) => d.toISOString().split("T")[0];
+
+    return { min: format(start), max: format(end) };
+  };
 
   if (loading && sectionsData.length === 0) {
     return (
@@ -824,26 +870,35 @@ const AnomaliesPage = () => {
   return (
     <div className="p-4 bg-gray-50 min-h-screen">
       {/* En-tête */}
-      <div className="bg-white border-2 border-gray-800 mb-4 p-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-white shadow-md rounded-lg border border-gray-200 mb-6 p-6">
+        {/* ===== Header principal ===== */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-0">
+          {/* Badge + titre */}
           <div className="flex items-center gap-4">
-            <div className="bg-red-600 text-white px-6 py-3 font-bold text-lg flex items-center gap-2">
-              <AlertCircle className="w-6 h-6" />
-              ANOMALIES
+            <div className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg font-semibold text-sm shadow">
+              <AlertCircle className="w-5 h-5" />
+              Anomalies
             </div>
-            <h1 className="text-2xl font-bold uppercase">
-              Gestion des Anomalies de Pointage
-            </h1>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">
+                Gestion des Anomalies de Pointage
+              </h1>
+              <p className="text-sm text-gray-500 mt-1">
+                Suivi et correction des anomalies de présence par mois et par section
+              </p>
+            </div>
           </div>
 
-          <div className="text-right">
-            <div className="flex gap-3 mb-3">
+          {/* Filtres mois/année + bouton */}
+          <div className="flex flex-col md:flex-row md:items-end md:gap-4 w-full md:w-auto">
+            <div className="flex gap-3">
+              {/* Mois */}
               <div>
                 <label className="block text-xs text-gray-600 mb-1">Mois</label>
                 <select
                   value={currentMonth}
                   onChange={(e) => setCurrentMonth(parseInt(e.target.value))}
-                  className="px-3 py-2 border border-gray-300 rounded"
+                  className="px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 >
                   {[...Array(12)].map((_, i) => (
                     <option key={i + 1} value={i + 1}>
@@ -852,12 +907,14 @@ const AnomaliesPage = () => {
                   ))}
                 </select>
               </div>
+
+              {/* Année */}
               <div>
                 <label className="block text-xs text-gray-600 mb-1">Année</label>
                 <select
                   value={currentYear}
                   onChange={(e) => setCurrentYear(parseInt(e.target.value))}
-                  className="px-3 py-2 border border-gray-300 rounded"
+                  className="px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 >
                   {[...Array(11)].map((_, i) => {
                     const year = 2020 + i;
@@ -870,10 +927,12 @@ const AnomaliesPage = () => {
                 </select>
               </div>
             </div>
+
+            {/* Bouton */}
             <button
               onClick={handleDetect}
               disabled={detecting}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+              className="mt-3 md:mt-0 w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 disabled:bg-gray-400 transition"
             >
               {detecting ? (
                 <>
@@ -890,26 +949,22 @@ const AnomaliesPage = () => {
           </div>
         </div>
 
-        {/* Statistiques */}
+        {/* ===== Statistiques ===== */}
         {stats && (
-          <div className="grid grid-cols-4 gap-4 border-t-2 border-gray-800 pt-4">
-            <div className="bg-gray-100 p-3 rounded">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+            <div className="bg-gray-100 p-4 rounded-lg shadow">
               <div className="text-2xl font-bold">{stats.total}</div>
               <div className="text-sm text-gray-600">Total anomalies</div>
             </div>
-            <div className="bg-red-100 p-3 rounded">
-              <div className="text-2xl font-bold text-red-700">
-                {stats.non_corrigees}
-              </div>
+            <div className="bg-red-100 p-4 rounded-lg shadow">
+              <div className="text-2xl font-bold text-red-700">{stats.non_corrigees}</div>
               <div className="text-sm text-red-700">Non corrigées</div>
             </div>
-            <div className="bg-green-100 p-3 rounded">
-              <div className="text-2xl font-bold text-green-700">
-                {stats.corrigees}
-              </div>
+            <div className="bg-green-100 p-4 rounded-lg shadow">
+              <div className="text-2xl font-bold text-green-700">{stats.corrigees}</div>
               <div className="text-sm text-green-700">Corrigées</div>
             </div>
-            <div className="bg-blue-100 p-3 rounded">
+            <div className="bg-blue-100 p-4 rounded-lg shadow">
               <div className="text-2xl font-bold text-blue-700">
                 {Math.round((stats.corrigees / stats.total) * 100) || 0}%
               </div>
@@ -918,49 +973,44 @@ const AnomaliesPage = () => {
           </div>
         )}
 
-        {/* Légende */}
-        <div className="mt-4 border-t-2 border-gray-800 pt-4">
-          <div className="text-sm font-bold mb-2">Règles de gestion:</div>
-          <div className="grid grid-cols-2 gap-4 text-xs bg-gray-50 p-4 rounded">
-            <div>
-              <div className="font-bold text-blue-700 mb-1">Code date RÉEL (R):</div>
-              <ul className="list-disc list-inside space-y-1">
-                <li>Heures prévues par section</li>
-                <li>MODIFIABLE manuellement</li>
-                <li>Objectif: Réel = Rectifié → État OK</li>
-              </ul>
-            </div>
-            <div>
-              <div className="font-bold text-green-700 mb-1">Code date RECTIFIE (P):</div>
-              <ul className="list-disc list-inside space-y-1">
-                <li>Heures corrigées</li>
-                <li>MODIFIABLE manuellement</li>
-                <li>Si absent: mettre NULL pour OK</li>
-                <li>Bouton "Réel = Rectifié" pour égaliser les heures</li>
-              </ul>
-            </div>
-            <div className="col-span-2">
-              <div className="font-bold text-gray-700 mb-1">Code date BRUT (B):</div>
-              <ul className="list-disc list-inside space-y-1">
-                <li>Heures de pointage brutes</li>
-                <li>NON MODIFIABLE</li>
-                <li>Source: table CheckInOut (O=entrée, I=sortie)</li>
-              </ul>
-            </div>
-            <div className="col-span-2 bg-yellow-50 p-3 rounded border border-yellow-300">
-              <div className="font-bold text-yellow-800 mb-1">💡 Cas d'usage - Retard avec inversion:</div>
-              <ol className="list-decimal list-inside space-y-1 text-yellow-900">
-                <li>Corriger l'inversion dans "Rectifié" (entrée/sortie)</li>
-                <li>Cliquer sur "Réel = Rectifié" pour accepter le retard</li>
-                <li>L'anomalie passe automatiquement à l'état "OK"</li>
-              </ol>
-            </div>
+        {/* ===== Filtres supplémentaires ===== */}
+        <div className="flex flex-col md:flex-row gap-4 mt-6">
+          {/* Filtrer par section */}
+          <div className="flex-1">
+            <label className="block text-xs text-gray-600 mb-1">Filtrer par section</label>
+            <select
+              value={selectedSection}
+              onChange={(e) => setSelectedSection(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">Toutes les sections</option>
+              {allSections.map((section) => (
+                <option key={section} value={section}>{section}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Filtrer par date */}
+          <div className="flex-1">
+            <label className="block text-xs text-gray-600 mb-1">Filtrer par date</label>
+            {currentMonth && currentYear && (
+              <input
+                type="date"
+                value={selectedDate === "all" ? "" : selectedDate}
+                min={getPeriodRange(currentMonth, currentYear).min}
+                max={getPeriodRange(currentMonth, currentYear).max}
+                onChange={(e) => setSelectedDate(e.target.value || "all")}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              />
+            )}
           </div>
         </div>
       </div>
 
+
+
       {/* Tableau des anomalies */}
-      {sectionsData.length === 0 ? (
+      {filteredData.length === 0 ? (
         <div className="bg-white border-2 border-gray-800 p-8 text-center">
           <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
           <p className="text-xl font-bold text-gray-700">
@@ -971,46 +1021,56 @@ const AnomaliesPage = () => {
           </p>
         </div>
       ) : (
-        sectionsData.map((section) => (
+        filteredData.map((section) => (
           <div key={section.section} className="mb-6">
-            <div className="bg-gray-800 text-white px-4 py-3 font-bold flex items-center justify-between">
-              <span>{section.section}</span>
-              <span className="text-sm">
-                {section.total} anomalie(s) - {section.corrigees} corrigée(s)
-              </span>
+            {/* Header Section */}
+            <div className="flex items-center justify-between bg-gray-900 text-white px-5 py-3 rounded-lg shadow-md border-l-4 border-red-600 mb-2">
+              <span className="text-lg font-semibold">{section.section}</span>
+              <div className="flex items-center gap-3 text-sm">
+                <span className="bg-red-600 px-2 py-0.5 rounded-full font-semibold text-white">
+                  {section.total}
+                </span>
+                <span className="text-gray-300">anomalie(s)</span>
+                <span className="bg-green-600 px-2 py-0.5 rounded-full font-semibold text-white">
+                  {section.corrigees}
+                </span>
+                <span className="text-gray-300">corrigée(s)</span>
+              </div>
             </div>
 
+            {/* Dates */}
             {Object.entries(section.par_date).map(([dateStr, anomalies]) => (
-              <div key={dateStr} className="bg-white border-2 border-gray-800 mb-2">
-                <div className="bg-gray-100 px-4 py-2 font-semibold border-b-2 border-gray-800">
-                  {new Date(dateStr).toLocaleDateString("fr-FR", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                  <span className="ml-4 text-sm text-gray-600">
-                    ({anomalies.length} anomalie(s))
+              <div key={dateStr} className="bg-white border border-gray-200 rounded-lg mb-4 shadow-sm">
+                <div className="bg-gray-100 px-4 py-2 font-semibold border-b border-gray-300 rounded-t-lg flex justify-between items-center">
+                  <span>
+                    {new Date(dateStr).toLocaleDateString("fr-FR", {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
                   </span>
+                  <span className="text-sm text-gray-500">({anomalies.length} anomalie(s))</span>
                 </div>
 
+                {/* Tableau */}
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse text-sm">
                     <thead>
-                      <tr className="bg-gray-200">
-                        <th className="border-2 border-gray-300 p-2">Section</th>
-                        <th className="border-2 border-gray-300 p-2">Badge</th>
-                        <th className="border-2 border-gray-300 p-2">Nom</th>
-                        <th className="border-2 border-gray-300 p-2 bg-blue-50">
-                          Code date RÉEL (R)
+                      <tr className="bg-gray-200 text-center align-middle">
+                        <th className="border border-gray-300 p-2">Section</th>
+                        <th className="border border-gray-300 p-2">Badge</th>
+                        <th className="border border-gray-300 p-2">Nom</th>
+                        <th className="border border-gray-300 p-2 bg-blue-100">
+                          {anomalies[0].code_date}(R)
                         </th>
-                        <th className="border-2 border-gray-300 p-2 bg-green-50">
-                          Code date RECTIFIE (P)
+                        <th className="border border-gray-300 p-2 bg-green-100">
+                          {anomalies[0].code_date}(P)
                         </th>
-                        <th className="border-2 border-gray-300 p-2 bg-gray-100">
-                          Code date BRUT (B)
+                        <th className="border border-gray-300 p-2 bg-yellow-100">
+                          {anomalies[0].code_date}(B)
                         </th>
-                        <th className="border-2 border-gray-300 p-2">État</th>
+                        <th className="border border-gray-300 p-2">État</th>
                       </tr>
                     </thead>
                     <tbody>
