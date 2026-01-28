@@ -1,14 +1,24 @@
 // attendancePage.js - Version sans badges B/R
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Settings, Edit2, Plus, Save, X, Trash2, AlertCircle, CheckCircle, RefreshCw } from "lucide-react";
-import { useNavigate } from 'react-router-dom';
+import {
+  Settings,
+  Edit2,
+  Plus,
+  Save,
+  X,
+  Trash2,
+  AlertCircle,
+  CheckCircle,
+  RefreshCw,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import presenceService from "../../services/presenceService";
-import { useReactToPrint } from 'react-to-print';
+import { useReactToPrint } from "react-to-print";
 
 // Utilitaires pour conversion heures
 const decimalToTime = (decimal) => {
   if (!decimal && decimal !== 0) return "00:00";
-  
+
   const decimalNum = parseFloat(decimal);
   const hours = Math.floor(decimalNum);
   const minutes = Math.round((decimalNum - hours) * 60);
@@ -16,19 +26,19 @@ const decimalToTime = (decimal) => {
 };
 
 const formatDate = (dateStr) => {
-  if (typeof dateStr === 'string' && dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+  if (typeof dateStr === "string" && dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
     return dateStr;
   }
-  
+
   const date = new Date(dateStr);
   if (isNaN(date.getTime())) {
-    console.error('❌ Date invalide:', dateStr);
-    return '';
+    console.error("❌ Date invalide:", dateStr);
+    return "";
   }
-  
+
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
 
@@ -72,8 +82,12 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
     heure_entree: horaire ? decimalToTime(horaire.heure_entree) : "07:30",
     heure_sortie: horaire ? decimalToTime(horaire.heure_sortie) : "17:50",
     sortie_samedi: horaire ? decimalToTime(horaire.sortie_samedi) : "15:30",
-    sortie_vendredi_paiement: horaire ? decimalToTime(horaire.sortie_vendredi_paiement) : "17:33",
-    sortie_samedi_paiement: horaire ? decimalToTime(horaire.sortie_samedi_paiement) : "13:00",
+    sortie_vendredi_paiement: horaire
+      ? decimalToTime(horaire.sortie_vendredi_paiement)
+      : "17:33",
+    sortie_samedi_paiement: horaire
+      ? decimalToTime(horaire.sortie_samedi_paiement)
+      : "13:00",
   });
   const [saving, setSaving] = useState(false);
 
@@ -87,11 +101,15 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
     try {
       const data = {
         section: formData.section,
-        heure_entree: parseFloat(formData.heure_entree.replace(':', '.')),
-        heure_sortie: parseFloat(formData.heure_sortie.replace(':', '.')),
-        sortie_samedi: parseFloat(formData.sortie_samedi.replace(':', '.')),
-        sortie_vendredi_paiement: parseFloat(formData.sortie_vendredi_paiement.replace(':', '.')),
-        sortie_samedi_paiement: parseFloat(formData.sortie_samedi_paiement.replace(':', '.')),
+        heure_entree: parseFloat(formData.heure_entree.replace(":", ".")),
+        heure_sortie: parseFloat(formData.heure_sortie.replace(":", ".")),
+        sortie_samedi: parseFloat(formData.sortie_samedi.replace(":", ".")),
+        sortie_vendredi_paiement: parseFloat(
+          formData.sortie_vendredi_paiement.replace(":", "."),
+        ),
+        sortie_samedi_paiement: parseFloat(
+          formData.sortie_samedi_paiement.replace(":", "."),
+        ),
       };
       await onSave(data);
     } catch (err) {
@@ -109,7 +127,10 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
           <h3 className="text-xl font-bold">
             {horaire ? "Modifier" : "Ajouter"} un horaire
           </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -120,7 +141,9 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
             <input
               type="text"
               value={formData.section}
-              onChange={(e) => setFormData({ ...formData, section: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, section: e.target.value })
+              }
               className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800"
               disabled={!!horaire}
               placeholder="Ex: BRODERIE MAIN DEV"
@@ -128,54 +151,82 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">Heure d'entrée *</label>
+            <label className="block text-sm font-bold mb-1">
+              Heure d'entrée *
+            </label>
             <input
               type="time"
               value={formData.heure_entree}
-              onChange={(e) => setFormData({ ...formData, heure_entree: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, heure_entree: e.target.value })
+              }
               className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">Heure de sortie (lundi-ven normal) *</label>
+            <label className="block text-sm font-bold mb-1">
+              Heure de sortie (lundi-ven normal) *
+            </label>
             <input
               type="time"
               value={formData.heure_sortie}
-              onChange={(e) => setFormData({ ...formData, heure_sortie: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, heure_sortie: e.target.value })
+              }
               className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">Sortie samedi normal *</label>
+            <label className="block text-sm font-bold mb-1">
+              Sortie samedi normal *
+            </label>
             <input
               type="time"
               value={formData.sortie_samedi}
-              onChange={(e) => setFormData({ ...formData, sortie_samedi: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, sortie_samedi: e.target.value })
+              }
               className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800"
             />
           </div>
 
           <div className="border-t-2 border-gray-300 pt-4">
-            <h4 className="font-bold text-gray-700 mb-3">Horaires pour jours de paiement (P)</h4>
-            
+            <h4 className="font-bold text-gray-700 mb-3">
+              Horaires pour jours de paiement (P)
+            </h4>
+
             <div className="mb-3">
-              <label className="block text-sm font-bold mb-1">Sortie vendredi de paiement *</label>
+              <label className="block text-sm font-bold mb-1">
+                Sortie vendredi de paiement *
+              </label>
               <input
                 type="time"
                 value={formData.sortie_vendredi_paiement}
-                onChange={(e) => setFormData({ ...formData, sortie_vendredi_paiement: e.target.value })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    sortie_vendredi_paiement: e.target.value,
+                  })
+                }
                 className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-yellow-600"
               />
             </div>
 
             <div className="mb-3">
-              <label className="block text-sm font-bold mb-1">Sortie samedi de paiement *</label>
+              <label className="block text-sm font-bold mb-1">
+                Sortie samedi de paiement *
+              </label>
               <input
                 type="time"
                 value={formData.sortie_samedi_paiement}
-                onChange={(e) => setFormData({ ...formData, sortie_samedi_paiement: e.target.value })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    sortie_samedi_paiement: e.target.value,
+                  })
+                }
                 className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-yellow-600"
               />
             </div>
@@ -194,7 +245,9 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
               disabled={saving}
               className="flex-1 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 flex items-center justify-center gap-2 disabled:bg-gray-400"
             >
-              {saving ? "Enregistrement..." : (
+              {saving ? (
+                "Enregistrement..."
+              ) : (
                 <>
                   <Save className="w-4 h-4" />
                   Enregistrer
@@ -209,7 +262,13 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
 };
 
 // Modal de gestion des événements
-const EvenementModal = ({ evenement, onClose, onSave, onDelete, typesEvenement }) => {
+const EvenementModal = ({
+  evenement,
+  onClose,
+  onSave,
+  onDelete,
+  typesEvenement,
+}) => {
   const [formData, setFormData] = useState({
     type_evenement: evenement?.type_evenement || "X",
     commentaire: evenement?.commentaire || "",
@@ -235,7 +294,11 @@ const EvenementModal = ({ evenement, onClose, onSave, onDelete, typesEvenement }
   };
 
   const handleDelete = async () => {
-    if (window.confirm("Voulez-vous supprimer cet événement ?\n\nL'événement sera réinitialisé à 'X' (Travail normal).")) {
+    if (
+      window.confirm(
+        "Voulez-vous supprimer cet événement ?\n\nL'événement sera réinitialisé à 'X' (Travail normal).",
+      )
+    ) {
       setDeleting(true);
       try {
         await onDelete();
@@ -249,7 +312,7 @@ const EvenementModal = ({ evenement, onClose, onSave, onDelete, typesEvenement }
     }
   };
 
-  const canDelete = evenement && evenement.type_evenement !== 'X';
+  const canDelete = evenement && evenement.type_evenement !== "X";
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -258,7 +321,10 @@ const EvenementModal = ({ evenement, onClose, onSave, onDelete, typesEvenement }
           <h3 className="text-xl font-bold">
             {evenement ? "Modifier" : "Ajouter"} un événement
           </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -282,10 +348,14 @@ const EvenementModal = ({ evenement, onClose, onSave, onDelete, typesEvenement }
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">Type d'événement *</label>
+            <label className="block text-sm font-bold mb-1">
+              Type d'événement *
+            </label>
             <select
               value={formData.type_evenement}
-              onChange={(e) => setFormData({ ...formData, type_evenement: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, type_evenement: e.target.value })
+              }
               className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800"
             >
               {typesEvenement.map((type) => (
@@ -302,7 +372,9 @@ const EvenementModal = ({ evenement, onClose, onSave, onDelete, typesEvenement }
             </label>
             <textarea
               value={formData.commentaire}
-              onChange={(e) => setFormData({ ...formData, commentaire: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, commentaire: e.target.value })
+              }
               className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800"
               rows="2"
               placeholder="Commentaire facultatif..."
@@ -316,7 +388,9 @@ const EvenementModal = ({ evenement, onClose, onSave, onDelete, typesEvenement }
                 disabled={saving || deleting}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-gray-400 flex items-center justify-center gap-2"
               >
-                {deleting ? "Suppression..." : (
+                {deleting ? (
+                  "Suppression..."
+                ) : (
                   <>
                     <Trash2 className="w-4 h-4" />
                     Supprimer
@@ -336,7 +410,9 @@ const EvenementModal = ({ evenement, onClose, onSave, onDelete, typesEvenement }
               disabled={saving || deleting}
               className="flex-1 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 flex items-center justify-center gap-2 disabled:bg-gray-400"
             >
-              {saving ? "Enregistrement..." : (
+              {saving ? (
+                "Enregistrement..."
+              ) : (
                 <>
                   <Save className="w-4 h-4" />
                   Enregistrer
@@ -375,15 +451,15 @@ const AttendancePage = () => {
 
   // Fonction pour rafraîchir les données
   const refreshData = useCallback(() => {
-    setForceRefresh(prev => prev + 1);
+    setForceRefresh((prev) => prev + 1);
   }, []);
 
   const fetchEvenementsMois = useCallback(async (annee, mois) => {
     try {
       const evenementsData = await presenceService.getEvenements(annee, mois);
-      
+
       const newEvenementsMap = {};
-      
+
       if (evenementsData.evenements && evenementsData.evenements.length > 0) {
         evenementsData.evenements.forEach((e) => {
           const dateFormatted = formatDate(e.date);
@@ -392,49 +468,57 @@ const AttendancePage = () => {
             newEvenementsMap[key] = e.type_evenement;
           }
         });
-        
+
         setEvenementsMap(newEvenementsMap);
       }
-      
     } catch (err) {
       console.error("Erreur chargement événements:", err);
     }
   }, []);
 
-  const fetchPresences = useCallback(async (annee, mois) => {
-    try {
-      setLoading(true);
-      console.log(`🔄 Chargement des présences pour ${mois}/${annee}`);
-
+  const fetchPresences = useCallback(
+    async (annee, mois) => {
       try {
-        await presenceService.genererDates(annee, mois);
+        setLoading(true);
+        console.log(`🔄 Chargement des présences pour ${mois}/${annee}`);
+
+        try {
+          await presenceService.genererDates(annee, mois);
+        } catch (err) {
+          console.log(
+            "ℹ️ Génération des dates déjà effectuée ou erreur:",
+            err.message,
+          );
+        }
+
+        const datesData = await presenceService.getDates(annee, mois);
+        setDates(datesData);
+
+        const presencesData = await presenceService.getPresencesMoisCalculee(
+          annee,
+          mois,
+          false,
+        );
+        console.log("📊 Données reçues:", {
+          periode: presencesData.periode,
+          nombrePresences: presencesData.presences?.length,
+          statistiques: presencesData.statistiques,
+        });
+
+        setPeriode(presencesData.periode);
+        setPresences(presencesData.presences || []);
+
+        await fetchEvenementsMois(annee, mois);
       } catch (err) {
-        console.log('ℹ️ Génération des dates déjà effectuée ou erreur:', err.message);
+        console.error("❌ Erreur lors du chargement:", err);
+        alert("Erreur lors du chargement des présences: " + err.message);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-
-      const datesData = await presenceService.getDates(annee, mois);
-      setDates(datesData);
-
-      const presencesData = await presenceService.getPresencesMoisCalculee(annee, mois, false);
-      console.log('📊 Données reçues:', {
-        periode: presencesData.periode,
-        nombrePresences: presencesData.presences?.length,
-        statistiques: presencesData.statistiques
-      });
-
-      setPeriode(presencesData.periode);
-      setPresences(presencesData.presences || []);
-
-      await fetchEvenementsMois(annee, mois);
-      
-    } catch (err) {
-      console.error("❌ Erreur lors du chargement:", err);
-      alert("Erreur lors du chargement des présences: " + err.message);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [fetchEvenementsMois]);
+    },
+    [fetchEvenementsMois],
+  );
 
   const fetchTypesEvenements = useCallback(async () => {
     try {
@@ -454,176 +538,214 @@ const AttendancePage = () => {
     }
   }, []);
 
-  const handleEvenementClick = useCallback((employee, dateStr, attendance) => {
-    const dateFormatted = formatDate(dateStr);
-    
-    if (!dateFormatted) {
-      console.error('❌ Date invalide:', dateStr);
-      return;
-    }
-    
-    const key = `${employee.userid}-${dateFormatted}`;
-    const currentEvenement = evenementsMap[key] || "X";
+  const handleEvenementClick = useCallback(
+    (employee, dateStr, attendance) => {
+      const dateFormatted = formatDate(dateStr);
 
-    const evenementData = {
-      userid: employee.userid,
-      badgenumber: employee.badgenumber,
-      name: employee.name,
-      date: dateFormatted,
-      type_evenement: currentEvenement,
-      commentaire: "",
-      attendance: attendance,
-    };
-    setSelectedEvenement(evenementData);
-    setShowEvenementModal(true);
-  }, [evenementsMap]);
+      if (!dateFormatted) {
+        console.error("❌ Date invalide:", dateStr);
+        return;
+      }
 
-  const handleSaveEvenement = useCallback(async (formData) => {
-    try {
-      const { userid, date } = selectedEvenement;
+      const key = `${employee.userid}-${dateFormatted}`;
+      const currentEvenement = evenementsMap[key] || "X";
 
-      await presenceService.updateEvenementByUserDate(
-        userid,
-        date,
-        formData.type_evenement,
-        formData.commentaire || ""
-      );
+      const evenementData = {
+        userid: employee.userid,
+        badgenumber: employee.badgenumber,
+        name: employee.name,
+        date: dateFormatted,
+        type_evenement: currentEvenement,
+        commentaire: "",
+        attendance: attendance,
+      };
+      setSelectedEvenement(evenementData);
+      setShowEvenementModal(true);
+    },
+    [evenementsMap],
+  );
 
-      const key = `${userid}-${date}`;
-      setEvenementsMap(prev => ({
-        ...prev,
-        [key]: formData.type_evenement
-      }));
+  const handleSaveEvenement = useCallback(
+    async (formData) => {
+      try {
+        const { userid, date } = selectedEvenement;
 
-      await fetchEvenementsMois(currentYear, currentMonth);
+        await presenceService.updateEvenementByUserDate(
+          userid,
+          date,
+          formData.type_evenement,
+          formData.commentaire || "",
+        );
 
-      setShowEvenementModal(false);
-      setSelectedEvenement(null);
+        const key = `${userid}-${date}`;
+        setEvenementsMap((prev) => ({
+          ...prev,
+          [key]: formData.type_evenement,
+        }));
 
-      console.log('✅ Événement mis à jour');
-      
-      // Rafraîchir les données après modification
-      refreshData();
-      
-    } catch (err) {
-      console.error("❌ Erreur lors de la sauvegarde:", err);
-      alert("Erreur lors de la sauvegarde. Veuillez réessayer.");
-    }
-  }, [selectedEvenement, currentYear, currentMonth, fetchEvenementsMois, refreshData]);
+        await fetchEvenementsMois(currentYear, currentMonth);
+
+        setShowEvenementModal(false);
+        setSelectedEvenement(null);
+
+        console.log("✅ Événement mis à jour");
+
+        // Rafraîchir les données après modification
+        refreshData();
+      } catch (err) {
+        console.error("❌ Erreur lors de la sauvegarde:", err);
+        alert("Erreur lors de la sauvegarde. Veuillez réessayer.");
+      }
+    },
+    [
+      selectedEvenement,
+      currentYear,
+      currentMonth,
+      fetchEvenementsMois,
+      refreshData,
+    ],
+  );
 
   const handleDeleteEvenement = useCallback(async () => {
     try {
       const { userid, date } = selectedEvenement;
-      
+
       await presenceService.deleteEvenementByUserDate(userid, date);
-      
+
       const key = `${userid}-${date}`;
-      setEvenementsMap(prev => ({
+      setEvenementsMap((prev) => ({
         ...prev,
-        [key]: 'X'
+        [key]: "X",
       }));
-      
+
       alert("Événement supprimé avec succès !");
-      
+
       await fetchEvenementsMois(currentYear, currentMonth);
-      
+
       setShowEvenementModal(false);
       setSelectedEvenement(null);
-      
+
       // Rafraîchir les données après suppression
       refreshData();
-      
     } catch (err) {
       console.error("❌ Erreur lors de la suppression:", err);
-      alert("Erreur lors de la suppression de l'événement. Veuillez réessayer.");
+      alert(
+        "Erreur lors de la suppression de l'événement. Veuillez réessayer.",
+      );
     }
-  }, [selectedEvenement, currentYear, currentMonth, fetchEvenementsMois, refreshData]);
+  }, [
+    selectedEvenement,
+    currentYear,
+    currentMonth,
+    fetchEvenementsMois,
+    refreshData,
+  ]);
 
-  const handleSaveHoraire = useCallback(async (data) => {
-    try {
-      if (selectedHoraire) {
-        const result = await presenceService.updateHoraireSection(selectedHoraire.section, data);
-        console.log('✅ Horaire mis à jour:', result);
-      } else {
-        const result = await presenceService.createHoraireSection(data);
-        console.log('✅ Horaire créé:', result);
+  const handleSaveHoraire = useCallback(
+    async (data) => {
+      try {
+        if (selectedHoraire) {
+          const result = await presenceService.updateHoraireSection(
+            selectedHoraire.section,
+            data,
+          );
+          console.log("✅ Horaire mis à jour:", result);
+        } else {
+          const result = await presenceService.createHoraireSection(data);
+          console.log("✅ Horaire créé:", result);
+        }
+
+        setShowHoraireModal(false);
+        setSelectedHoraire(null);
+        await fetchHoraires();
+
+        alert("Horaire enregistré avec succès !");
+
+        // Rafraîchir les données après modification
+        refreshData();
+      } catch (err) {
+        console.error(
+          "❌ Erreur détaillée lors de la sauvegarde de l'horaire:",
+          err,
+        );
+        alert(
+          `Erreur lors de la sauvegarde: ${err.response?.data?.message || err.message}`,
+        );
       }
-      
-      setShowHoraireModal(false);
-      setSelectedHoraire(null);
-      await fetchHoraires();
-      
-      alert("Horaire enregistré avec succès !");
-      
-      // Rafraîchir les données après modification
-      refreshData();
-      
-    } catch (err) {
-      console.error("❌ Erreur détaillée lors de la sauvegarde de l'horaire:", err);
-      alert(`Erreur lors de la sauvegarde: ${err.response?.data?.message || err.message}`);
-    }
-  }, [selectedHoraire, fetchHoraires, refreshData]);
+    },
+    [selectedHoraire, fetchHoraires, refreshData],
+  );
 
   // FONCTION POUR DETERMINER LES HEURES A AFFICHER
-  const getHeuresAffichees = useCallback((attendance) => {
-    let heureEntreeAffichee = "";
-    let heureSortieAffichee = "";
-    
-    if (!attendance) {
-      return { heureEntreeAffichee: "", heureSortieAffichee: "" };
-    }
-    
-    if (modeHeures === "brutes") {
-      // MODE "HEURES BRUTES" : TOUJOURS afficher les heures brutes
-      if (attendance.est_anomalie_corrigee) {
-        // Pour les anomalies corrigées, afficher les heures brutes
-        heureEntreeAffichee = attendance.heure_brute_entree 
-          ? attendance.heure_brute_entree.slice(0, 5)
-          : "";
-        heureSortieAffichee = attendance.heure_brute_sortie 
-          ? attendance.heure_brute_sortie.slice(0, 5)
-          : "";
-      } else {
-        // Pour les autres, afficher les heures réelles (brutes)
-        heureEntreeAffichee = attendance.heure_entree_reelle 
-          ? attendance.heure_entree_reelle.slice(0, 5)
-          : "";
-        heureSortieAffichee = attendance.heure_sortie_reelle 
-          ? attendance.heure_sortie_reelle.slice(0, 5)
-          : "";
+  const getHeuresAffichees = useCallback(
+    (attendance) => {
+      let heureEntreeAffichee = "";
+      let heureSortieAffichee = "";
+
+      if (!attendance) {
+        return { heureEntreeAffichee: "", heureSortieAffichee: "" };
       }
-    } else {
-      // MODE "HEURES RECTIFIÉES" : TOUJOURS afficher les heures après traitement
-      if (attendance.est_anomalie_corrigee) {
-        // Pour les anomalies corrigées, afficher les heures rectifiées
-        heureEntreeAffichee = attendance.heure_entree_rectifiee 
-          ? attendance.heure_entree_rectifiee.slice(0, 5)
-          : "";
-        heureSortieAffichee = attendance.heure_sortie_rectifiee 
-          ? attendance.heure_sortie_rectifiee.slice(0, 5)
-          : "";
+
+      if (modeHeures === "brutes") {
+        // MODE "HEURES BRUTES" : TOUJOURS afficher les heures brutes
+        if (attendance.est_anomalie_corrigee) {
+          // Pour les anomalies corrigées, afficher les heures brutes
+          heureEntreeAffichee = attendance.heure_brute_entree
+            ? attendance.heure_brute_entree.slice(0, 5)
+            : "";
+          heureSortieAffichee = attendance.heure_brute_sortie
+            ? attendance.heure_brute_sortie.slice(0, 5)
+            : "";
+        } else {
+          // Pour les autres, afficher les heures réelles (brutes)
+          heureEntreeAffichee = attendance.heure_entree_reelle
+            ? attendance.heure_entree_reelle.slice(0, 5)
+            : "";
+          heureSortieAffichee = attendance.heure_sortie_reelle
+            ? attendance.heure_sortie_reelle.slice(0, 5)
+            : "";
+        }
       } else {
-        // Pour les autres, afficher les heures comptabilisées
-        heureEntreeAffichee = attendance.heure_entree_comptabilisee 
-          ? attendance.heure_entree_comptabilisee.slice(0, 5)
-          : "";
-        heureSortieAffichee = attendance.heure_sortie_comptabilisee 
-          ? attendance.heure_sortie_comptabilisee.slice(0, 5)
-          : "";
+        // MODE "HEURES RECTIFIÉES" : TOUJOURS afficher les heures après traitement
+        if (attendance.est_anomalie_corrigee) {
+          // Pour les anomalies corrigées, afficher les heures rectifiées
+          heureEntreeAffichee = attendance.heure_entree_rectifiee
+            ? attendance.heure_entree_rectifiee.slice(0, 5)
+            : "";
+          heureSortieAffichee = attendance.heure_sortie_rectifiee
+            ? attendance.heure_sortie_rectifiee.slice(0, 5)
+            : "";
+        } else {
+          // Pour les autres, afficher les heures comptabilisées
+          heureEntreeAffichee = attendance.heure_entree_comptabilisee
+            ? attendance.heure_entree_comptabilisee.slice(0, 5)
+            : "";
+          heureSortieAffichee = attendance.heure_sortie_comptabilisee
+            ? attendance.heure_sortie_comptabilisee.slice(0, 5)
+            : "";
+        }
       }
-    }
-    
-    return {
-      heureEntreeAffichee,
-      heureSortieAffichee
-    };
-  }, [modeHeures]);
+
+      return {
+        heureEntreeAffichee,
+        heureSortieAffichee,
+      };
+    },
+    [modeHeures],
+  );
 
   useEffect(() => {
     fetchPresences(currentYear, currentMonth);
     fetchTypesEvenements();
     fetchHoraires();
-  }, [currentYear, currentMonth, forceRefresh, fetchPresences, fetchTypesEvenements, fetchHoraires]);
+  }, [
+    currentYear,
+    currentMonth,
+    forceRefresh,
+    fetchPresences,
+    fetchTypesEvenements,
+    fetchHoraires,
+  ]);
 
   const getEmployeeData = useCallback(() => {
     const employees = {};
@@ -648,60 +770,73 @@ const AttendancePage = () => {
   const getAttendanceData = useCallback((employee, dateStr) => {
     const dateFormatted = formatDate(dateStr);
     if (!dateFormatted) return null;
-    
+
     return employee.presences[dateFormatted] || null;
   }, []);
 
-  const getEvenementForCell = useCallback((userId, dateStr) => {
-    const dateFormatted = formatDate(dateStr);
-    if (!dateFormatted) return 'X';
-    
-    const key = `${userId}-${dateFormatted}`;
-    return evenementsMap[key] || 'X';
-  }, [evenementsMap]);
+  const getEvenementForCell = useCallback(
+    (userId, dateStr) => {
+      const dateFormatted = formatDate(dateStr);
+      if (!dateFormatted) return "X";
+
+      const key = `${userId}-${dateFormatted}`;
+      return evenementsMap[key] || "X";
+    },
+    [evenementsMap],
+  );
 
   const groupDatesByWeek = useCallback(() => {
     const weeks = {};
-    
-    const datesDansPeriode = dates.filter(date => !date.hors_periode);
+
+    const datesDansPeriode = dates.filter((date) => !date.hors_periode);
 
     datesDansPeriode.forEach((date) => {
       if (date.code_date && date.code_date.length > 0) {
-        const semaine = date.code_date[0]; 
-        
+        const semaine = date.code_date[0];
+
         if (!weeks[semaine]) {
           weeks[semaine] = [];
         }
         weeks[semaine].push(date);
       }
     });
-    
+
     return weeks;
   }, [dates]);
 
   const getMonthAbbreviation = useCallback((dateString) => {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return "";
-    
+
     const monthNames = [
-      "Jan", "Fév", "Mar", "Avr", "Mai", "Jun",
-      "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc",
+      "Jan",
+      "Fév",
+      "Mar",
+      "Avr",
+      "Mai",
+      "Jun",
+      "Jul",
+      "Aoû",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Déc",
     ];
     return monthNames[date.getMonth()];
   }, []);
 
   const getCellBackgroundColor = useCallback((attendance) => {
-    if (!attendance) return 'transparent';
-    
+    if (!attendance) return "transparent";
+
     if (attendance.est_jour_paiement) {
-      return 'bg-yellow-50';
+      return "bg-yellow-50";
     }
-    
+
     if (attendance.est_samedi) {
-      return 'bg-gray-50';
+      return "bg-gray-50";
     }
-    
-    return 'transparent';
+
+    return "transparent";
   }, []);
 
   const handlePrint = useReactToPrint({
@@ -712,16 +847,16 @@ const AttendancePage = () => {
   const employees = getEmployeeData();
   const weeks = groupDatesByWeek();
   const weekNumbers = Object.keys(weeks).sort((a, b) => {
-    return parseInt(a) - parseInt(b); 
+    return parseInt(a) - parseInt(b);
   });
 
-  const datesValides = dates.filter(dateObj => !dateObj.hors_periode);
+  const datesValides = dates.filter((dateObj) => !dateObj.hors_periode);
 
   const getVariableGroups = (array) => {
     if (!array || array.length === 0) return [];
 
     const groups = [];
-    
+
     const firstGroup = array.slice(0, 7);
     groups.push(firstGroup);
 
@@ -870,14 +1005,15 @@ const AttendancePage = () => {
   return (
     <div className="p-4 bg-gray-50 min-h-screen">
       <div ref={componentRef} className="print-container">
-
         <div className="bg-white border-2 border-gray-800 mb-4 p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
               <div className="bg-gray-800 text-white px-6 py-3 font-bold text-lg">
                 AKANJO
               </div>
-              <h1 className="text-2xl font-bold uppercase">FICHE DE PRESENCE:</h1>
+              <h1 className="text-2xl font-bold uppercase">
+                FICHE DE PRESENCE:
+              </h1>
             </div>
             <div className="text-right">
               <h2 className="text-xl font-bold mb-3">
@@ -885,7 +1021,9 @@ const AttendancePage = () => {
               </h2>
               <div className="flex gap-3 print:hidden">
                 <div>
-                  <label className="block text-xs text-gray-600 mb-1">Mois</label>
+                  <label className="block text-xs text-gray-600 mb-1">
+                    Mois
+                  </label>
                   <select
                     value={currentMonth}
                     onChange={(e) => setCurrentMonth(parseInt(e.target.value))}
@@ -906,7 +1044,9 @@ const AttendancePage = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-600 mb-1">Année</label>
+                  <label className="block text-xs text-gray-600 mb-1">
+                    Année
+                  </label>
                   <select
                     value={currentYear}
                     onChange={(e) => setCurrentYear(parseInt(e.target.value))}
@@ -960,29 +1100,29 @@ const AttendancePage = () => {
             </button>
 
             <button
-              onClick={() => navigate('/anomalies')}
+              onClick={() => navigate("/anomalies")}
               className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
             >
               <AlertCircle className="w-4 h-4" />
               Anomalies
             </button>
-            
+
             <button
               onClick={() => setModeHeures("brutes")}
               className={`flex items-center gap-2 px-4 py-2 border-2 rounded ${
-                modeHeures === "brutes" 
-                  ? "border-blue-600 bg-blue-50 text-blue-700 font-bold" 
+                modeHeures === "brutes"
+                  ? "border-blue-600 bg-blue-50 text-blue-700 font-bold"
                   : "border-gray-300 text-gray-700 hover:bg-gray-100"
               }`}
             >
               Heures Brutes
             </button>
-            
+
             <button
               onClick={() => setModeHeures("rectifiees")}
               className={`flex items-center gap-2 px-4 py-2 border-2 rounded ${
-                modeHeures === "rectifiees" 
-                  ? "border-green-600 bg-green-50 text-green-700 font-bold" 
+                modeHeures === "rectifiees"
+                  ? "border-green-600 bg-green-50 text-green-700 font-bold"
                   : "border-gray-300 text-gray-700 hover:bg-gray-100"
               }`}
             >
@@ -998,23 +1138,9 @@ const AttendancePage = () => {
           </div>
 
           <div className="mt-4 border-t-2 border-gray-800 pt-4 print:hidden">
-            <div className="text-sm font-bold mb-2">Modes d'affichage:</div>
-            <div className="flex flex-wrap gap-3 items-center mb-4">
-              <div className="flex items-center gap-2">
-                <div className={`w-4 h-4 rounded border ${modeHeures === "brutes" ? "bg-blue-100 border-blue-500" : "bg-gray-100 border-gray-300"}`}></div>
-                <span className="text-sm">
-                  <span className="font-bold">Heures Brutes:</span> Heures originales du pointage
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className={`w-4 h-4 rounded border ${modeHeures === "rectifiees" ? "bg-green-100 border-green-500" : "bg-gray-100 border-gray-300"}`}></div>
-                <span className="text-sm">
-                  <span className="font-bold">Heures Rectifiées:</span> Heures après correction des anomalies
-                </span>
-              </div>
+            <div className="text-sm font-bold mb-2">
+              Légende des événements:
             </div>
-            
-            <div className="text-sm font-bold mb-2">Légende des événements:</div>
             <div className="flex flex-wrap gap-2">
               {typesEvenement.map((type) => (
                 <div
@@ -1025,34 +1151,17 @@ const AttendancePage = () => {
                 </div>
               ))}
             </div>
-            
-            {/* Légende pour les anomalies corrigées */}
-            <div className="mt-4 text-sm font-bold mb-2">Indicateurs:</div>
-            <div className="flex flex-wrap gap-3 items-center">
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-green-600 font-bold">✓</span>
-                <span className="text-xs text-gray-700">Anomalie corrigée</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-4 h-4 bg-yellow-50 border border-yellow-300"></div>
-                <span className="text-xs text-gray-700">Jour de paiement (P)</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-4 h-4 bg-gray-50 border border-gray-300"></div>
-                <span className="text-xs text-gray-700">Samedi normal</span>
-              </div>
-            </div>
           </div>
         </div>
 
         {employeeGroups.map((group, groupIdx) => (
-          <div 
-            key={groupIdx} 
+          <div
+            key={groupIdx}
             className="bg-white border-x-2 border-b-2 border-gray-800 overflow-x-auto print:overflow-visible"
-            style={{ 
-              pageBreakAfter: 'always',
-              borderTop: groupIdx === 0 ? 'none' : '2px solid #1f2937',
-              marginTop: groupIdx === 0 ? '0' : '20px'
+            style={{
+              pageBreakAfter: "always",
+              borderTop: groupIdx === 0 ? "none" : "2px solid #1f2937",
+              marginTop: groupIdx === 0 ? "0" : "20px",
             }}
           >
             <table className="w-full border-collapse text-xs print:text-[7.5pt] print:table-fixed">
@@ -1077,7 +1186,10 @@ const AttendancePage = () => {
 
                 <tr className="bg-gray-100">
                   {datesValides.map((date, idx) => (
-                    <th key={idx} className="border border-gray-600 p-1 min-w-10">
+                    <th
+                      key={idx}
+                      className="border border-gray-600 p-1 min-w-10"
+                    >
                       <div className="font-bold">{date.code_affichage}</div>
                     </th>
                   ))}
@@ -1118,20 +1230,32 @@ const AttendancePage = () => {
                           <span className="font-bold text-sm">
                             {employee.badgenumber}
                           </span>
-                          <span className="italic text-sm">{employee.name}</span>
+                          <span className="italic text-sm">
+                            {employee.name}
+                          </span>
                         </div>
                       </td>
 
                       {datesValides.map((dateObj, dayIdx) => {
-                        const attendance = getAttendanceData(employee, dateObj.date);
-                        const evenementType = getEvenementForCell(employee.userid, dateObj.date);
-                        const { heureEntreeAffichee, heureSortieAffichee } = getHeuresAffichees(attendance);
-                        const backgroundColor = getCellBackgroundColor(attendance);
-                        const estAnomalieCorrigee = attendance?.est_anomalie_corrigee || false;
+                        const attendance = getAttendanceData(
+                          employee,
+                          dateObj.date,
+                        );
+                        const evenementType = getEvenementForCell(
+                          employee.userid,
+                          dateObj.date,
+                        );
+                        const { heureEntreeAffichee, heureSortieAffichee } =
+                          getHeuresAffichees(attendance);
+                        const backgroundColor =
+                          getCellBackgroundColor(attendance);
+                        const estAnomalieCorrigee =
+                          attendance?.est_anomalie_corrigee || false;
 
                         // Afficher la cellule même si vide pour les anomalies corrigées
-                        const shouldDisplay = attendance || 
-                          (estAnomalieCorrigee && evenementType === 'A'); // Anomalie corrigée avec absence
+                        const shouldDisplay =
+                          attendance ||
+                          (estAnomalieCorrigee && evenementType === "A"); // Anomalie corrigée avec absence
 
                         if (!shouldDisplay) {
                           return (
@@ -1157,7 +1281,13 @@ const AttendancePage = () => {
                               </div>
                               {/* ÉVÉNEMENT */}
                               <button
-                                onClick={() => handleEvenementClick(employee, dateObj.date, attendance)}
+                                onClick={() =>
+                                  handleEvenementClick(
+                                    employee,
+                                    dateObj.date,
+                                    attendance,
+                                  )
+                                }
                                 className={`print:text-[7pt] border-b border-gray-300 px-1 py-0.5 min-h-[21px] text-xs font-bold w-full hover:bg-gray-50 transition-colors ${getEvenementTextColor(evenementType)}`}
                                 title={`Modifier l'événement (${evenementType})`}
                               >
