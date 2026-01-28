@@ -71,3 +71,26 @@ button:focus-visible {
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@media print {
+  @page {
+    size: A4 landscape; /* ou portrait si besoin */
+    margin: 0mm 6mm 0mm 6mm; 
+    /* top right bottom left */
+  }
+
+  @page :first {
+    margin-top: 6mm; /* ✅ uniquement page 1 */
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  .print-container {
+    margin: 0;
+    padding: 0;
+  }
+}
+

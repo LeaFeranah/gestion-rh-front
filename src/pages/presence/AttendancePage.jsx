@@ -1020,7 +1020,7 @@ const AttendancePage = () => {
                 <tr className="bg-gray-100">
                   {datesValides.map((date, idx) => (
                     <th key={idx} className="border border-gray-600 p-1 min-w-10">
-                      <div className="font-bold">{date.code_affichage}</div>
+                      <div className="font-bold">{date.code_date}</div>
                     </th>
                   ))}
                 </tr>
