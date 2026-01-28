@@ -636,9 +636,6 @@ const AnomalieRow = ({ anomalie, onUpdate, horairesDict }) => {
               <div className="text-sm font-semibold text-yellow-700">
                 S: {heuresPrevues.heureSortie}
               </div>
-              <div className="text-xs text-gray-500 italic mt-1">
-                (Horaire {anomalie.section})
-              </div>
             </>
           )}
         </div>
@@ -857,23 +854,23 @@ const AnomaliesPage = () => {
       {/* En-tête */}
       <div className="bg-white border-2 border-gray-800 mb-4 p-6">
         <div className="flex items-center justify-between mb-4">
-    <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4">
             <div className="bg-red-600 text-white px-6 py-3 font-bold text-lg flex items-center gap-2">
-        <AlertCircle className="w-6 h-6" />
-        ANOMALIES
-      </div>
+              <AlertCircle className="w-6 h-6" />
+              ANOMALIES
+            </div>
             <h1 className="text-2xl font-bold uppercase">
-        Gestion des Anomalies de Pointage
-      </h1>
-    </div>
+              Gestion des Anomalies de Pointage
+            </h1>
+          </div>
 
           <div className="text-right">
             <div className="flex gap-3 mb-3">
-        <div>
+              <div>
                 <label className="block text-xs text-gray-600 mb-1">Mois</label>
-          <select
-            value={currentMonth}
-            onChange={(e) => setCurrentMonth(parseInt(e.target.value))}
+                <select
+                  value={currentMonth}
+                  onChange={(e) => setCurrentMonth(parseInt(e.target.value))}
                   className="px-3 py-2 border border-gray-300 rounded"
                 >
                   <option value={1}>Janvier</option>
@@ -888,53 +885,53 @@ const AnomaliesPage = () => {
                   <option value={10}>Octobre</option>
                   <option value={11}>Novembre</option>
                   <option value={12}>Décembre</option>
-          </select>
-        </div>
-        <div>
+                </select>
+              </div>
+              <div>
                 <label className="block text-xs text-gray-600 mb-1">Année</label>
-          <select
-            value={currentYear}
-            onChange={(e) => setCurrentYear(parseInt(e.target.value))}
+                <select
+                  value={currentYear}
+                  onChange={(e) => setCurrentYear(parseInt(e.target.value))}
                   className="px-3 py-2 border border-gray-300 rounded"
-          >
-            {[...Array(11)].map((_, i) => {
-              const year = 2020 + i;
+                >
+                  {[...Array(11)].map((_, i) => {
+                    const year = 2020 + i;
                     return (
                       <option key={year} value={year}>
                         {year}
                       </option>
                     );
-            })}
-          </select>
-        </div>
-      </div>
-      <button
-        onClick={handleDetect}
-        disabled={detecting}
+                  })}
+                </select>
+              </div>
+            </div>
+            <button
+              onClick={handleDetect}
+              disabled={detecting}
               className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
-      >
-        {detecting ? (
-          <>
+            >
+              {detecting ? (
+                <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-            Détection...
-          </>
-        ) : (
-          <>
+                  Détection...
+                </>
+              ) : (
+                <>
                   <RefreshCw className="w-4 h-4" />
-            Détecter les anomalies
-          </>
-        )}
-      </button>
-    </div>
-  </div>
+                  Détecter les anomalies
+                </>
+              )}
+            </button>
+          </div>
+        </div>
 
-  {/* Statistiques */}
-  {stats && (
+        {/* Statistiques */}
+        {stats && (
           <div className="grid grid-cols-4 gap-4 border-t-2 border-gray-800 pt-4">
             <div className="bg-gray-100 p-3 rounded">
               <div className="text-2xl font-bold">{stats.total}</div>
               <div className="text-sm text-gray-600">Total anomalies</div>
-        </div>
+            </div>
             <div className="bg-red-100 p-3 rounded">
               <div className="text-2xl font-bold text-red-700">
                 {stats.non_corrigees}
@@ -953,57 +950,59 @@ const AnomaliesPage = () => {
               </div>
               <div className="text-sm text-blue-700">Taux de correction</div>
             </div>
-    </div>
-  )}
+          </div>
+        )}
 
-  {/* Filtres */}
+        {/* Filtres */}
         <div className="flex gap-4 mt-4 border-t-2 border-gray-800 pt-4">
-    <div className="flex-1">
+          <div className="flex-1">
             <label className="block text-xs text-gray-600 mb-1">
               Filtrer par section
             </label>
-      <select
-        value={selectedSection}
-        onChange={(e) => setSelectedSection(e.target.value)}
+            <select
+              value={selectedSection}
+              onChange={(e) => setSelectedSection(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded"
-      >
-        <option value="all">Toutes les sections</option>
-        {allSections.map((section) => (
+            >
+              <option value="all">Toutes les sections</option>
+              {allSections.map((section) => (
                 <option key={section} value={section}>
                   {section}
                 </option>
-        ))}
-      </select>
-    </div>
-    <div className="flex-1">
-      <label className="block text-xs font-medium text-gray-500 mb-1">Filtrer par date</label>
-      <input
-        type="date"
-        value={selectedDate === "all" ? "" : selectedDate}
-        onChange={(e) => setSelectedDate(e.target.value || "all")}
-        min={minDate}
-        max={maxDate}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-      />
-    </div>
-  </div>
+              ))}
+            </select>
+          </div>
+          <div className="flex-1">
+            <label className="block text-xs text-gray-600 mb-1">
+              Filtrer par date
+            </label>
+            <input
+              type="date"
+              value={selectedDate === "all" ? "" : selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value || "all")}
+              min={minDate}
+              max={maxDate}
+              className="w-full px-3 py-2 border border-gray-300 rounded"
+            />
+          </div>
+        </div>
 
-  {/* Légende */}
+        {/* Légende */}
         <div className="mt-4 border-t-2 border-gray-800 pt-4">
           <div className="text-sm font-bold mb-2">Légende des colonnes:</div>
           <div className="grid grid-cols-3 gap-4 text-xs">
             <div className="bg-yellow-50 p-2 rounded border-2 border-yellow-200">
               <span className="font-bold">Code date RÉEL:</span> Heures prévues par section (modifiable)
-      </div>
+            </div>
             <div className="bg-blue-50 p-2 rounded border-2 border-blue-200">
               <span className="font-bold">Code date P:</span> Heures comptabilisées (identiques aux réelles)
-      </div>
+            </div>
             <div className="bg-gray-100 p-2 rounded border-2 border-gray-300">
               <span className="font-bold">Code date B:</span> Heures brutes du pointage (non modifiable)
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-</div>
 
       {/* Tableau des anomalies par section */}
       {filteredData.length === 0 ? (
