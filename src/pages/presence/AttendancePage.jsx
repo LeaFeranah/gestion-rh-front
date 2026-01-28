@@ -1,6 +1,6 @@
-// attendancePage.js
+// attendancePage.js - Version sans badges B/R
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Settings, Edit2, Plus, Save, X, Trash2, AlertCircle } from "lucide-react";
+import { Settings, Edit2, Plus, Save, X, Trash2, AlertCircle, CheckCircle, RefreshCw } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import presenceService from "../../services/presenceService";
 import { useReactToPrint } from 'react-to-print';
@@ -13,14 +13,6 @@ const decimalToTime = (decimal) => {
   const hours = Math.floor(decimalNum);
   const minutes = Math.round((decimalNum - hours) * 60);
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-};
-
-const timeToDecimal = (timeStr) => {
-  if (!timeStr) return 0;
-  
-  const [hours, minutes] = timeStr.split(":").map(Number);
-  const decimal = hours + minutes / 60;
-  return Math.round(decimal * 100) / 100;
 };
 
 const formatDate = (dateStr) => {
@@ -73,7 +65,7 @@ const getEvenementTextColor = (type) => {
   return textColors[type] || "text-gray-700";
 };
 
-// Modal de gestion des horaires AVEC JOURS DE PAIEMENT
+// Modal de gestion des horaires
 const HoraireModal = ({ horaire, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     section: horaire?.section || "",
@@ -95,11 +87,11 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
     try {
       const data = {
         section: formData.section,
-        heure_entree: timeToDecimal(formData.heure_entree),
-        heure_sortie: timeToDecimal(formData.heure_sortie),
-        sortie_samedi: timeToDecimal(formData.sortie_samedi),
-        sortie_vendredi_paiement: timeToDecimal(formData.sortie_vendredi_paiement),
-        sortie_samedi_paiement: timeToDecimal(formData.sortie_samedi_paiement),
+        heure_entree: parseFloat(formData.heure_entree.replace(':', '.')),
+        heure_sortie: parseFloat(formData.heure_sortie.replace(':', '.')),
+        sortie_samedi: parseFloat(formData.sortie_samedi.replace(':', '.')),
+        sortie_vendredi_paiement: parseFloat(formData.sortie_vendredi_paiement.replace(':', '.')),
+        sortie_samedi_paiement: parseFloat(formData.sortie_samedi_paiement.replace(':', '.')),
       };
       await onSave(data);
     } catch (err) {
@@ -216,7 +208,7 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
   );
 };
 
-// Modal de gestion des événements avec suppression
+// Modal de gestion des événements
 const EvenementModal = ({ evenement, onClose, onSave, onDelete, typesEvenement }) => {
   const [formData, setFormData] = useState({
     type_evenement: evenement?.type_evenement || "X",
@@ -370,8 +362,9 @@ const AttendancePage = () => {
   const [horaires, setHoraires] = useState([]);
   const [selectedHoraire, setSelectedHoraire] = useState(null);
   const [showHoraireModal, setShowHoraireModal] = useState(false);
-  const [modeHeures, setModeHeures] = useState("comptabilisees");
+  const [modeHeures, setModeHeures] = useState("rectifiees"); // "brutes" ou "rectifiees"
   const [refreshing, setRefreshing] = useState(false);
+  const [forceRefresh, setForceRefresh] = useState(0);
 
   const [typesEvenement, setTypesEvenement] = useState([]);
   const [selectedEvenement, setSelectedEvenement] = useState(null);
@@ -380,21 +373,10 @@ const AttendancePage = () => {
 
   const componentRef = useRef();
 
-  // Dictionnaire des horaires par section
-  const horairesDict = React.useMemo(() => {
-    const dict = {};
-    horaires.forEach(h => {
-      dict[h.section] = {
-        ...h,
-        heure_entree_normale: decimalToTime(h.heure_entree),
-        heure_sortie_normale: decimalToTime(h.heure_sortie),
-        sortie_samedi_normale: decimalToTime(h.sortie_samedi),
-        sortie_vendredi_paiement_normale: decimalToTime(h.sortie_vendredi_paiement),
-        sortie_samedi_paiement_normale: decimalToTime(h.sortie_samedi_paiement)
-      };
-    });
-    return dict;
-  }, [horaires]);
+  // Fonction pour rafraîchir les données
+  const refreshData = useCallback(() => {
+    setForceRefresh(prev => prev + 1);
+  }, []);
 
   const fetchEvenementsMois = useCallback(async (annee, mois) => {
     try {
@@ -422,17 +404,23 @@ const AttendancePage = () => {
   const fetchPresences = useCallback(async (annee, mois) => {
     try {
       setLoading(true);
+      console.log(`🔄 Chargement des présences pour ${mois}/${annee}`);
 
       try {
         await presenceService.genererDates(annee, mois);
-      } catch {
-        console.log('ℹ️ Génération des dates déjà effectuée');
+      } catch (err) {
+        console.log('ℹ️ Génération des dates déjà effectuée ou erreur:', err.message);
       }
 
       const datesData = await presenceService.getDates(annee, mois);
       setDates(datesData);
 
       const presencesData = await presenceService.getPresencesMoisCalculee(annee, mois, false);
+      console.log('📊 Données reçues:', {
+        periode: presencesData.periode,
+        nombrePresences: presencesData.presences?.length,
+        statistiques: presencesData.statistiques
+      });
 
       setPeriode(presencesData.periode);
       setPresences(presencesData.presences || []);
@@ -514,11 +502,14 @@ const AttendancePage = () => {
 
       console.log('✅ Événement mis à jour');
       
+      // Rafraîchir les données après modification
+      refreshData();
+      
     } catch (err) {
       console.error("❌ Erreur lors de la sauvegarde:", err);
       alert("Erreur lors de la sauvegarde. Veuillez réessayer.");
     }
-  }, [selectedEvenement, currentYear, currentMonth, fetchEvenementsMois]);
+  }, [selectedEvenement, currentYear, currentMonth, fetchEvenementsMois, refreshData]);
 
   const handleDeleteEvenement = useCallback(async () => {
     try {
@@ -539,11 +530,14 @@ const AttendancePage = () => {
       setShowEvenementModal(false);
       setSelectedEvenement(null);
       
+      // Rafraîchir les données après suppression
+      refreshData();
+      
     } catch (err) {
       console.error("❌ Erreur lors de la suppression:", err);
       alert("Erreur lors de la suppression de l'événement. Veuillez réessayer.");
     }
-  }, [selectedEvenement, currentYear, currentMonth, fetchEvenementsMois]);
+  }, [selectedEvenement, currentYear, currentMonth, fetchEvenementsMois, refreshData]);
 
   const handleSaveHoraire = useCallback(async (data) => {
     try {
@@ -560,30 +554,63 @@ const AttendancePage = () => {
       await fetchHoraires();
       
       alert("Horaire enregistré avec succès !");
+      
+      // Rafraîchir les données après modification
+      refreshData();
+      
     } catch (err) {
       console.error("❌ Erreur détaillée lors de la sauvegarde de l'horaire:", err);
       alert(`Erreur lors de la sauvegarde: ${err.response?.data?.message || err.message}`);
     }
-  }, [selectedHoraire, fetchHoraires]);
+  }, [selectedHoraire, fetchHoraires, refreshData]);
 
+  // FONCTION POUR DETERMINER LES HEURES A AFFICHER
   const getHeuresAffichees = useCallback((attendance) => {
     let heureEntreeAffichee = "";
     let heureSortieAffichee = "";
     
-    if (modeHeures === "reelles") {
-      heureEntreeAffichee = attendance?.heure_entree_reelle 
-        ? attendance.heure_entree_reelle.slice(0, 5)
-        : "";
-      heureSortieAffichee = attendance?.heure_sortie_reelle 
-        ? attendance.heure_sortie_reelle.slice(0, 5)
-        : "";
+    if (!attendance) {
+      return { heureEntreeAffichee: "", heureSortieAffichee: "" };
+    }
+    
+    if (modeHeures === "brutes") {
+      // MODE "HEURES BRUTES" : TOUJOURS afficher les heures brutes
+      if (attendance.est_anomalie_corrigee) {
+        // Pour les anomalies corrigées, afficher les heures brutes
+        heureEntreeAffichee = attendance.heure_brute_entree 
+          ? attendance.heure_brute_entree.slice(0, 5)
+          : "";
+        heureSortieAffichee = attendance.heure_brute_sortie 
+          ? attendance.heure_brute_sortie.slice(0, 5)
+          : "";
+      } else {
+        // Pour les autres, afficher les heures réelles (brutes)
+        heureEntreeAffichee = attendance.heure_entree_reelle 
+          ? attendance.heure_entree_reelle.slice(0, 5)
+          : "";
+        heureSortieAffichee = attendance.heure_sortie_reelle 
+          ? attendance.heure_sortie_reelle.slice(0, 5)
+          : "";
+      }
     } else {
-      heureEntreeAffichee = attendance?.heure_entree_comptabilisee 
-        ? attendance.heure_entree_comptabilisee.slice(0, 5)
-        : "";
-      heureSortieAffichee = attendance?.heure_sortie_comptabilisee 
-        ? attendance.heure_sortie_comptabilisee.slice(0, 5)
-        : "";
+      // MODE "HEURES RECTIFIÉES" : TOUJOURS afficher les heures après traitement
+      if (attendance.est_anomalie_corrigee) {
+        // Pour les anomalies corrigées, afficher les heures rectifiées
+        heureEntreeAffichee = attendance.heure_entree_rectifiee 
+          ? attendance.heure_entree_rectifiee.slice(0, 5)
+          : "";
+        heureSortieAffichee = attendance.heure_sortie_rectifiee 
+          ? attendance.heure_sortie_rectifiee.slice(0, 5)
+          : "";
+      } else {
+        // Pour les autres, afficher les heures comptabilisées
+        heureEntreeAffichee = attendance.heure_entree_comptabilisee 
+          ? attendance.heure_entree_comptabilisee.slice(0, 5)
+          : "";
+        heureSortieAffichee = attendance.heure_sortie_comptabilisee 
+          ? attendance.heure_sortie_comptabilisee.slice(0, 5)
+          : "";
+      }
     }
     
     return {
@@ -596,11 +623,7 @@ const AttendancePage = () => {
     fetchPresences(currentYear, currentMonth);
     fetchTypesEvenements();
     fetchHoraires();
-
-    if (showHoraires) {
-      fetchHoraires();
-    }
-  }, [currentYear, currentMonth, showHoraires, fetchPresences, fetchTypesEvenements, fetchHoraires]);
+  }, [currentYear, currentMonth, forceRefresh, fetchPresences, fetchTypesEvenements, fetchHoraires]);
 
   const getEmployeeData = useCallback(() => {
     const employees = {};
@@ -611,7 +634,6 @@ const AttendancePage = () => {
           badgenumber: presence.badgenumber,
           name: presence.name,
           section: presence.section || "ADMINISTRATION",
-          horaire: horairesDict[presence.section] || horairesDict["ADMINISTRATION"] || {},
           presences: {},
         };
       }
@@ -621,11 +643,13 @@ const AttendancePage = () => {
       }
     });
     return Object.values(employees);
-  }, [presences, horairesDict]);
+  }, [presences]);
 
   const getAttendanceData = useCallback((employee, dateStr) => {
     const dateFormatted = formatDate(dateStr);
-    return dateFormatted ? employee.presences[dateFormatted] || null : null;
+    if (!dateFormatted) return null;
+    
+    return employee.presences[dateFormatted] || null;
   }, []);
 
   const getEvenementForCell = useCallback((userId, dateStr) => {
@@ -694,16 +718,14 @@ const AttendancePage = () => {
   const datesValides = dates.filter(dateObj => !dateObj.hors_periode);
 
   const getVariableGroups = (array) => {
-  if (!array || array.length === 0) return [];
+    if (!array || array.length === 0) return [];
 
-  const groups = [];
-  
-  // 1. On prend les 5 premiers pour la page 1
-  const firstGroup = array.slice(0, 7);
-  groups.push(firstGroup);
+    const groups = [];
+    
+    const firstGroup = array.slice(0, 7);
+    groups.push(firstGroup);
 
-  // 2. On boucle sur le reste par paquets de 8
-  const remainingEmployees = array.slice(7);
+    const remainingEmployees = array.slice(7);
     for (let i = 0; i < remainingEmployees.length; i += 10) {
       groups.push(remainingEmployees.slice(i, i + 10));
     }
@@ -900,6 +922,13 @@ const AttendancePage = () => {
                     })}
                   </select>
                 </div>
+                <button
+                  onClick={refreshData}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  title="Rafraîchir les données"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                </button>
               </div>
             </div>
           </div>
@@ -939,10 +968,10 @@ const AttendancePage = () => {
             </button>
             
             <button
-              onClick={() => setModeHeures("reelles")}
+              onClick={() => setModeHeures("brutes")}
               className={`flex items-center gap-2 px-4 py-2 border-2 rounded ${
-                modeHeures === "reelles" 
-                  ? "border-gray-500 bg-gray-50 text-gray-700 font-bold" 
+                modeHeures === "brutes" 
+                  ? "border-blue-600 bg-blue-50 text-blue-700 font-bold" 
                   : "border-gray-300 text-gray-700 hover:bg-gray-100"
               }`}
             >
@@ -950,10 +979,10 @@ const AttendancePage = () => {
             </button>
             
             <button
-              onClick={() => setModeHeures("comptabilisees")}
+              onClick={() => setModeHeures("rectifiees")}
               className={`flex items-center gap-2 px-4 py-2 border-2 rounded ${
-                modeHeures === "comptabilisees" 
-                  ? "border-gray-500 bg-gray-50 text-gray-700 font-bold" 
+                modeHeures === "rectifiees" 
+                  ? "border-green-600 bg-green-50 text-green-700 font-bold" 
                   : "border-gray-300 text-gray-700 hover:bg-gray-100"
               }`}
             >
@@ -969,6 +998,22 @@ const AttendancePage = () => {
           </div>
 
           <div className="mt-4 border-t-2 border-gray-800 pt-4 print:hidden">
+            <div className="text-sm font-bold mb-2">Modes d'affichage:</div>
+            <div className="flex flex-wrap gap-3 items-center mb-4">
+              <div className="flex items-center gap-2">
+                <div className={`w-4 h-4 rounded border ${modeHeures === "brutes" ? "bg-blue-100 border-blue-500" : "bg-gray-100 border-gray-300"}`}></div>
+                <span className="text-sm">
+                  <span className="font-bold">Heures Brutes:</span> Heures originales du pointage
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className={`w-4 h-4 rounded border ${modeHeures === "rectifiees" ? "bg-green-100 border-green-500" : "bg-gray-100 border-gray-300"}`}></div>
+                <span className="text-sm">
+                  <span className="font-bold">Heures Rectifiées:</span> Heures après correction des anomalies
+                </span>
+              </div>
+            </div>
+            
             <div className="text-sm font-bold mb-2">Légende des événements:</div>
             <div className="flex flex-wrap gap-2">
               {typesEvenement.map((type) => (
@@ -980,6 +1025,23 @@ const AttendancePage = () => {
                 </div>
               ))}
             </div>
+            
+            {/* Légende pour les anomalies corrigées */}
+            <div className="mt-4 text-sm font-bold mb-2">Indicateurs:</div>
+            <div className="flex flex-wrap gap-3 items-center">
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-green-600 font-bold">✓</span>
+                <span className="text-xs text-gray-700">Anomalie corrigée</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-4 h-4 bg-yellow-50 border border-yellow-300"></div>
+                <span className="text-xs text-gray-700">Jour de paiement (P)</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-4 h-4 bg-gray-50 border border-gray-300"></div>
+                <span className="text-xs text-gray-700">Samedi normal</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -988,12 +1050,8 @@ const AttendancePage = () => {
             key={groupIdx} 
             className="bg-white border-x-2 border-b-2 border-gray-800 overflow-x-auto print:overflow-visible"
             style={{ 
-              // Force le saut de page après chaque groupe
               pageBreakAfter: 'always',
-              // Ajoute une bordure en haut pour les pages suivantes (2, 3, etc.)
-              // La page 1 n'en a pas besoin car elle suit l'en-tête de section
               borderTop: groupIdx === 0 ? 'none' : '2px solid #1f2937',
-              // Optionnel : ajoute une marge en haut pour les pages suivantes à l'impression
               marginTop: groupIdx === 0 ? '0' : '20px'
             }}
           >
@@ -1020,7 +1078,7 @@ const AttendancePage = () => {
                 <tr className="bg-gray-100">
                   {datesValides.map((date, idx) => (
                     <th key={idx} className="border border-gray-600 p-1 min-w-10">
-                      <div className="font-bold">{date.code_date}</div>
+                      <div className="font-bold">{date.code_affichage}</div>
                     </th>
                   ))}
                 </tr>
@@ -1065,16 +1123,32 @@ const AttendancePage = () => {
                       </td>
 
                       {datesValides.map((dateObj, dayIdx) => {
-                        // Plus besoin du "if (dateObj.hors_periode)" ici
                         const attendance = getAttendanceData(employee, dateObj.date);
                         const evenementType = getEvenementForCell(employee.userid, dateObj.date);
                         const { heureEntreeAffichee, heureSortieAffichee } = getHeuresAffichees(attendance);
                         const backgroundColor = getCellBackgroundColor(attendance);
+                        const estAnomalieCorrigee = attendance?.est_anomalie_corrigee || false;
+
+                        // Afficher la cellule même si vide pour les anomalies corrigées
+                        const shouldDisplay = attendance || 
+                          (estAnomalieCorrigee && evenementType === 'A'); // Anomalie corrigée avec absence
+
+                        if (!shouldDisplay) {
+                          return (
+                            <td
+                              key={dayIdx}
+                              className="border border-gray-600 p-0 text-center"
+                              style={{ backgroundColor }}
+                            >
+                              {/* Cellule vide */}
+                            </td>
+                          );
+                        }
 
                         return (
                           <td
                             key={dayIdx}
-                            className="border border-gray-600 p-0 text-center"
+                            className="border border-gray-600 p-0 text-center relative"
                             style={{ backgroundColor }}
                           >
                             <div className="flex flex-col h-full">
@@ -1087,11 +1161,7 @@ const AttendancePage = () => {
                                 className={`print:text-[7pt] border-b border-gray-300 px-1 py-0.5 min-h-[21px] text-xs font-bold w-full hover:bg-gray-50 transition-colors ${getEvenementTextColor(evenementType)}`}
                                 title={`Modifier l'événement (${evenementType})`}
                               >
-                                {evenementType !== "X" ||
-                                attendance?.heure_entree_reelle ||
-                                attendance?.heure_sortie_reelle
-                                  ? evenementType
-                                  : ""}
+                                {evenementType}
                               </button>
                               <div className="px-1 py-0.5 min-h-[20px]">
                                 {heureSortieAffichee}

@@ -1,5 +1,3 @@
-
-
 // import React, { useState, useEffect, useCallback } from "react";
 // import { AlertCircle, CheckCircle, Edit2, Save, X, RefreshCw, ArrowLeftRight } from "lucide-react";
 // import anomalieService from "../../services/anomalieService";
