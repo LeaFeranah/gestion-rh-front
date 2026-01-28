@@ -1,4 +1,4 @@
-// attendancePage.js - Version corrigée
+// attendancePage.js - Version sans badges B/R
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Settings, Edit2, Plus, Save, X, Trash2, AlertCircle, CheckCircle, RefreshCw } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
@@ -362,7 +362,7 @@ const AttendancePage = () => {
   const [horaires, setHoraires] = useState([]);
   const [selectedHoraire, setSelectedHoraire] = useState(null);
   const [showHoraireModal, setShowHoraireModal] = useState(false);
-  const [modeHeures, setModeHeures] = useState("comptabilisees");
+  const [modeHeures, setModeHeures] = useState("rectifiees"); // "brutes" ou "rectifiees"
   const [refreshing, setRefreshing] = useState(false);
   const [forceRefresh, setForceRefresh] = useState(0);
 
@@ -564,6 +564,7 @@ const AttendancePage = () => {
     }
   }, [selectedHoraire, fetchHoraires, refreshData]);
 
+  // FONCTION POUR DETERMINER LES HEURES A AFFICHER
   const getHeuresAffichees = useCallback((attendance) => {
     let heureEntreeAffichee = "";
     let heureSortieAffichee = "";
@@ -572,20 +573,44 @@ const AttendancePage = () => {
       return { heureEntreeAffichee: "", heureSortieAffichee: "" };
     }
     
-    if (modeHeures === "reelles") {
-      heureEntreeAffichee = attendance.heure_entree_reelle 
-        ? attendance.heure_entree_reelle.slice(0, 5)
-        : "";
-      heureSortieAffichee = attendance.heure_sortie_reelle 
-        ? attendance.heure_sortie_reelle.slice(0, 5)
-        : "";
+    if (modeHeures === "brutes") {
+      // MODE "HEURES BRUTES" : TOUJOURS afficher les heures brutes
+      if (attendance.est_anomalie_corrigee) {
+        // Pour les anomalies corrigées, afficher les heures brutes
+        heureEntreeAffichee = attendance.heure_brute_entree 
+          ? attendance.heure_brute_entree.slice(0, 5)
+          : "";
+        heureSortieAffichee = attendance.heure_brute_sortie 
+          ? attendance.heure_brute_sortie.slice(0, 5)
+          : "";
+      } else {
+        // Pour les autres, afficher les heures réelles (brutes)
+        heureEntreeAffichee = attendance.heure_entree_reelle 
+          ? attendance.heure_entree_reelle.slice(0, 5)
+          : "";
+        heureSortieAffichee = attendance.heure_sortie_reelle 
+          ? attendance.heure_sortie_reelle.slice(0, 5)
+          : "";
+      }
     } else {
-      heureEntreeAffichee = attendance.heure_entree_comptabilisee 
-        ? attendance.heure_entree_comptabilisee.slice(0, 5)
-        : "";
-      heureSortieAffichee = attendance.heure_sortie_comptabilisee 
-        ? attendance.heure_sortie_comptabilisee.slice(0, 5)
-        : "";
+      // MODE "HEURES RECTIFIÉES" : TOUJOURS afficher les heures après traitement
+      if (attendance.est_anomalie_corrigee) {
+        // Pour les anomalies corrigées, afficher les heures rectifiées
+        heureEntreeAffichee = attendance.heure_entree_rectifiee 
+          ? attendance.heure_entree_rectifiee.slice(0, 5)
+          : "";
+        heureSortieAffichee = attendance.heure_sortie_rectifiee 
+          ? attendance.heure_sortie_rectifiee.slice(0, 5)
+          : "";
+      } else {
+        // Pour les autres, afficher les heures comptabilisées
+        heureEntreeAffichee = attendance.heure_entree_comptabilisee 
+          ? attendance.heure_entree_comptabilisee.slice(0, 5)
+          : "";
+        heureSortieAffichee = attendance.heure_sortie_comptabilisee 
+          ? attendance.heure_sortie_comptabilisee.slice(0, 5)
+          : "";
+      }
     }
     
     return {
@@ -943,10 +968,10 @@ const AttendancePage = () => {
             </button>
             
             <button
-              onClick={() => setModeHeures("reelles")}
+              onClick={() => setModeHeures("brutes")}
               className={`flex items-center gap-2 px-4 py-2 border-2 rounded ${
-                modeHeures === "reelles" 
-                  ? "border-gray-500 bg-gray-50 text-gray-700 font-bold" 
+                modeHeures === "brutes" 
+                  ? "border-blue-600 bg-blue-50 text-blue-700 font-bold" 
                   : "border-gray-300 text-gray-700 hover:bg-gray-100"
               }`}
             >
@@ -954,10 +979,10 @@ const AttendancePage = () => {
             </button>
             
             <button
-              onClick={() => setModeHeures("comptabilisees")}
+              onClick={() => setModeHeures("rectifiees")}
               className={`flex items-center gap-2 px-4 py-2 border-2 rounded ${
-                modeHeures === "comptabilisees" 
-                  ? "border-gray-500 bg-gray-50 text-gray-700 font-bold" 
+                modeHeures === "rectifiees" 
+                  ? "border-green-600 bg-green-50 text-green-700 font-bold" 
                   : "border-gray-300 text-gray-700 hover:bg-gray-100"
               }`}
             >
@@ -973,6 +998,22 @@ const AttendancePage = () => {
           </div>
 
           <div className="mt-4 border-t-2 border-gray-800 pt-4 print:hidden">
+            <div className="text-sm font-bold mb-2">Modes d'affichage:</div>
+            <div className="flex flex-wrap gap-3 items-center mb-4">
+              <div className="flex items-center gap-2">
+                <div className={`w-4 h-4 rounded border ${modeHeures === "brutes" ? "bg-blue-100 border-blue-500" : "bg-gray-100 border-gray-300"}`}></div>
+                <span className="text-sm">
+                  <span className="font-bold">Heures Brutes:</span> Heures originales du pointage
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className={`w-4 h-4 rounded border ${modeHeures === "rectifiees" ? "bg-green-100 border-green-500" : "bg-gray-100 border-gray-300"}`}></div>
+                <span className="text-sm">
+                  <span className="font-bold">Heures Rectifiées:</span> Heures après correction des anomalies
+                </span>
+              </div>
+            </div>
+            
             <div className="text-sm font-bold mb-2">Légende des événements:</div>
             <div className="flex flex-wrap gap-2">
               {typesEvenement.map((type) => (
@@ -1111,15 +1152,7 @@ const AttendancePage = () => {
                             style={{ backgroundColor }}
                           >
                             <div className="flex flex-col h-full">
-                              <div className="border-b border-gray-300 px-1 py-0.5 min-h-[20px] relative">
-                                {estAnomalieCorrigee && (
-                                  <span 
-                                    className="absolute left-0 top-0 text-[6px] font-bold text-green-600 bg-green-50 px-0.5 rounded-r"
-                                    title="Anomalie corrigée"
-                                  >
-                                    ✓
-                                  </span>
-                                )}
+                              <div className="border-b border-gray-300 px-1 py-0.5 min-h-[20px]">
                                 {heureEntreeAffichee}
                               </div>
                               {/* ÉVÉNEMENT */}
