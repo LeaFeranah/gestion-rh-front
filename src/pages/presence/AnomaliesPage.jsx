@@ -589,15 +589,20 @@ const AnomalieRow = ({ anomalie, onUpdate }) => {
       <td className="border-2 border-gray-300 p-2">{anomalie.user_name}</td>
       <td className="border-2 border-gray-300 p-2 text-center">
         <div className="space-y-1">
-          <div className="text-sm text-gray-600">
-            {anomalie.heure_brute_entree
-              ? "O"
-              : "-"}
+          <div className="text-sm">
+            {
+              anomalie.heure_reelle_entree === null ||
+              anomalie.heure_reelle_entree < anomalie.heure_reelle_sortie
+                ? "O"
+                : "I"
+            }
           </div>
-          <div className="text-sm text-gray-600">
-            {anomalie.heure_brute_sortie
+          <div className="text-sm">
+            {
+              anomalie.heure_reelle_sortie === null ||
+              anomalie.heure_reelle_sortie > anomalie.heure_reelle_entree
               ? "I"
-              : "-"}
+              : "O"}
           </div>
         </div>
       </td>
@@ -683,8 +688,6 @@ const AnomalieRow = ({ anomalie, onUpdate }) => {
                 >
                   R
                 </button>
-              </div>
-              <div className="mt-2">
                 <button
                   onClick={handleEgaliserReelRectifie}
                   className="w-full px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700"
