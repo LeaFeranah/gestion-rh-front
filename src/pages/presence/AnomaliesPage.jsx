@@ -505,8 +505,10 @@
 
 
 import React, { useState, useEffect, useCallback } from "react";
-import { AlertCircle, CheckCircle, Edit2, Save, X, RefreshCw, ArrowLeftRight } from "lucide-react";
+import { AlertCircle, CheckCircle, Edit2, Save, X, RefreshCw, ArrowLeftRight, ArrowLeft } from "lucide-react";
 import anomalieService from "../../services/anomalieService";
+import "/src/styles/custom.css";
+import { useNavigate } from "react-router-dom";
 
 const getEtatColor = (etat) => {
   const colors = {
@@ -585,9 +587,22 @@ const AnomalieRow = ({ anomalie, onUpdate }) => {
         {anomalie.badgenumber}
       </td>
       <td className="border-2 border-gray-300 p-2">{anomalie.user_name}</td>
-
+      <td className="border-2 border-gray-300 p-2 text-center">
+        <div className="space-y-1">
+          <div className="text-sm text-gray-600">
+            {anomalie.heure_brute_entree
+              ? "O"
+              : "-"}
+          </div>
+          <div className="text-sm text-gray-600">
+            {anomalie.heure_brute_sortie
+              ? "I"
+              : "-"}
+          </div>
+        </div>
+      </td>
       {/* Code date RÉEL (modifiable) */}
-      <td className="border-2 border-gray-300 p-2 text-center bg-blue-50">
+      <td className="border-2 border-gray-300 p-2 text-center">
         <div className="space-y-1">
           {editing ? (
             <>
@@ -626,7 +641,7 @@ const AnomalieRow = ({ anomalie, onUpdate }) => {
       </td>
 
       {/* Code date RECTIFIE (modifiable) */}
-      <td className="border-2 border-gray-300 p-2 text-center bg-green-50">
+      <td className="border-2 border-gray-300 p-2 text-center">
         <div className="space-y-1">
           {editing ? (
             <>
@@ -697,7 +712,7 @@ const AnomalieRow = ({ anomalie, onUpdate }) => {
       </td>
 
       {/* Code date BRUT (non modifiable) */}
-      <td className="border-2 border-gray-300 p-2 text-center bg-gray-100">
+      <td className="border-2 border-gray-300 p-2 text-center">
         <div className="space-y-1">
           <div className="text-sm text-gray-600">
             {anomalie.heure_brute_entree
@@ -761,6 +776,7 @@ const AnomaliesPage = () => {
   const [stats, setStats] = useState(null);
   const [selectedSection, setSelectedSection] = useState("all");
   const [selectedDate, setSelectedDate] = useState("all");
+  const navigate = useNavigate();
 
   const fetchAnomalies = useCallback(async () => {
     try {
@@ -810,7 +826,9 @@ const AnomaliesPage = () => {
 
   useEffect(() => {
     fetchAnomalies();
-  }, [fetchAnomalies]);
+    setSelectedDate("all");
+  }, [fetchAnomalies, currentMonth, currentYear]);
+
 
   // Liste des sections uniques
   const allSections = React.useMemo(() => {
@@ -858,6 +876,27 @@ const AnomaliesPage = () => {
     return { min: format(start), max: format(end) };
   };
 
+  const sectionStats = selectedSection === "all"
+  ? null
+  : {
+      section: selectedSection,
+    };
+  
+  const formatPeriod = (month, year) => {
+    const { min, max } = getPeriodRange(month, year);
+    const start = new Date(min);
+    const end = new Date(max);
+
+    return (
+      <>
+        <span className="font-bold">Période du: </span>{" "}
+        {start.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}{" "}
+        <span className="font-bold">au</span>{" "}
+        {end.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+      </>
+    );
+  };
+
   if (loading && sectionsData.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
@@ -868,23 +907,25 @@ const AnomaliesPage = () => {
   }
 
   return (
-    <div className="p-4 bg-gray-50 min-h-screen">
+    <div className="p-4 bg-akj-50 min-h-screen">
       {/* En-tête */}
       <div className="bg-white shadow-md rounded-lg border border-gray-200 mb-6 p-6">
         {/* ===== Header principal ===== */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-0">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-0 border-b-2 pb-8">
           {/* Badge + titre */}
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg font-semibold text-sm shadow">
-              <AlertCircle className="w-5 h-5" />
-              Anomalies
-            </div>
+            <button
+                onClick={() => navigate("/attendance")} // ou le chemin exact de ta page AttendancePage
+                className="mt-3 md:mt-0 w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-lg shadow hover:bg-gray-600 transition"
+              >
+                <ArrowLeft className="w-5 h-5" /> 
+              </button>
             <div>
               <h1 className="text-2xl font-bold text-gray-800">
                 Gestion des Anomalies de Pointage
               </h1>
               <p className="text-sm text-gray-500 mt-1">
-                Suivi et correction des anomalies de présence par mois et par section
+                Suivi et correction des anomalies de pointage par mois et par section
               </p>
             </div>
           </div>
@@ -949,6 +990,20 @@ const AnomaliesPage = () => {
           </div>
         </div>
 
+        <div className="grid grid-cols-2 gap-4 pt-4 border-b-2 pb-4">
+          <span className="font-bold italic">SECTION:
+            {selectedSection && sectionStats && (
+            <span className="ml-4 font-semibold">
+              {sectionStats.section}
+            </span>
+          )}
+          </span>
+          <span className="text-md text-black-500 text-right">
+              {formatPeriod(currentMonth, currentYear)}
+          </span>
+        </div>
+
+
         {/* ===== Statistiques ===== */}
         {stats && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-6">
@@ -1011,7 +1066,7 @@ const AnomaliesPage = () => {
 
       {/* Tableau des anomalies */}
       {filteredData.length === 0 ? (
-        <div className="bg-white border-2 border-gray-800 p-8 text-center">
+        <div className="bg-white shadow-md rounded-lg border border-gray-200 mb-6 p-6 text-center">
           <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
           <p className="text-xl font-bold text-gray-700">
             Aucune anomalie détectée !
@@ -1023,67 +1078,64 @@ const AnomaliesPage = () => {
       ) : (
         filteredData.map((section) => (
           <div key={section.section} className="mb-6">
-            {/* Header Section */}
-            <div className="flex items-center justify-between bg-gray-900 text-white px-5 py-3 rounded-lg shadow-md border-l-4 border-red-600 mb-2">
-              <span className="text-lg font-semibold">{section.section}</span>
-              <div className="flex items-center gap-3 text-sm">
-                <span className="bg-red-600 px-2 py-0.5 rounded-full font-semibold text-white">
-                  {section.total}
-                </span>
-                <span className="text-gray-300">anomalie(s)</span>
-                <span className="bg-green-600 px-2 py-0.5 rounded-full font-semibold text-white">
-                  {section.corrigees}
-                </span>
-                <span className="text-gray-300">corrigée(s)</span>
-              </div>
-            </div>
-
             {/* Dates */}
             {Object.entries(section.par_date).map(([dateStr, anomalies]) => (
               <div key={dateStr} className="bg-white border border-gray-200 rounded-lg mb-4 shadow-sm">
-                <div className="bg-gray-100 px-4 py-2 font-semibold border-b border-gray-300 rounded-t-lg flex justify-between items-center">
-                  <span>
-                    {new Date(dateStr).toLocaleDateString("fr-FR", {
-                      weekday: "long",
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </span>
-                  <span className="text-sm text-gray-500">({anomalies.length} anomalie(s))</span>
-                </div>
+                  {anomalies.length === 0 ? (
+                    <div className="bg-white rounded-lg border-gray-200 mb-6 p-6 text-center">
+                      <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                      <p className="text-2xl font-semibold text-gray-800 mb-2">
+                        Aucune anomalie détectée !
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="bg-gray-100 px-4 py-2 font-semibold border-b border-gray-300 rounded-t-lg flex justify-between items-center">
+                        <span>
+                          {new Date(dateStr).toLocaleDateString("fr-FR", {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </span>
+                        <span className="text-sm text-gray-500">({anomalies.length} anomalie(s))</span>
+                      </div>
 
-                {/* Tableau */}
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse text-sm">
-                    <thead>
-                      <tr className="bg-gray-200 text-center align-middle">
-                        <th className="border border-gray-300 p-2">Section</th>
-                        <th className="border border-gray-300 p-2">Badge</th>
-                        <th className="border border-gray-300 p-2">Nom</th>
-                        <th className="border border-gray-300 p-2 bg-blue-100">
-                          {anomalies[0].code_date}(R)
-                        </th>
-                        <th className="border border-gray-300 p-2 bg-green-100">
-                          {anomalies[0].code_date}(P)
-                        </th>
-                        <th className="border border-gray-300 p-2 bg-yellow-100">
-                          {anomalies[0].code_date}(B)
-                        </th>
-                        <th className="border border-gray-300 p-2">État</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {anomalies.map((anomalie) => (
-                        <AnomalieRow
-                          key={anomalie.id}
-                          anomalie={anomalie}
-                          onUpdate={fetchAnomalies}
-                        />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      {/* Tableau */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse text-sm">
+                          <thead>
+                            <tr className="bg-gray-200 text-center align-middle">
+                              <th className="border border-gray-300 p-2">Section</th>
+                              <th className="border border-gray-300 p-2">Badge</th>
+                              <th className="border border-gray-300 p-2">Nom</th>
+                              <th className="border border-gray-300 p-2">Type</th>
+                              <th className="border border-gray-300 p-2">
+                                {anomalies[0].code_date}
+                              </th>
+                              <th className="border border-gray-300 p-2">
+                                {anomalies[0].code_date}(P)
+                              </th>
+                              <th className="border border-gray-300 p-2">
+                                {anomalies[0].code_date}(B)
+                              </th>
+                              <th className="border border-gray-300 p-2">État</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {anomalies.map((anomalie) => (
+                              <AnomalieRow
+                                key={anomalie.id}
+                                anomalie={anomalie}
+                                onUpdate={fetchAnomalies}
+                              />
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
               </div>
             ))}
           </div>
