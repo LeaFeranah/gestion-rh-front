@@ -1,4 +1,4 @@
-// attendancePage.js - Version sans badges B/R
+// attendancePage.js - Version avec boutons ajustés et F5 pour actualiser
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Settings,
@@ -9,11 +9,11 @@ import {
   Trash2,
   AlertCircle,
   CheckCircle,
-  RefreshCw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import presenceService from "../../services/presenceService";
 import { useReactToPrint } from "react-to-print";
+import "/src/styles/custom.css";
 
 // Utilitaires pour conversion heures
 const decimalToTime = (decimal) => {
@@ -431,15 +431,20 @@ const AttendancePage = () => {
   const [presences, setPresences] = useState([]);
   const [periode, setPeriode] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // États pour les filtres
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [filterChanged, setFilterChanged] = useState(false);
+  
   const [dates, setDates] = useState([]);
   const [showHoraires, setShowHoraires] = useState(false);
   const [horaires, setHoraires] = useState([]);
   const [selectedHoraire, setSelectedHoraire] = useState(null);
   const [showHoraireModal, setShowHoraireModal] = useState(false);
-  const [modeHeures, setModeHeures] = useState("rectifiees"); // "brutes" ou "rectifiees"
-  const [refreshing, setRefreshing] = useState(false);
+  const [modeHeures, setModeHeures] = useState("rectifiees");
   const [forceRefresh, setForceRefresh] = useState(0);
 
   const [typesEvenement, setTypesEvenement] = useState([]);
@@ -449,10 +454,43 @@ const AttendancePage = () => {
 
   const componentRef = useRef();
 
+  // Gestionnaires de changement de filtre
+  const handleMonthChange = (month) => {
+    setSelectedMonth(month);
+    setFilterChanged(month !== currentMonth || selectedYear !== currentYear);
+  };
+
+  const handleYearChange = (year) => {
+    setSelectedYear(year);
+    setFilterChanged(selectedMonth !== currentMonth || year !== currentYear);
+  };
+
+  const applyFilters = () => {
+    setCurrentMonth(selectedMonth);
+    setCurrentYear(selectedYear);
+    setFilterChanged(false);
+    refreshData();
+  };
+
   // Fonction pour rafraîchir les données
   const refreshData = useCallback(() => {
     setForceRefresh((prev) => prev + 1);
   }, []);
+
+  // Gestionnaire F5 pour actualiser
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'F5') {
+        e.preventDefault();
+        refreshData();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [refreshData]);
 
   const fetchEvenementsMois = useCallback(async (annee, mois) => {
     try {
@@ -734,6 +772,8 @@ const AttendancePage = () => {
     [modeHeures],
   );
 
+  const [refreshing, setRefreshing] = useState(false);
+
   useEffect(() => {
     fetchPresences(currentYear, currentMonth);
     fetchTypesEvenements();
@@ -1008,7 +1048,7 @@ const AttendancePage = () => {
         <div className="bg-white border-2 border-gray-800 mb-4 p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
-              <div className="bg-gray-800 text-white px-6 py-3 font-bold text-lg">
+              <div className="bg-akj text-white px-6 py-3 font-bold text-lg">
                 AKANJO
               </div>
               <h1 className="text-2xl font-bold uppercase">
@@ -1019,15 +1059,15 @@ const AttendancePage = () => {
               <h2 className="text-xl font-bold mb-3">
                 {periode?.mois} {periode?.annee}
               </h2>
-              <div className="flex gap-3 print:hidden">
-                <div>
+              <div className="flex items-center gap-3 print:hidden">
+                <div className="flex flex-col">
                   <label className="block text-xs text-gray-600 mb-1">
                     Mois
                   </label>
                   <select
-                    value={currentMonth}
-                    onChange={(e) => setCurrentMonth(parseInt(e.target.value))}
-                    className="px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                    value={selectedMonth}
+                    onChange={(e) => handleMonthChange(parseInt(e.target.value))}
+                    className="px-3 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-gray-500 text-sm"
                   >
                     <option value={1}>Janvier</option>
                     <option value={2}>Février</option>
@@ -1043,14 +1083,14 @@ const AttendancePage = () => {
                     <option value={12}>Décembre</option>
                   </select>
                 </div>
-                <div>
+                <div className="flex flex-col">
                   <label className="block text-xs text-gray-600 mb-1">
                     Année
                   </label>
                   <select
-                    value={currentYear}
-                    onChange={(e) => setCurrentYear(parseInt(e.target.value))}
-                    className="px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                    value={selectedYear}
+                    onChange={(e) => handleYearChange(parseInt(e.target.value))}
+                    className="px-3 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-gray-500 text-sm"
                   >
                     {[...Array(11)].map((_, i) => {
                       const year = 2020 + i;
@@ -1062,13 +1102,17 @@ const AttendancePage = () => {
                     })}
                   </select>
                 </div>
-                <button
-                  onClick={refreshData}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                  title="Rafraîchir les données"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                </button>
+                
+                {/* Bouton Appliquer */}
+                {filterChanged && (
+                  <button
+                    onClick={applyFilters}
+                    className="flex items-center gap-2 px-4 py-1 text-sm bg-akj text-white rounded mt-5"
+                    title="Appliquer les filtres"
+                  >
+                    Appliquer
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -1093,7 +1137,7 @@ const AttendancePage = () => {
           <div className="flex flex-wrap gap-3 mt-4 border-t-2 border-gray-800 pt-4 print:hidden">
             <button
               onClick={() => setShowHoraires(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700"
+              className="flex items-center gap-2 px-4 py-1 text-sm bg-akj text-white rounded hover:bg-gray-700"
             >
               <Settings className="w-4 h-4" />
               Gérer les horaires
@@ -1101,7 +1145,7 @@ const AttendancePage = () => {
 
             <button
               onClick={() => navigate("/anomalies")}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              className="flex items-center gap-2 px-4 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
             >
               <AlertCircle className="w-4 h-4" />
               Anomalies
@@ -1109,9 +1153,9 @@ const AttendancePage = () => {
 
             <button
               onClick={() => setModeHeures("brutes")}
-              className={`flex items-center gap-2 px-4 py-2 border-2 rounded ${
+              className={`flex items-center gap-2 px-4 py-1 text-sm rounded border focus:outline-none focus:ring-1 focus:ring-gray-800 ${
                 modeHeures === "brutes"
-                  ? "border-blue-600 bg-blue-50 text-blue-700 font-bold"
+                  ? "border-gray-400 bg-gray-50 text-gray-700 font-semibold"
                   : "border-gray-300 text-gray-700 hover:bg-gray-100"
               }`}
             >
@@ -1120,9 +1164,9 @@ const AttendancePage = () => {
 
             <button
               onClick={() => setModeHeures("rectifiees")}
-              className={`flex items-center gap-2 px-4 py-2 border-2 rounded ${
+              className={`flex items-center gap-2 px-4 py-1 text-sm rounded border focus:outline-none focus:ring-1 focus:ring-gray-800 ${
                 modeHeures === "rectifiees"
-                  ? "border-green-600 bg-green-50 text-green-700 font-bold"
+                  ? "border-gray-400 bg-gray-50 text-gray-700 font-semibold"
                   : "border-gray-300 text-gray-700 hover:bg-gray-100"
               }`}
             >
@@ -1131,7 +1175,7 @@ const AttendancePage = () => {
 
             <button
               onClick={() => handlePrint()}
-              className="ml-auto flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="ml-auto flex items-center gap-2 px-4 py-1 text-sm bg-akj text-white rounded hover:bg-gray-700"
             >
               Imprimer la fiche
             </button>
