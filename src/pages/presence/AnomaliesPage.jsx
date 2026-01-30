@@ -593,16 +593,16 @@ const AnomalieRow = ({ anomalie, onUpdate }) => {
             {
               anomalie.heure_reelle_entree === null ||
               anomalie.heure_reelle_entree < anomalie.heure_reelle_sortie
-                ? "O"
-                : "I"
+                ? "Entrée"
+                : "Sortie"
             }
           </div>
           <div className="text-sm">
             {
               anomalie.heure_reelle_sortie === null ||
               anomalie.heure_reelle_sortie > anomalie.heure_reelle_entree
-              ? "I"
-              : "O"}
+              ? "Sortie"
+              : "Entrée"}
           </div>
         </div>
       </td>
