@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { AlertCircle, CheckCircle, Edit2, Save, X, RefreshCw, ArrowLeftRight, ArrowLeft } from "lucide-react";
+import { AlertCircle, CheckCircle, Edit2, Save, X, RefreshCw, ArrowUpDown , ArrowLeft } from "lucide-react";
 import anomalieService from "../../services/anomalieService";
 import "/src/styles/custom.css";
 import { useNavigate } from "react-router-dom";
@@ -107,14 +107,14 @@ const AnomalieRow = ({ anomalie, onUpdate }) => {
 
   return (
     <tr className="border-b-2 border-gray-300 hover:bg-gray-50">
-      <td className="border-2 border-gray-300 p-2 font-semibold">
+      <td className="border-2 border-gray-300 p-2 w-64 font-semibold">
         {anomalie.section}
       </td>
-      <td className="border-2 border-gray-300 p-2 text-center">
+      <td className="border-2 border-gray-300 p-2 text-center w-24">
         {anomalie.badgenumber}
       </td>
-      <td className="border-2 border-gray-300 p-2">{anomalie.user_name}</td>
-      <td className="border-2 border-gray-300 p-2 text-center">
+      <td className="border-2 border-gray-300 p-2 w-64">{anomalie.user_name}</td>
+      <td className="border-2 border-gray-300 p-2 text-center w-24">
         <div className="space-y-1">
           <div className="text-sm">
             {
@@ -134,7 +134,7 @@ const AnomalieRow = ({ anomalie, onUpdate }) => {
         </div>
       </td>
       {/* Code date RÉEL (modifiable) */}
-      <td className="border-2 border-gray-300 p-2 text-center">
+      <td className="border-2 border-gray-300 p-2 text-center w-24">
         <div className="space-y-1">
           {editing ? (
             <>
@@ -162,6 +162,15 @@ const AnomalieRow = ({ anomalie, onUpdate }) => {
                 }
                 className="w-full px-2 py-1 border rounded text-sm"
               />
+              <div className="flex flex-wrap gap-1 mt-2">
+                <button
+                  onClick={handleEgaliserReelRectifie}
+                  className="w-full px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700"
+                  title="Égaliser Réel = Rectifié (État OK)"
+                >
+                  Réel = Rectifié ✓
+                </button>
+              </div>
             </>
           ) : (
             <>
@@ -177,7 +186,7 @@ const AnomalieRow = ({ anomalie, onUpdate }) => {
       </td>
 
       {/* Code date RECTIFIE (modifiable) */}
-      <td className="border-2 border-gray-300 p-2 text-center">
+      <td className="border-2 border-gray-300 p-2 text-center w-24">
         <div className="space-y-1">
           {editing ? (
             <>
@@ -211,7 +220,7 @@ const AnomalieRow = ({ anomalie, onUpdate }) => {
                   className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
                   title="Inverser entrée et sortie"
                 >
-                  <ArrowLeftRight className="w-3 h-3" />
+                  <ArrowUpDown  className="w-3 h-3" />
                 </button>
                 <button
                   onClick={handleCopierBrut}
@@ -226,15 +235,6 @@ const AnomalieRow = ({ anomalie, onUpdate }) => {
                   title="Copier depuis réel"
                 >
                   R
-                </button>
-              </div>
-              <div className="mt-1">
-                <button
-                  onClick={handleEgaliserReelRectifie}
-                  className="w-full px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700"
-                  title="Égaliser Réel = Rectifié (État OK)"
-                >
-                  Réel = Rectifié ✓
                 </button>
               </div>
             </>
@@ -252,7 +252,7 @@ const AnomalieRow = ({ anomalie, onUpdate }) => {
       </td>
 
       {/* Code date BRUT (non modifiable) */}
-      <td className="border-2 border-gray-300 p-2 text-center">
+      <td className="border-2 border-gray-300 p-2 text-center w-24">
         <div className="space-y-1">
           <div className="text-sm text-gray-600">
             {formatDisplayTime(anomalie.heure_brute_entree)}
@@ -264,7 +264,7 @@ const AnomalieRow = ({ anomalie, onUpdate }) => {
       </td>
 
       {/* État */}
-      <td className="border-2 border-gray-300 p-2">
+      <td className="border-2 border-gray-300 p-2 w-64">
         <div className="flex items-center justify-between gap-2">
           <span
             className={`px-2 py-1 rounded text-xs font-medium border-2 ${getEtatColor(
@@ -643,20 +643,20 @@ const AnomaliesPage = () => {
                         <table className="w-full border-collapse text-sm">
                           <thead>
                             <tr className="bg-gray-200 text-center align-middle">
-                              <th className="border border-gray-300 p-2">Section</th>
-                              <th className="border border-gray-300 p-2">Badge</th>
-                              <th className="border border-gray-300 p-2">Nom</th>
-                              <th className="border border-gray-300 p-2">Type</th>
-                              <th className="border border-gray-300 p-2">
+                              <th className="border-2 border-gray-300 p-2 w-64">Section</th>
+                              <th className="border-2 border-gray-300 p-2 w-24">Badge</th>
+                              <th className="border-2 border-gray-300 p-2 w-64">Nom</th>
+                              <th className="border-2 border-gray-300 p-2 w-24">Type</th>
+                              <th className="border-2 border-gray-300 p-2 w-24">
                                 {anomalies[0].code_date}
                               </th>
-                              <th className="border border-gray-300 p-2">
+                              <th className="border-2 border-gray-300 p-2 w-24">
                                 {anomalies[0].code_date}(P)
                               </th>
-                              <th className="border border-gray-300 p-2">
+                              <th className="border-2 border-gray-300 p-2 w-24">
                                 {anomalies[0].code_date}(B)
                               </th>
-                              <th className="border border-gray-300 p-2">État</th>
+                              <th className="border-2 border-gray-300 p-2 w-64">État</th>
                             </tr>
                           </thead>
                           <tbody>
