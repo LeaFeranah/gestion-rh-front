@@ -1,4 +1,3 @@
-// attendancePage.js - Version avec boutons ajustés et F5 pour actualiser
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Settings,
@@ -10,7 +9,7 @@ import {
   AlertCircle,
   CheckCircle,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import presenceService from "../../services/presenceService";
 import { useReactToPrint } from "react-to-print";
 import "/src/styles/custom.css";
@@ -428,17 +427,39 @@ const EvenementModal = ({
 
 const AttendancePage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [presences, setPresences] = useState([]);
   const [periode, setPeriode] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
+  // Récupérer l'état de navigation une seule fois
+  const locationState = React.useMemo(
+    () => location.state || {},
+    [location.state],
+  );
+
+  // Initialiser avec l'état de navigation si disponible, sinon date actuelle
+  const getInitialMonth = () => {
+    if (locationState.month && locationState.returnFromAnomalies) {
+      return locationState.month;
+    }
+    return new Date().getMonth() + 1;
+  };
+
+  const getInitialYear = () => {
+    if (locationState.year && locationState.returnFromAnomalies) {
+      return locationState.year;
+    }
+    return new Date().getFullYear();
+  };
+
   // États pour les filtres
-  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(getInitialMonth());
+  const [currentYear, setCurrentYear] = useState(getInitialYear());
+  const [selectedMonth, setSelectedMonth] = useState(getInitialMonth());
+  const [selectedYear, setSelectedYear] = useState(getInitialYear());
   const [filterChanged, setFilterChanged] = useState(false);
-  
+
   const [dates, setDates] = useState([]);
   const [showHoraires, setShowHoraires] = useState(false);
   const [horaires, setHoraires] = useState([]);
@@ -453,6 +474,34 @@ const AttendancePage = () => {
   const [evenementsMap, setEvenementsMap] = useState({});
 
   const componentRef = useRef();
+
+  // Nettoyer le state de navigation après l'avoir utilisé
+  useEffect(() => {
+    // Utiliser une référence stable pour locationState
+    const state = locationState;
+
+    if (state.returnFromAnomalies) {
+      // Effacer le state pour éviter qu'il persiste
+      window.history.replaceState({}, document.title);
+
+      // Si le mois/année dans l'état est différent de ce qui est déjà affiché
+      if (state.month !== currentMonth || state.year !== currentYear) {
+        setCurrentMonth(state.month);
+        setCurrentYear(state.year);
+        setSelectedMonth(state.month);
+        setSelectedYear(state.year);
+        setFilterChanged(false);
+
+        // Rafraîchir les données immédiatement
+        refreshData();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    locationState.returnFromAnomalies,
+    locationState.month,
+    locationState.year,
+  ]);
 
   // Gestionnaires de changement de filtre
   const handleMonthChange = (month) => {
@@ -480,15 +529,15 @@ const AttendancePage = () => {
   // Gestionnaire F5 pour actualiser
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'F5') {
+      if (e.key === "F5") {
         e.preventDefault();
         refreshData();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [refreshData]);
 
@@ -1066,7 +1115,9 @@ const AttendancePage = () => {
                   </label>
                   <select
                     value={selectedMonth}
-                    onChange={(e) => handleMonthChange(parseInt(e.target.value))}
+                    onChange={(e) =>
+                      handleMonthChange(parseInt(e.target.value))
+                    }
                     className="px-3 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-gray-500 text-sm"
                   >
                     <option value={1}>Janvier</option>
@@ -1102,7 +1153,7 @@ const AttendancePage = () => {
                     })}
                   </select>
                 </div>
-                
+
                 {/* Bouton Appliquer */}
                 {filterChanged && (
                   <button
@@ -1143,8 +1194,22 @@ const AttendancePage = () => {
               Gérer les horaires
             </button>
 
-            <button
+            {/* <button
               onClick={() => navigate("/anomalies")}
+              className="flex items-center gap-2 px-4 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              <AlertCircle className="w-4 h-4" />
+              Anomalies
+            </button> */}
+            <button
+              onClick={() =>
+                navigate("/anomalies", {
+                  state: {
+                    month: currentMonth,
+                    year: currentYear,
+                  },
+                })
+              }
               className="flex items-center gap-2 px-4 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
             >
               <AlertCircle className="w-4 h-4" />

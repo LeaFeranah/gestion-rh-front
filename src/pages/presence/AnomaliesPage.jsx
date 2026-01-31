@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { AlertCircle, CheckCircle, Edit2, Save, X, RefreshCw, ArrowUpDown , ArrowLeft } from "lucide-react";
 import anomalieService from "../../services/anomalieService";
 import "/src/styles/custom.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const getEtatColor = (etat) => {
   const colors = {
@@ -304,15 +304,35 @@ const AnomalieRow = ({ anomalie, onUpdate }) => {
 };
 
 const AnomaliesPage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [sectionsData, setSectionsData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  
+  // Récupérer l'état de navigation
+  const locationState = React.useMemo(() => location.state || {}, [location.state]);
+  
+  // Initialiser avec l'état de navigation si disponible, sinon date actuelle
+  const getInitialMonth = () => {
+    if (locationState.month) {
+      return locationState.month;
+    }
+    return new Date().getMonth() + 1;
+  };
+  
+  const getInitialYear = () => {
+    if (locationState.year) {
+      return locationState.year;
+    }
+    return new Date().getFullYear();
+  };
+  
+  const [currentMonth, setCurrentMonth] = useState(getInitialMonth());
+  const [currentYear, setCurrentYear] = useState(getInitialYear());
   const [detecting, setDetecting] = useState(false);
   const [stats, setStats] = useState(null);
   const [selectedSection, setSelectedSection] = useState("all");
   const [selectedDate, setSelectedDate] = useState("all");
-  const navigate = useNavigate();
 
   const fetchAnomalies = useCallback(async () => {
     try {
@@ -365,6 +385,13 @@ const AnomaliesPage = () => {
     setSelectedDate("all");
   }, [fetchAnomalies, currentMonth, currentYear]);
 
+  // Nettoyer le state de navigation après l'avoir utilisé
+  useEffect(() => {
+    if (locationState.month || locationState.year) {
+      // Effacer le state pour éviter qu'il persiste
+      window.history.replaceState({}, document.title);
+    }
+  }, [locationState.month, locationState.year]);
 
   // Liste des sections uniques
   const allSections = React.useMemo(() => {
@@ -451,10 +478,16 @@ const AnomaliesPage = () => {
           {/* Badge + titre */}
           <div className="flex items-center gap-4">
             <button
-                onClick={() => navigate("/attendance")}
+                onClick={() => navigate("/attendance", { 
+                  state: { 
+                    returnFromAnomalies: true,
+                    month: currentMonth, 
+                    year: currentYear 
+                  }
+                })}
                 className="mt-3 md:mt-0 w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-lg shadow hover:bg-gray-600 transition"
               >
-                <ArrowLeft className="w-5 h-5" /> 
+                <ArrowLeft className="w-5 h-5" /> Retour
               </button>
             <div>
               <h1 className="text-2xl font-bold text-gray-800">
