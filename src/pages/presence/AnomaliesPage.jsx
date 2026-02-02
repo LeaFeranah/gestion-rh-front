@@ -508,7 +508,7 @@ const AnomaliesPage = () => {
                 <select
                   value={currentMonth}
                   onChange={(e) => setCurrentMonth(parseInt(e.target.value))}
-                  className="px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  className="px-3 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-gray-500 text-sm"
                 >
                   {[...Array(12)].map((_, i) => (
                     <option key={i + 1} value={i + 1}>
@@ -524,7 +524,7 @@ const AnomaliesPage = () => {
                 <select
                   value={currentYear}
                   onChange={(e) => setCurrentYear(parseInt(e.target.value))}
-                  className="px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  className="px-3 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-gray-500 text-sm"
                 >
                   {[...Array(11)].map((_, i) => {
                     const year = 2020 + i;
@@ -542,7 +542,7 @@ const AnomaliesPage = () => {
             <button
               onClick={handleDetect}
               disabled={detecting}
-              className="mt-3 md:mt-0 w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 disabled:bg-gray-400 transition"
+              className="flex items-center gap-2 px-4 py-[4.7px] text-sm bg-akj text-white rounded"
             >
               {detecting ? (
                 <>
@@ -605,7 +605,7 @@ const AnomaliesPage = () => {
             <select
               value={selectedSection}
               onChange={(e) => setSelectedSection(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-1 border border-gray-300 rounded shadow-sm focus:ring-1 focus:ring-gray-500"
             >
               <option value="all">Toutes les sections</option>
               {allSections.map((section) => (
@@ -624,7 +624,7 @@ const AnomaliesPage = () => {
                 min={getPeriodRange(currentMonth, currentYear).min}
                 max={getPeriodRange(currentMonth, currentYear).max}
                 onChange={(e) => setSelectedDate(e.target.value || "all")}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-[2px] border border-gray-300 rounded shadow-sm focus:ring-1 focus:ring-gray-500"
               />
             )}
           </div>

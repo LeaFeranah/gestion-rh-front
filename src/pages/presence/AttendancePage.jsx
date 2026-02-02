@@ -972,19 +972,19 @@ const AttendancePage = () => {
     return (
       <div className="p-4 bg-gray-50 min-h-screen">
         <div className="bg-white border-2 border-gray-800 mb-4 p-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="bg-gray-800 text-white px-6 py-3 font-bold text-lg">
+              <div className="bg-akj text-white px-6 py-3 font-bold text-lg">
                 AKANJO
               </div>
               <h1 className="text-2xl font-bold uppercase">
                 GESTION DES HORAIRES
               </h1>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <button
                 onClick={() => setShowHoraires(false)}
-                className="px-4 py-2 border-2 border-gray-800 rounded hover:bg-gray-100"
+                className="px-4 py-1 border-2 border-gray-600 rounded hover:bg-gray-100"
               >
                 ← Retour aux présences
               </button>
@@ -993,7 +993,7 @@ const AttendancePage = () => {
                   setSelectedHoraire(null);
                   setShowHoraireModal(true);
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700"
+                className="flex items-center gap-2 px-4 py-1 bg-akj text-white rounded"
               >
                 <Plus className="w-4 h-4" />
                 Nouveau horaire
