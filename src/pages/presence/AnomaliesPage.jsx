@@ -168,7 +168,7 @@ const AnomalieRow = ({ anomalie, onUpdate }) => {
                   className="w-full px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700"
                   title="Égaliser Réel = Rectifié (État OK)"
                 >
-                  Réel = Rectifié ✓
+                  Réel = Rectifié
                 </button>
               </div>
             </>
