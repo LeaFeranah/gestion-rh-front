@@ -1067,7 +1067,7 @@ const AttendancePage = () => {
                         setShowHoraireModal(true);
                       }}
                       className="p-2 border-2 border-gray-800 rounded hover:bg-gray-100"
-                    >
+                    >npm
                       <Edit2 className="w-4 h-4" />
                     </button>
                   </td>
