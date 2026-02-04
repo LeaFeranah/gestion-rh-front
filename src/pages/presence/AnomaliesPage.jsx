@@ -681,13 +681,13 @@ const AnomaliesPage = () => {
                               <th className="border-2 border-gray-300 p-2 w-64">Nom</th>
                               <th className="border-2 border-gray-300 p-2 w-24">Type</th>
                               <th className="border-2 border-gray-300 p-2 w-24">
-                                {anomalies[0].code_date}
+                                {anomalies[0].code_date} (Heures par defaut)
                               </th>
                               <th className="border-2 border-gray-300 p-2 w-24">
-                                {anomalies[0].code_date}(P)
+                                {anomalies[0].code_date} (Pointages rectifiés)
                               </th>
                               <th className="border-2 border-gray-300 p-2 w-24">
-                                {anomalies[0].code_date}(B)
+                                {anomalies[0].code_date} (Pointages bruts)
                               </th>
                               <th className="border-2 border-gray-300 p-2 w-64">État</th>
                             </tr>
