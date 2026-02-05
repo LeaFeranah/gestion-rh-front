@@ -74,23 +74,65 @@ const getEvenementTextColor = (type) => {
   return textColors[type] || "text-gray-700";
 };
 
-// Modal de gestion des horaires
+// Modal de gestion des horaires 
 const HoraireModal = ({ horaire, onClose, onSave }) => {
-  const [formData, setFormData] = useState({
-    section: horaire?.section || "",
-    heure_entree: horaire ? decimalToTime(horaire.heure_entree) : "07:30",
-    heure_sortie: horaire ? decimalToTime(horaire.heure_sortie) : "17:50",
-    sortie_samedi: horaire ? decimalToTime(horaire.sortie_samedi) : "15:30",
-    sortie_vendredi_paiement: horaire
-      ? decimalToTime(horaire.sortie_vendredi_paiement)
-      : "17:33",
-    sortie_samedi_paiement: horaire
-      ? decimalToTime(horaire.sortie_samedi_paiement)
-      : "13:00",
-  });
   const [saving, setSaving] = useState(false);
 
+  // ========== FONCTIONS DE CONVERSION ==========
+  
+  /**
+   * Convertit HH:MM en format décimal
+   * Ex: "08:20" → 8.33
+   */
+  const timeToDecimal = (timeStr) => {
+    if (!timeStr) return 0;
+    
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    
+    // Convertir les minutes en centièmes d'heure
+    // 60 minutes = 100 centièmes
+    const centiemes = (minutes / 60) * 100;
+    
+    // Arrondir à 2 décimales
+    return parseFloat((hours + centiemes / 100).toFixed(2));
+  };
+
+  /**
+   * Convertit le format décimal en HH:MM
+   * Ex: 8.33 → "08:20"
+   */
+  const decimalToTimeLocal = (decimal) => {
+    if (!decimal && decimal !== 0) return "00:00";
+    
+    const decimalNum = parseFloat(decimal);
+    const hours = Math.floor(decimalNum);
+    
+    // Extraire les centièmes et convertir en minutes
+    const centiemes = (decimalNum - hours) * 100;
+    const minutes = Math.round(centiemes * 0.6);
+    
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+  };
+
+  // ========== ÉTAT DU FORMULAIRE ==========
+  
+  const [formData, setFormData] = useState({
+    section: horaire?.section || "",
+    heure_entree: horaire ? decimalToTimeLocal(horaire.heure_entree) : "07:30",
+    heure_sortie: horaire ? decimalToTimeLocal(horaire.heure_sortie) : "17:50",
+    sortie_samedi: horaire ? decimalToTimeLocal(horaire.sortie_samedi) : "15:30",
+    sortie_vendredi_paiement: horaire
+      ? decimalToTimeLocal(horaire.sortie_vendredi_paiement)
+      : "17:33",
+    sortie_samedi_paiement: horaire
+      ? decimalToTimeLocal(horaire.sortie_samedi_paiement)
+      : "13:00",
+  });
+
+  // ========== SOUMISSION DU FORMULAIRE ==========
+  
   const handleSubmit = async () => {
+    // Validation
     if (!formData.section) {
       alert("Veuillez entrer un nom de section");
       return;
@@ -98,59 +140,77 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
 
     setSaving(true);
     try {
+      // Conversion HH:MM → Décimal pour l'envoi au backend
       const data = {
         section: formData.section,
-        heure_entree: parseFloat(formData.heure_entree.replace(":", ".")),
-        heure_sortie: parseFloat(formData.heure_sortie.replace(":", ".")),
-        sortie_samedi: parseFloat(formData.sortie_samedi.replace(":", ".")),
-        sortie_vendredi_paiement: parseFloat(
-          formData.sortie_vendredi_paiement.replace(":", "."),
-        ),
-        sortie_samedi_paiement: parseFloat(
-          formData.sortie_samedi_paiement.replace(":", "."),
-        ),
+        heure_entree: timeToDecimal(formData.heure_entree),
+        heure_sortie: timeToDecimal(formData.heure_sortie),
+        sortie_samedi: timeToDecimal(formData.sortie_samedi),
+        sortie_vendredi_paiement: timeToDecimal(formData.sortie_vendredi_paiement),
+        sortie_samedi_paiement: timeToDecimal(formData.sortie_samedi_paiement),
       };
+      
+      console.log('📤 Données converties pour envoi:', data);
+      console.log('🔍 Vérification:');
+      console.log(`  ${formData.heure_entree} → ${data.heure_entree}`);
+      console.log(`  ${formData.heure_sortie} → ${data.heure_sortie}`);
+      
       await onSave(data);
+      
     } catch (err) {
-      console.error("Erreur:", err);
+      console.error("❌ Erreur:", err);
       alert("Erreur lors de l'enregistrement");
     } finally {
       setSaving(false);
     }
   };
 
+  // ========== RENDU ==========
+  
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div className="flex items-center justify-between p-6 border-b-2 border-gray-800">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+        {/* En-tête */}
+        <div className="flex items-center justify-between p-6 border-b-2 border-gray-800 sticky top-0 bg-white">
           <h3 className="text-xl font-bold">
             {horaire ? "Modifier" : "Ajouter"} un horaire
           </h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+            disabled={saving}
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
+        {/* Corps du formulaire */}
         <div className="p-6 space-y-4">
+          {/* Section */}
           <div>
-            <label className="block text-sm font-bold mb-1">Section *</label>
+            <label className="block text-sm font-bold mb-1 text-gray-700">
+              Section *
+            </label>
             <input
               type="text"
               value={formData.section}
               onChange={(e) =>
-                setFormData({ ...formData, section: e.target.value })
+                setFormData({ ...formData, section: e.target.value.toUpperCase() })
               }
-              className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800"
+              className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800 focus:outline-none transition-colors"
               disabled={!!horaire}
               placeholder="Ex: BRODERIE MAIN DEV"
             />
+            {!!horaire && (
+              <p className="text-xs text-gray-500 mt-1">
+                La section ne peut pas être modifiée
+              </p>
+            )}
           </div>
 
+          {/* Heure d'entrée */}
           <div>
-            <label className="block text-sm font-bold mb-1">
+            <label className="block text-sm font-bold mb-1 text-gray-700">
               Heure d'entrée *
             </label>
             <input
@@ -159,13 +219,17 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
               onChange={(e) =>
                 setFormData({ ...formData, heure_entree: e.target.value })
               }
-              className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800"
+              className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800 focus:outline-none transition-colors"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              En décimal: {timeToDecimal(formData.heure_entree)}
+            </p>
           </div>
 
+          {/* Heure de sortie normale */}
           <div>
-            <label className="block text-sm font-bold mb-1">
-              Heure de sortie (lundi-ven normal) *
+            <label className="block text-sm font-bold mb-1 text-gray-700">
+              Heure de sortie (lundi-vendredi normal) *
             </label>
             <input
               type="time"
@@ -173,12 +237,16 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
               onChange={(e) =>
                 setFormData({ ...formData, heure_sortie: e.target.value })
               }
-              className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800"
+              className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800 focus:outline-none transition-colors"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              En décimal: {timeToDecimal(formData.heure_sortie)}
+            </p>
           </div>
 
+          {/* Sortie samedi normal */}
           <div>
-            <label className="block text-sm font-bold mb-1">
+            <label className="block text-sm font-bold mb-1 text-gray-700">
               Sortie samedi normal *
             </label>
             <input
@@ -187,17 +255,23 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
               onChange={(e) =>
                 setFormData({ ...formData, sortie_samedi: e.target.value })
               }
-              className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800"
+              className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800 focus:outline-none transition-colors"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              En décimal: {timeToDecimal(formData.sortie_samedi)}
+            </p>
           </div>
 
+          {/* Séparateur */}
           <div className="border-t-2 border-gray-300 pt-4">
-            <h4 className="font-bold text-gray-700 mb-3">
+            <h4 className="font-bold text-gray-700 mb-3 flex items-center gap-2">
+              <span className="text-yellow-600">●</span>
               Horaires pour jours de paiement (P)
             </h4>
 
+            {/* Sortie vendredi paiement */}
             <div className="mb-3">
-              <label className="block text-sm font-bold mb-1">
+              <label className="block text-sm font-bold mb-1 text-gray-700">
                 Sortie vendredi de paiement *
               </label>
               <input
@@ -209,12 +283,16 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
                     sortie_vendredi_paiement: e.target.value,
                   })
                 }
-                className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-yellow-600"
+                className="w-full px-3 py-2 border-2 border-yellow-300 rounded focus:border-yellow-600 focus:outline-none transition-colors"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                En décimal: {timeToDecimal(formData.sortie_vendredi_paiement)}
+              </p>
             </div>
 
+            {/* Sortie samedi paiement */}
             <div className="mb-3">
-              <label className="block text-sm font-bold mb-1">
+              <label className="block text-sm font-bold mb-1 text-gray-700">
                 Sortie samedi de paiement *
               </label>
               <input
@@ -226,15 +304,19 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
                     sortie_samedi_paiement: e.target.value,
                   })
                 }
-                className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-yellow-600"
+                className="w-full px-3 py-2 border-2 border-yellow-300 rounded focus:border-yellow-600 focus:outline-none transition-colors"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                En décimal: {timeToDecimal(formData.sortie_samedi_paiement)}
+              </p>
             </div>
           </div>
 
+          {/* Boutons d'action */}
           <div className="flex gap-3 pt-4">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2 border-2 border-gray-300 rounded hover:bg-gray-50"
+              className="flex-1 px-4 py-2 border-2 border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={saving}
             >
               Annuler
@@ -242,10 +324,13 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
             <button
               onClick={handleSubmit}
               disabled={saving}
-              className="flex-1 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 flex items-center justify-center gap-2 disabled:bg-gray-400"
+              className="flex-1 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             >
               {saving ? (
-                "Enregistrement..."
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Enregistrement...
+                </>
               ) : (
                 <>
                   <Save className="w-4 h-4" />
@@ -1067,7 +1152,7 @@ const AttendancePage = () => {
                         setShowHoraireModal(true);
                       }}
                       className="p-2 border-2 border-gray-800 rounded hover:bg-gray-100"
-                    >npm
+                    >
                       <Edit2 className="w-4 h-4" />
                     </button>
                   </td>
