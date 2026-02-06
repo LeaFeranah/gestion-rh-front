@@ -7,7 +7,8 @@ import {
   X,
   Trash2,
   AlertCircle,
-  CheckCircle,
+  Clock,
+  Search,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import presenceService from "../../services/presenceService";
@@ -74,25 +75,471 @@ const getEvenementTextColor = (type) => {
   return textColors[type] || "text-gray-700";
 };
 
-// Modal de gestion des horaires 
+// ========== COMPOSANT DE RECHERCHE LOCALE ==========
+const LocalEmployeeSearch = ({ onFilter }) => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        onFilter("");
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onFilter]);
+
+  const handleChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    onFilter(query);
+  };
+
+  const handleClear = () => {
+    setSearchQuery("");
+    onFilter("");
+  };
+
+  return (
+    <div ref={searchRef} className="relative flex-1 max-w-md">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={handleChange}
+          placeholder="Rechercher dans la liste..."
+          className="w-full pl-10 pr-10 py-2 border-2 border-gray-300 rounded-lg focus:border-akj focus:outline-none"
+        />
+        {searchQuery && (
+          <button
+            onClick={handleClear}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ========== MODAL DE MODIFICATION DES HEURES ==========
+const HeureModal = ({
+  employee,
+  date,
+  attendance,
+  onClose,
+  onSave,
+  onDelete: _onDelete,
+}) => {
+  const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [formData, setFormData] = useState({
+    heure_entree: "",
+    heure_sortie: "",
+    commentaire: "",
+  });
+  const [horairesPrevus, setHorairesPrevus] = useState(null);
+
+  // Charger les données existantes
+  useEffect(() => {
+    const loadData = async () => {
+      if (!employee || !date) return;
+
+      setLoading(true);
+      try {
+        const data = await presenceService.getHeuresJour(employee.userid, date);
+
+        // Sauvegarder les horaires prévus pour affichage
+        setHorairesPrevus(data.horaires_prevu);
+
+        // Déterminer quelles heures afficher par défaut
+        let heureEntreeDefaut = "";
+        let heureSortieDefaut = "";
+
+        if (attendance) {
+          if (attendance.heure_entree_rectifiee) {
+            heureEntreeDefaut = attendance.heure_entree_rectifiee.slice(0, 5);
+          } else if (attendance.heure_brute_entree) {
+            heureEntreeDefaut = attendance.heure_brute_entree.slice(0, 5);
+          } else if (attendance.heure_entree_comptabilisee) {
+            heureEntreeDefaut = attendance.heure_entree_comptabilisee.slice(
+              0,
+              5,
+            );
+          }
+
+          if (attendance.heure_sortie_rectifiee) {
+            heureSortieDefaut = attendance.heure_sortie_rectifiee.slice(0, 5);
+          } else if (attendance.heure_brute_sortie) {
+            heureSortieDefaut = attendance.heure_brute_sortie.slice(0, 5);
+          } else if (attendance.heure_sortie_comptabilisee) {
+            heureSortieDefaut = attendance.heure_sortie_comptabilisee.slice(
+              0,
+              5,
+            );
+          }
+        } else {
+          // Pas de données de présence, utiliser les horaires prévus
+          heureEntreeDefaut = data.horaires_prevu?.entree?.slice(0, 5) || "";
+          heureSortieDefaut = data.horaires_prevu?.sortie?.slice(0, 5) || "";
+        }
+
+        setFormData({
+          heure_entree: heureEntreeDefaut,
+          heure_sortie: heureSortieDefaut,
+          commentaire: data.anomalie?.commentaire || "",
+        });
+      } catch (error) {
+        console.error("❌ Erreur chargement données:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [employee, date, attendance]);
+
+  const handleSubmit = async () => {
+    // Validation
+    if (!formData.heure_entree && !formData.heure_sortie) {
+      alert("Veuillez saisir au moins une heure (entrée ou sortie)");
+      return;
+    }
+
+    // Validation format heures
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    if (formData.heure_entree && !timeRegex.test(formData.heure_entree)) {
+      alert("Format d'heure d'entrée invalide. Utilisez HH:MM");
+      return;
+    }
+    if (formData.heure_sortie && !timeRegex.test(formData.heure_sortie)) {
+      alert("Format d'heure de sortie invalide. Utilisez HH:MM");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const dataToSend = {
+        userid: employee.userid,
+        date: date,
+        heure_entree: formData.heure_entree
+          ? `${formData.heure_entree}:00`
+          : null,
+        heure_sortie: formData.heure_sortie
+          ? `${formData.heure_sortie}:00`
+          : null,
+        commentaire: formData.commentaire || "Ajouté manuellement",
+      };
+
+      await presenceService.modifierHeuresManuellement(dataToSend);
+
+      alert("✅ Présence enregistrée avec succès !");
+      onSave();
+      onClose();
+    } catch (error) {
+      console.error("❌ Erreur modification heures:", error);
+      alert(`❌ Erreur: ${error.response?.data?.error || error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (
+      !window.confirm(
+        "Êtes-vous sûr de vouloir supprimer cette présence ?\nLes pointages bruts seront rétablis s'ils existent.",
+      )
+    ) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await presenceService.supprimerHeuresManuellement(employee.userid, date);
+      alert("✅ Présence supprimée avec succès !");
+      if (_onDelete) _onDelete();
+      onClose();
+    } catch (error) {
+      console.error("❌ Erreur suppression:", error);
+      alert(`❌ Erreur: ${error.response?.data?.error || error.message}`);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const formatTimeDisplay = (timeStr) => {
+    if (!timeStr) return "Non renseigné";
+    return timeStr.length > 5 ? timeStr.slice(0, 5) : timeStr;
+  };
+
+  const canDelete = attendance !== null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        {/* En-tête */}
+        <div className="sticky top-0 bg-white border-b-2 border-gray-800 p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Clock className="w-6 h-6 text-gray-800" />
+              <h3 className="text-xl font-bold">
+                {attendance ? "Modifier la présence" : "Ajouter une présence"}
+              </h3>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+              disabled={loading || deleting}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Corps */}
+        <div className="p-6 space-y-6">
+          {/* Informations employé */}
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="font-bold text-gray-600">Employé:</span>
+                <div className="mt-1 font-semibold">{employee?.name}</div>
+              </div>
+              <div>
+                <span className="font-bold text-gray-600">Badge:</span>
+                <div className="mt-1 font-semibold">
+                  {employee?.badgenumber}
+                </div>
+              </div>
+              <div className="col-span-2">
+                <span className="font-bold text-gray-600">Date:</span>
+                <div className="mt-1 font-semibold">
+                  {new Date(date).toLocaleDateString("fr-FR", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </div>
+              </div>
+              {(attendance?.section || employee?.section) && (
+                <div className="col-span-2">
+                  <span className="font-bold text-gray-600">Section:</span>
+                  <div className="mt-1 font-semibold">
+                    {attendance?.section || employee?.section}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Horaires prévus */}
+          {horairesPrevus && (
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <h4 className="font-bold text-blue-900 mb-2">
+                Horaires prévus pour cette date:
+              </h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-blue-700">Entrée:</span>
+                  <span className="ml-2 font-semibold">
+                    {formatTimeDisplay(horairesPrevus.entree)}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-blue-700">Sortie:</span>
+                  <span className="ml-2 font-semibold">
+                    {formatTimeDisplay(horairesPrevus.sortie)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Heures existantes (si présence existe) */}
+          {attendance && (
+            <div className="space-y-4">
+              <h4 className="font-bold text-gray-700">Heures existantes:</h4>
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div className="text-center p-2 bg-gray-50 rounded">
+                  <div className="font-bold text-gray-600 mb-2">Brutes</div>
+                  <div className="space-y-1">
+                    <div className="text-xs text-gray-500">Entrée</div>
+                    <div className="font-medium">
+                      {formatTimeDisplay(attendance.heure_brute_entree)}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-2">Sortie</div>
+                    <div className="font-medium">
+                      {formatTimeDisplay(attendance.heure_brute_sortie)}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-center p-2 bg-blue-50 rounded">
+                  <div className="font-bold text-blue-700 mb-2">Prévues</div>
+                  <div className="space-y-1">
+                    <div className="text-xs text-blue-600">Entrée</div>
+                    <div className="font-medium text-blue-900">
+                      {formatTimeDisplay(attendance.heure_entree_prevue)}
+                    </div>
+                    <div className="text-xs text-blue-600 mt-2">Sortie</div>
+                    <div className="font-medium text-blue-900">
+                      {formatTimeDisplay(attendance.heure_sortie_prevue)}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-center p-2 bg-green-50 rounded">
+                  <div className="font-bold text-green-700 mb-2">
+                    Rectifiées
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-xs text-green-600">Entrée</div>
+                    <div className="font-medium text-green-900">
+                      {formatTimeDisplay(attendance.heure_entree_rectifiee)}
+                    </div>
+                    <div className="text-xs text-green-600 mt-2">Sortie</div>
+                    <div className="font-medium text-green-900">
+                      {formatTimeDisplay(attendance.heure_sortie_rectifiee)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Formulaire de modification */}
+          <div className="space-y-4">
+            <h4 className="font-bold text-gray-700">
+              {attendance ? "Modifier les heures" : "Saisir les heures"}
+            </h4>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold mb-2 text-gray-700">
+                  Heure d'entrée *
+                </label>
+                <input
+                  type="time"
+                  value={formData.heure_entree}
+                  onChange={(e) =>
+                    setFormData({ ...formData, heure_entree: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800 focus:outline-none transition-colors"
+                  disabled={loading || deleting}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold mb-2 text-gray-700">
+                  Heure de sortie *
+                </label>
+                <input
+                  type="time"
+                  value={formData.heure_sortie}
+                  onChange={(e) =>
+                    setFormData({ ...formData, heure_sortie: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800 focus:outline-none transition-colors"
+                  disabled={loading || deleting}
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold mb-2 text-gray-700">
+                Commentaire
+              </label>
+              <textarea
+                value={formData.commentaire}
+                onChange={(e) =>
+                  setFormData({ ...formData, commentaire: e.target.value })
+                }
+                className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800 focus:outline-none transition-colors"
+                rows="2"
+                placeholder="Ex: Oubli de pointage, appareil en panne..."
+                disabled={loading || deleting}
+              />
+            </div>
+          </div>
+
+          {/* Boutons d'action */}
+          <div className="flex gap-3 pt-6 border-t border-gray-200">
+            {canDelete && (
+              <button
+                onClick={handleDelete}
+                disabled={loading || deleting}
+                className="flex-1 px-4 py-3 bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+              >
+                {deleting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Suppression...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Supprimer
+                  </>
+                )}
+              </button>
+            )}
+
+            <button
+              onClick={onClose}
+              disabled={loading || deleting}
+              className="flex-1 px-4 py-3 border-2 border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Annuler
+            </button>
+
+            <button
+              onClick={handleSubmit}
+              disabled={loading || deleting}
+              className="flex-1 px-4 py-3 bg-gray-800 text-white rounded hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Enregistrement...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Enregistrer
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Modal de gestion des horaires
 const HoraireModal = ({ horaire, onClose, onSave }) => {
   const [saving, setSaving] = useState(false);
 
   // ========== FONCTIONS DE CONVERSION ==========
-  
+
   /**
    * Convertit HH:MM en format décimal
    * Ex: "08:20" → 8.33
    */
   const timeToDecimal = (timeStr) => {
     if (!timeStr) return 0;
-    
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    
+
+    const [hours, minutes] = timeStr.split(":").map(Number);
+
     // Convertir les minutes en centièmes d'heure
     // 60 minutes = 100 centièmes
     const centiemes = (minutes / 60) * 100;
-    
+
     // Arrondir à 2 décimales
     return parseFloat((hours + centiemes / 100).toFixed(2));
   };
@@ -103,24 +550,26 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
    */
   const decimalToTimeLocal = (decimal) => {
     if (!decimal && decimal !== 0) return "00:00";
-    
+
     const decimalNum = parseFloat(decimal);
     const hours = Math.floor(decimalNum);
-    
+
     // Extraire les centièmes et convertir en minutes
     const centiemes = (decimalNum - hours) * 100;
     const minutes = Math.round(centiemes * 0.6);
-    
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
   };
 
   // ========== ÉTAT DU FORMULAIRE ==========
-  
+
   const [formData, setFormData] = useState({
     section: horaire?.section || "",
     heure_entree: horaire ? decimalToTimeLocal(horaire.heure_entree) : "07:30",
     heure_sortie: horaire ? decimalToTimeLocal(horaire.heure_sortie) : "17:50",
-    sortie_samedi: horaire ? decimalToTimeLocal(horaire.sortie_samedi) : "15:30",
+    sortie_samedi: horaire
+      ? decimalToTimeLocal(horaire.sortie_samedi)
+      : "15:30",
     sortie_vendredi_paiement: horaire
       ? decimalToTimeLocal(horaire.sortie_vendredi_paiement)
       : "17:33",
@@ -130,7 +579,7 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
   });
 
   // ========== SOUMISSION DU FORMULAIRE ==========
-  
+
   const handleSubmit = async () => {
     // Validation
     if (!formData.section) {
@@ -146,17 +595,15 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
         heure_entree: timeToDecimal(formData.heure_entree),
         heure_sortie: timeToDecimal(formData.heure_sortie),
         sortie_samedi: timeToDecimal(formData.sortie_samedi),
-        sortie_vendredi_paiement: timeToDecimal(formData.sortie_vendredi_paiement),
+        sortie_vendredi_paiement: timeToDecimal(
+          formData.sortie_vendredi_paiement,
+        ),
         sortie_samedi_paiement: timeToDecimal(formData.sortie_samedi_paiement),
       };
-      
-      console.log('📤 Données converties pour envoi:', data);
-      console.log('🔍 Vérification:');
-      console.log(`  ${formData.heure_entree} → ${data.heure_entree}`);
-      console.log(`  ${formData.heure_sortie} → ${data.heure_sortie}`);
-      
+
+      console.log("📤 Données converties pour envoi:", data);
+
       await onSave(data);
-      
     } catch (err) {
       console.error("❌ Erreur:", err);
       alert("Erreur lors de l'enregistrement");
@@ -166,7 +613,7 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
   };
 
   // ========== RENDU ==========
-  
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
@@ -195,7 +642,10 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
               type="text"
               value={formData.section}
               onChange={(e) =>
-                setFormData({ ...formData, section: e.target.value.toUpperCase() })
+                setFormData({
+                  ...formData,
+                  section: e.target.value.toUpperCase(),
+                })
               }
               className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800 focus:outline-none transition-colors"
               disabled={!!horaire}
@@ -510,6 +960,7 @@ const EvenementModal = ({
   );
 };
 
+// ========== COMPOSANT PRINCIPAL ==========
 const AttendancePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -517,7 +968,7 @@ const AttendancePage = () => {
   const [periode, setPeriode] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Récupérer l'état de navigation une seule fois
+  // Récupérer l'état de navigation
   const locationState = React.useMemo(
     () => location.state || {},
     [location.state],
@@ -544,6 +995,7 @@ const AttendancePage = () => {
   const [selectedMonth, setSelectedMonth] = useState(getInitialMonth());
   const [selectedYear, setSelectedYear] = useState(getInitialYear());
   const [filterChanged, setFilterChanged] = useState(false);
+  const [searchFilter, setSearchFilter] = useState("");
 
   const [dates, setDates] = useState([]);
   const [showHoraires, setShowHoraires] = useState(false);
@@ -558,18 +1010,19 @@ const AttendancePage = () => {
   const [showEvenementModal, setShowEvenementModal] = useState(false);
   const [evenementsMap, setEvenementsMap] = useState({});
 
+  // NOUVEAUX ÉTATS POUR LA MODIFICATION DES HEURES
+  const [showHeureModal, setShowHeureModal] = useState(false);
+  const [selectedHeureData, setSelectedHeureData] = useState(null);
+
   const componentRef = useRef();
 
   // Nettoyer le state de navigation après l'avoir utilisé
   useEffect(() => {
-    // Utiliser une référence stable pour locationState
     const state = locationState;
 
     if (state.returnFromAnomalies) {
-      // Effacer le state pour éviter qu'il persiste
       window.history.replaceState({}, document.title);
 
-      // Si le mois/année dans l'état est différent de ce qui est déjà affiché
       if (state.month !== currentMonth || state.year !== currentYear) {
         setCurrentMonth(state.month);
         setCurrentYear(state.year);
@@ -577,7 +1030,6 @@ const AttendancePage = () => {
         setSelectedYear(state.year);
         setFilterChanged(false);
 
-        // Rafraîchir les données immédiatement
         refreshData();
       }
     }
@@ -686,7 +1138,6 @@ const AttendancePage = () => {
         alert("Erreur lors du chargement des présences: " + err.message);
       } finally {
         setLoading(false);
-        setRefreshing(false);
       }
     },
     [fetchEvenementsMois],
@@ -709,6 +1160,49 @@ const AttendancePage = () => {
       console.error("Erreur:", err);
     }
   }, []);
+
+  // NOUVELLE FONCTION : Gestion du clic sur les heures
+  const handleHeureClick = useCallback((employee, dateStr, attendance) => {
+    const dateFormatted = formatDate(dateStr);
+
+    if (!dateFormatted) {
+      console.error("❌ Date invalide:", dateStr);
+      return;
+    }
+
+    setSelectedHeureData({
+      employee,
+      date: dateFormatted,
+      attendance,
+    });
+    setShowHeureModal(true);
+  }, []);
+
+  // FONCTION MODIFIÉE : Ne retourne l'événement "X" que si l'employé a une présence
+  const getEvenementForCell = useCallback(
+    (userId, dateStr, attendance) => {
+      const dateFormatted = formatDate(dateStr);
+      if (!dateFormatted) return "";
+
+      const key = `${userId}-${dateFormatted}`;
+      const eventFromMap = evenementsMap[key];
+
+      // Si l'événement est "X" et qu'il n'y a pas de présence (pas de pointage et pas d'anomalie corrigée)
+      if (eventFromMap === "X") {
+        // Si pas d'attendance (null) ou (pas présent et pas d'anomalie corrigée)
+        if (
+          !attendance ||
+          (!attendance.present && !attendance.est_anomalie_corrigee)
+        ) {
+          return "";
+        }
+      }
+
+      // Sinon, retourner l'événement (même s'il est "X" et qu'il y a présence, ou un autre événement)
+      return eventFromMap || "";
+    },
+    [evenementsMap],
+  );
 
   const handleEvenementClick = useCallback(
     (employee, dateStr, attendance) => {
@@ -762,7 +1256,6 @@ const AttendancePage = () => {
 
         console.log("✅ Événement mis à jour");
 
-        // Rafraîchir les données après modification
         refreshData();
       } catch (err) {
         console.error("❌ Erreur lors de la sauvegarde:", err);
@@ -797,7 +1290,6 @@ const AttendancePage = () => {
       setShowEvenementModal(false);
       setSelectedEvenement(null);
 
-      // Rafraîchir les données après suppression
       refreshData();
     } catch (err) {
       console.error("❌ Erreur lors de la suppression:", err);
@@ -833,7 +1325,6 @@ const AttendancePage = () => {
 
         alert("Horaire enregistré avec succès !");
 
-        // Rafraîchir les données après modification
         refreshData();
       } catch (err) {
         console.error(
@@ -859,9 +1350,7 @@ const AttendancePage = () => {
       }
 
       if (modeHeures === "brutes") {
-        // MODE "HEURES BRUTES" : TOUJOURS afficher les heures brutes
         if (attendance.est_anomalie_corrigee) {
-          // Pour les anomalies corrigées, afficher les heures brutes
           heureEntreeAffichee = attendance.heure_brute_entree
             ? attendance.heure_brute_entree.slice(0, 5)
             : "";
@@ -869,7 +1358,6 @@ const AttendancePage = () => {
             ? attendance.heure_brute_sortie.slice(0, 5)
             : "";
         } else {
-          // Pour les autres, afficher les heures réelles (brutes)
           heureEntreeAffichee = attendance.heure_entree_reelle
             ? attendance.heure_entree_reelle.slice(0, 5)
             : "";
@@ -878,9 +1366,7 @@ const AttendancePage = () => {
             : "";
         }
       } else {
-        // MODE "HEURES RECTIFIÉES" : TOUJOURS afficher les heures après traitement
         if (attendance.est_anomalie_corrigee) {
-          // Pour les anomalies corrigées, afficher les heures rectifiées
           heureEntreeAffichee = attendance.heure_entree_rectifiee
             ? attendance.heure_entree_rectifiee.slice(0, 5)
             : "";
@@ -888,7 +1374,6 @@ const AttendancePage = () => {
             ? attendance.heure_sortie_rectifiee.slice(0, 5)
             : "";
         } else {
-          // Pour les autres, afficher les heures comptabilisées
           heureEntreeAffichee = attendance.heure_entree_comptabilisee
             ? attendance.heure_entree_comptabilisee.slice(0, 5)
             : "";
@@ -906,8 +1391,6 @@ const AttendancePage = () => {
     [modeHeures],
   );
 
-  const [refreshing, setRefreshing] = useState(false);
-
   useEffect(() => {
     fetchPresences(currentYear, currentMonth);
     fetchTypesEvenements();
@@ -921,25 +1404,84 @@ const AttendancePage = () => {
     fetchHoraires,
   ]);
 
+  // FONCTION MODIFIÉE POUR LA RECHERCHE LOCALE
   const getEmployeeData = useCallback(() => {
-    const employees = {};
+    const employeesMap = {};
+
+    // Regrouper les employés ayant des présences dans le mois
     presences.forEach((presence) => {
-      if (!employees[presence.userid]) {
-        employees[presence.userid] = {
+      // Ignorer les présences hors période si nécessaire
+      if (presence.hors_periode) return;
+
+      // NOUVEAU: Ne pas créer d'entrée pour les jours où il n'y a que l'événement "X" sans présence
+      // et sans anomalie corrigée
+      if (
+        !presence.present &&
+        !presence.est_anomalie_corrigee &&
+        presence.evenement === "X"
+      ) {
+        return;
+      }
+
+      if (!employeesMap[presence.userid]) {
+        employeesMap[presence.userid] = {
           userid: presence.userid,
           badgenumber: presence.badgenumber,
           name: presence.name,
           section: presence.section || "ADMINISTRATION",
           presences: {},
+          hasPresence: false,
         };
       }
+
       const dateFormatted = formatDate(presence.date);
       if (dateFormatted) {
-        employees[presence.userid].presences[dateFormatted] = presence;
+        employeesMap[presence.userid].presences[dateFormatted] = {
+          ...presence,
+          anomalie_id: presence.anomalie_id || null,
+        };
+        employeesMap[presence.userid].hasPresence = true;
       }
     });
-    return Object.values(employees);
-  }, [presences]);
+
+    // Convertir en tableau et filtrer ceux qui ont au moins une présence
+    let employeesArray = Object.values(employeesMap).filter(
+      (emp) => emp.hasPresence,
+    );
+
+    // Appliquer le filtre de recherche locale
+    if (searchFilter.trim()) {
+      const query = searchFilter.toLowerCase().trim();
+      employeesArray = employeesArray.filter((employee) => {
+        // Recherche par badge number
+        const badgeMatch =
+          employee.badgenumber &&
+          employee.badgenumber.toLowerCase().includes(query);
+
+        // Recherche par nom
+        const nameMatch =
+          employee.name && employee.name.toLowerCase().includes(query);
+
+        // Recherche par section
+        const sectionMatch =
+          employee.section && employee.section.toLowerCase().includes(query);
+
+        return badgeMatch || nameMatch || sectionMatch;
+      });
+    }
+
+    // Trier par badge number
+    employeesArray.sort((a, b) => {
+      if (a.badgenumber && b.badgenumber) {
+        return a.badgenumber.localeCompare(b.badgenumber, undefined, {
+          numeric: true,
+        });
+      }
+      return 0;
+    });
+
+    return employeesArray;
+  }, [presences, searchFilter]);
 
   const getAttendanceData = useCallback((employee, dateStr) => {
     const dateFormatted = formatDate(dateStr);
@@ -947,17 +1489,6 @@ const AttendancePage = () => {
 
     return employee.presences[dateFormatted] || null;
   }, []);
-
-  const getEvenementForCell = useCallback(
-    (userId, dateStr) => {
-      const dateFormatted = formatDate(dateStr);
-      if (!dateFormatted) return "X";
-
-      const key = `${userId}-${dateFormatted}`;
-      return evenementsMap[key] || "X";
-    },
-    [evenementsMap],
-  );
 
   const groupDatesByWeek = useCallback(() => {
     const weeks = {};
@@ -1044,7 +1575,7 @@ const AttendancePage = () => {
 
   const employeeGroups = getVariableGroups(employees);
 
-  if (loading && !refreshing) {
+  if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
@@ -1239,7 +1770,6 @@ const AttendancePage = () => {
                   </select>
                 </div>
 
-                {/* Bouton Appliquer */}
                 {filterChanged && (
                   <button
                     onClick={applyFilters}
@@ -1271,6 +1801,15 @@ const AttendancePage = () => {
           </div>
 
           <div className="flex flex-wrap gap-3 mt-4 border-t-2 border-gray-800 pt-4 print:hidden">
+            {/* Barre de recherche locale */}
+            {/* Barre de recherche locale - FORCÉE en h-8 */}
+            <div className="h-8 flex items-center min-w-[200px]">
+              <div className="[&>*]:h-8 [&_input]:h-8 [&_input]:text-sm [&_input]:py-1 [&_button]:h-8 [&_button]:text-sm w-full">
+                <LocalEmployeeSearch onFilter={setSearchFilter} />
+              </div>
+            </div>
+
+            {/* Boutons existants */}
             <button
               onClick={() => setShowHoraires(true)}
               className="flex items-center gap-2 px-4 py-1 text-sm bg-akj text-white rounded hover:bg-gray-700"
@@ -1279,13 +1818,6 @@ const AttendancePage = () => {
               Gérer les horaires
             </button>
 
-            {/* <button
-              onClick={() => navigate("/anomalies")}
-              className="flex items-center gap-2 px-4 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
-            >
-              <AlertCircle className="w-4 h-4" />
-              Anomalies
-            </button> */}
             <button
               onClick={() =>
                 navigate("/anomalies", {
@@ -1297,7 +1829,6 @@ const AttendancePage = () => {
               }
               className="flex items-center gap-2 px-4 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
             >
-              <AlertCircle className="w-4 h-4" />
               Anomalies
             </button>
 
@@ -1438,42 +1969,49 @@ const AttendancePage = () => {
                         const evenementType = getEvenementForCell(
                           employee.userid,
                           dateObj.date,
+                          attendance,
                         );
                         const { heureEntreeAffichee, heureSortieAffichee } =
                           getHeuresAffichees(attendance);
                         const backgroundColor =
                           getCellBackgroundColor(attendance);
-                        const estAnomalieCorrigee =
-                          attendance?.est_anomalie_corrigee || false;
-
-                        // Afficher la cellule même si vide pour les anomalies corrigées
-                        const shouldDisplay =
-                          attendance ||
-                          (estAnomalieCorrigee && evenementType === "A"); // Anomalie corrigée avec absence
-
-                        if (!shouldDisplay) {
-                          return (
-                            <td
-                              key={dayIdx}
-                              className="border border-gray-600 p-0 text-center"
-                              style={{ backgroundColor }}
-                            >
-                              {/* Cellule vide */}
-                            </td>
-                          );
-                        }
+                        const anomalieId = attendance?.anomalie_id || null;
+                        const estModifieManuellement = anomalieId !== null;
 
                         return (
                           <td
                             key={dayIdx}
-                            className="border border-gray-600 p-0 text-center relative"
+                            className="border border-gray-600 p-0 text-center relative group"
                             style={{ backgroundColor }}
                           >
+                            {estModifieManuellement && (
+                              <div
+                                className="absolute top-0 right-0 w-2 h-2 bg-yellow-500 rounded-full"
+                                title="Heures modifiées manuellement"
+                              ></div>
+                            )}
+
                             <div className="flex flex-col h-full">
-                              <div className="border-b border-gray-300 px-1 py-0.5 min-h-[20px]">
-                                {heureEntreeAffichee}
-                              </div>
-                              {/* ÉVÉNEMENT */}
+                              <button
+                                onClick={() =>
+                                  handleHeureClick(
+                                    employee,
+                                    dateObj.date,
+                                    attendance,
+                                  )
+                                }
+                                className="border-b border-gray-300 px-1 py-0.5 min-h-[20px] w-full hover:bg-gray-100 transition-colors relative group/entree print:hover:bg-transparent"
+                                title={
+                                  estModifieManuellement
+                                    ? "Heures modifiées - Cliquer pour modifier"
+                                    : "Cliquer pour modifier les heures"
+                                }
+                              >
+                                {heureEntreeAffichee || (
+                                  <span className="text-gray-400 italic text-xs"></span>
+                                )}
+                              </button>
+
                               <button
                                 onClick={() =>
                                   handleEvenementClick(
@@ -1482,14 +2020,39 @@ const AttendancePage = () => {
                                     attendance,
                                   )
                                 }
-                                className={`print:text-[7pt] border-b border-gray-300 px-1 py-0.5 min-h-[21px] text-xs font-bold w-full hover:bg-gray-50 transition-colors ${getEvenementTextColor(evenementType)}`}
-                                title={`Modifier l'événement (${evenementType})`}
+                                className={`print:text-[7pt] border-b border-gray-300 px-1 py-0.5 min-h-[21px] text-xs font-bold w-full hover:bg-gray-50 transition-colors print:hover:bg-transparent ${
+                                  evenementType
+                                    ? getEvenementTextColor(evenementType)
+                                    : ""
+                                }`}
+                                title={
+                                  evenementType
+                                    ? `Modifier l'événement (${evenementType})`
+                                    : "Ajouter un événement"
+                                }
                               >
                                 {evenementType}
                               </button>
-                              <div className="px-1 py-0.5 min-h-[20px]">
-                                {heureSortieAffichee}
-                              </div>
+
+                              <button
+                                onClick={() =>
+                                  handleHeureClick(
+                                    employee,
+                                    dateObj.date,
+                                    attendance,
+                                  )
+                                }
+                                className="px-1 py-0.5 min-h-[20px] w-full hover:bg-gray-100 transition-colors relative group/sortie print:hover:bg-transparent"
+                                title={
+                                  estModifieManuellement
+                                    ? "Heures modifiées - Cliquer pour modifier"
+                                    : "Cliquer pour modifier les heures"
+                                }
+                              >
+                                {heureSortieAffichee || (
+                                  <span className="text-gray-400 italic text-xs"></span>
+                                )}
+                              </button>
                             </div>
                           </td>
                         );
@@ -1503,6 +2066,26 @@ const AttendancePage = () => {
         ))}
       </div>
 
+      {/* Modal de modification des heures */}
+      {showHeureModal && selectedHeureData && (
+        <HeureModal
+          employee={selectedHeureData.employee}
+          date={selectedHeureData.date}
+          attendance={selectedHeureData.attendance}
+          onClose={() => {
+            setShowHeureModal(false);
+            setSelectedHeureData(null);
+          }}
+          onSave={() => {
+            refreshData();
+          }}
+          onDelete={() => {
+            refreshData();
+          }}
+        />
+      )}
+
+      {/* Modals existants */}
       {showEvenementModal && selectedEvenement && (
         <EvenementModal
           evenement={selectedEvenement}

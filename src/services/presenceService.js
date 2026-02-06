@@ -1,11 +1,11 @@
-import api from '../api/api'; 
+import api from "../api/api";
 
 const presenceService = {
   updateEvenementByUserDate: async (
     userid,
     date,
     type_evenement,
-    commentaire = ""
+    commentaire = "",
   ) => {
     try {
       console.log("🔄 Envoi requête événement:", {
@@ -18,7 +18,7 @@ const presenceService = {
         {
           type_evenement: type_evenement,
           commentaire: commentaire,
-        }
+        },
       );
 
       console.log("✅ Réponse serveur événement:", response.data);
@@ -37,7 +37,7 @@ const presenceService = {
   verifierEvenement: async (userid, date) => {
     try {
       const response = await api.get(
-        `api/presence/evenements/user/${userid}/date/${date}/`
+        `api/presence/evenements/user/${userid}/date/${date}/`,
       );
       console.log("🔍 Vérification événement:", response.data);
       return response.data;
@@ -117,7 +117,7 @@ const presenceService = {
     } catch (error) {
       console.error(
         "❌ Erreur lors de la récupération des présences calculées:",
-        error
+        error,
       );
       throw error;
     }
@@ -147,7 +147,7 @@ const presenceService = {
     try {
       const response = await api.put(
         `api/presence/horaires-section/${section}/`,
-        data
+        data,
       );
       return response.data;
     } catch (error) {
@@ -163,7 +163,7 @@ const presenceService = {
     } catch (error) {
       console.error(
         "❌ Erreur lors de la récupération des types d'événements:",
-        error
+        error,
       );
       throw error;
     }
@@ -191,12 +191,72 @@ const presenceService = {
     try {
       console.log("🔄 Suppression événement:", { userid, date });
       const response = await api.delete(
-        `api/presence/evenements/user/${userid}/date/${date}/`
+        `api/presence/evenements/user/${userid}/date/${date}/`,
       );
       console.log("✅ Événement supprimé:", response.data);
       return response.data;
     } catch (error) {
       console.error("❌ Erreur lors de la suppression de l'événement:", error);
+      throw error;
+    }
+  },
+
+  getHeuresJour: async (userid, date) => {
+    try {
+      const response = await api.get(`api/presence/heures-jour/`, {
+        params: { userid, date },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("❌ Erreur récupération heures jour:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Modifie manuellement les heures d'un employé
+   */
+  modifierHeuresManuellement: async (data) => {
+    try {
+      console.log("🔄 Modification manuelle heures:", data);
+
+      const response = await api.post(`api/presence/modifier-heures/`, data);
+
+      console.log("✅ Heures modifiées:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("❌ Erreur modification heures:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Supprime les modifications manuelles et rétablit les pointages bruts
+   */
+  supprimerHeuresManuellement: async (userid, date) => {
+    try {
+      console.log("🔄 Suppression modifications heures:", { userid, date });
+
+      const response = await api.delete(`api/presence/supprimer-heures/`, {
+        data: { userid, date },
+      });
+
+      console.log("✅ Modifications supprimées:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("❌ Erreur suppression heures:", error);
+      throw error;
+    }
+  },
+
+  searchEmployees: async (query) => {
+    try {
+      const response = await api.get(`api/presence/search-employees/`, {
+        params: { q: query },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("❌ Erreur recherche employés:", error);
       throw error;
     }
   },
