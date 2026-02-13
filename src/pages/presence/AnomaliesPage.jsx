@@ -8,7 +8,7 @@ const getEtatColor = (etat) => {
   const colors = {
     pas_entree: "bg-red-100 text-red-700 border-red-300",
     pas_sortie: "bg-orange-100 text-orange-700 border-orange-300",
-    entree_sortie_non_conformes: "bg-yellow-100 text-yellow-700 border-yellow-300",
+    abs: "bg-gray-200 text-gray-800 border-gray-400", 
     ok: "bg-green-100 text-green-700 border-green-300",
   };
   return colors[etat] || "bg-gray-100 text-gray-700 border-gray-300";

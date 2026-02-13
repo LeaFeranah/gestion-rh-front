@@ -161,32 +161,23 @@ const HeureModal = ({
         let heureSortieDefaut = "";
 
         if (attendance) {
-          if (attendance.heure_entree_rectifiee) {
-            heureEntreeDefaut = attendance.heure_entree_rectifiee.slice(0, 5);
-          } else if (attendance.heure_brute_entree) {
-            heureEntreeDefaut = attendance.heure_brute_entree.slice(0, 5);
-          } else if (attendance.heure_entree_comptabilisee) {
-            heureEntreeDefaut = attendance.heure_entree_comptabilisee.slice(
-              0,
-              5,
-            );
-          }
+  // Toujours prendre les heures rectifiées en premier
+  if (attendance.heure_entree_rectifiee) {
+    heureEntreeDefaut = attendance.heure_entree_rectifiee.slice(0, 5);
+  } else if (attendance.heure_entree_comptabilisee) {
+    heureEntreeDefaut = attendance.heure_entree_comptabilisee.slice(0, 5);
+  }
 
-          if (attendance.heure_sortie_rectifiee) {
-            heureSortieDefaut = attendance.heure_sortie_rectifiee.slice(0, 5);
-          } else if (attendance.heure_brute_sortie) {
-            heureSortieDefaut = attendance.heure_brute_sortie.slice(0, 5);
-          } else if (attendance.heure_sortie_comptabilisee) {
-            heureSortieDefaut = attendance.heure_sortie_comptabilisee.slice(
-              0,
-              5,
-            );
-          }
-        } else {
-          // Pas de données de présence, utiliser les horaires prévus
-          heureEntreeDefaut = data.horaires_prevu?.entree?.slice(0, 5) || "";
-          heureSortieDefaut = data.horaires_prevu?.sortie?.slice(0, 5) || "";
-        }
+  if (attendance.heure_sortie_rectifiee) {
+    heureSortieDefaut = attendance.heure_sortie_rectifiee.slice(0, 5);
+  } else if (attendance.heure_sortie_comptabilisee) {
+    heureSortieDefaut = attendance.heure_sortie_comptabilisee.slice(0, 5);
+  }
+} else {
+  // Pas de présence : utiliser les horaires prévus
+  heureEntreeDefaut = data.horaires_prevu?.entree?.slice(0, 5) || "";
+  heureSortieDefaut = data.horaires_prevu?.sortie?.slice(0, 5) || "";
+}
 
         setFormData({
           heure_entree: heureEntreeDefaut,
@@ -1002,7 +993,7 @@ const AttendancePage = () => {
   const [horaires, setHoraires] = useState([]);
   const [selectedHoraire, setSelectedHoraire] = useState(null);
   const [showHoraireModal, setShowHoraireModal] = useState(false);
-  const [modeHeures, setModeHeures] = useState("rectifiees");
+  const [modeHeures, setModeHeures] = useState("rectifiees"); // <-- IMPORTANT: RÉTABLI
   const [forceRefresh, setForceRefresh] = useState(0);
 
   const [typesEvenement, setTypesEvenement] = useState([]);
@@ -1161,10 +1152,15 @@ const AttendancePage = () => {
     }
   }, []);
 
-  // NOUVELLE FONCTION : Gestion du clic sur les heures
+  // FONCTION MODIFIÉE : Gestion du clic sur les heures avec vérification du mode
   const handleHeureClick = useCallback((employee, dateStr, attendance) => {
-    const dateFormatted = formatDate(dateStr);
+    // ❌ INTERDIRE LA MODIFICATION EN MODE HEURES BRUTES
+    if (modeHeures === "brutes") {
+      alert("Les heures brutes ne sont pas modifiables. Veuillez passer en mode 'Heures Rectifiées' pour modifier.");
+      return;
+    }
 
+    const dateFormatted = formatDate(dateStr);
     if (!dateFormatted) {
       console.error("❌ Date invalide:", dateStr);
       return;
@@ -1176,7 +1172,7 @@ const AttendancePage = () => {
       attendance,
     });
     setShowHeureModal(true);
-  }, []);
+  }, [modeHeures]); // ⚠️ AJOUTER modeHeures DANS LES DÉPENDANCES
 
   // FONCTION MODIFIÉE : Ne retourne l'événement "X" que si l'employé a une présence
   const getEvenementForCell = useCallback(
@@ -1339,48 +1335,32 @@ const AttendancePage = () => {
     [selectedHoraire, fetchHoraires, refreshData],
   );
 
-  // FONCTION POUR DETERMINER LES HEURES A AFFICHER
+  // FONCTION CORRIGÉE : Prend en compte le modeHeures
   const getHeuresAffichees = useCallback(
     (attendance) => {
-      let heureEntreeAffichee = "";
-      let heureSortieAffichee = "";
-
       if (!attendance) {
         return { heureEntreeAffichee: "", heureSortieAffichee: "" };
       }
 
+      let heureEntreeAffichee = "";
+      let heureSortieAffichee = "";
+
       if (modeHeures === "brutes") {
-        if (attendance.est_anomalie_corrigee) {
-          heureEntreeAffichee = attendance.heure_brute_entree
-            ? attendance.heure_brute_entree.slice(0, 5)
-            : "";
-          heureSortieAffichee = attendance.heure_brute_sortie
-            ? attendance.heure_brute_sortie.slice(0, 5)
-            : "";
-        } else {
-          heureEntreeAffichee = attendance.heure_entree_reelle
-            ? attendance.heure_entree_reelle.slice(0, 5)
-            : "";
-          heureSortieAffichee = attendance.heure_sortie_reelle
-            ? attendance.heure_sortie_reelle.slice(0, 5)
-            : "";
-        }
+        // Afficher les heures brutes (déjà corrigées automatiquement)
+        heureEntreeAffichee = attendance.heure_brute_entree
+          ? attendance.heure_brute_entree.slice(0, 5)
+          : "";
+        heureSortieAffichee = attendance.heure_brute_sortie
+          ? attendance.heure_brute_sortie.slice(0, 5)
+          : "";
       } else {
-        if (attendance.est_anomalie_corrigee) {
-          heureEntreeAffichee = attendance.heure_entree_rectifiee
-            ? attendance.heure_entree_rectifiee.slice(0, 5)
-            : "";
-          heureSortieAffichee = attendance.heure_sortie_rectifiee
-            ? attendance.heure_sortie_rectifiee.slice(0, 5)
-            : "";
-        } else {
-          heureEntreeAffichee = attendance.heure_entree_comptabilisee
-            ? attendance.heure_entree_comptabilisee.slice(0, 5)
-            : "";
-          heureSortieAffichee = attendance.heure_sortie_comptabilisee
-            ? attendance.heure_sortie_comptabilisee.slice(0, 5)
-            : "";
-        }
+        // Afficher les heures rectifiées (après analyse)
+        heureEntreeAffichee = attendance.heure_entree_comptabilisee
+          ? attendance.heure_entree_comptabilisee.slice(0, 5)
+          : "";
+        heureSortieAffichee = attendance.heure_sortie_comptabilisee
+          ? attendance.heure_sortie_comptabilisee.slice(0, 5)
+          : "";
       }
 
       return {
@@ -1388,7 +1368,7 @@ const AttendancePage = () => {
         heureSortieAffichee,
       };
     },
-    [modeHeures],
+    [modeHeures] // <-- IMPORTANT: modeHeures dans les dépendances
   );
 
   useEffect(() => {
@@ -1802,14 +1782,13 @@ const AttendancePage = () => {
 
           <div className="flex flex-wrap gap-3 mt-4 border-t-2 border-gray-800 pt-4 print:hidden">
             {/* Barre de recherche locale */}
-            {/* Barre de recherche locale - FORCÉE en h-8 */}
             <div className="h-8 flex items-center min-w-[200px]">
               <div className="[&>*]:h-8 [&_input]:h-8 [&_input]:text-sm [&_input]:py-1 [&_button]:h-8 [&_button]:text-sm w-full">
                 <LocalEmployeeSearch onFilter={setSearchFilter} />
               </div>
             </div>
 
-            {/* Boutons existants */}
+            {/* Boutons existants - RÉTABLIS */}
             <button
               onClick={() => setShowHoraires(true)}
               className="flex items-center gap-2 px-4 py-1 text-sm bg-akj text-white rounded hover:bg-gray-700"
@@ -1832,6 +1811,7 @@ const AttendancePage = () => {
               Anomalies
             </button>
 
+            {/* BOUTONS RÉTABLIS POUR BASCULER entre heures brutes et rectifiées */}
             <button
               onClick={() => setModeHeures("brutes")}
               className={`flex items-center gap-2 px-4 py-1 text-sm rounded border focus:outline-none focus:ring-1 focus:ring-gray-800 ${
@@ -1977,6 +1957,7 @@ const AttendancePage = () => {
                           getCellBackgroundColor(attendance);
                         const anomalieId = attendance?.anomalie_id || null;
                         const estModifieManuellement = anomalieId !== null;
+                        const estCorrectionAuto = attendance?.est_correction_auto || false;
 
                         return (
                           <td
@@ -1991,18 +1972,33 @@ const AttendancePage = () => {
                               ></div>
                             )}
 
+                            {estCorrectionAuto && (
+                              <div
+                                className="absolute top-0 left-0 w-2 h-2 bg-green-500 rounded-full"
+                                title="Correction automatique appliquée"
+                              ></div>
+                            )}
+
                             <div className="flex flex-col h-full">
                               <button
                                 onClick={() =>
+                                  modeHeures !== "brutes" &&
                                   handleHeureClick(
                                     employee,
                                     dateObj.date,
                                     attendance,
                                   )
                                 }
-                                className="border-b border-gray-300 px-1 py-0.5 min-h-[20px] w-full hover:bg-gray-100 transition-colors relative group/entree print:hover:bg-transparent"
+                                disabled={modeHeures === "brutes"}
+                                className={`border-b border-gray-300 px-1 py-0.5 min-h-[20px] w-full transition-colors relative group/entree print:hover:bg-transparent ${
+                                  modeHeures === "brutes"
+                                    ? ""
+                                    : ""
+                                }`}
                                 title={
-                                  estModifieManuellement
+                                  modeHeures === "brutes"
+                                    ? "Heures brutes non modifiables"
+                                    : estModifieManuellement
                                     ? "Heures modifiées - Cliquer pour modifier"
                                     : "Cliquer pour modifier les heures"
                                 }
@@ -2036,15 +2032,23 @@ const AttendancePage = () => {
 
                               <button
                                 onClick={() =>
+                                  modeHeures !== "brutes" &&
                                   handleHeureClick(
                                     employee,
                                     dateObj.date,
                                     attendance,
                                   )
                                 }
-                                className="px-1 py-0.5 min-h-[20px] w-full hover:bg-gray-100 transition-colors relative group/sortie print:hover:bg-transparent"
+                                disabled={modeHeures === "brutes"}
+                                className={`px-1 py-0.5 min-h-[20px] w-full transition-colors relative group/sortie print:hover:bg-transparent ${
+                                  modeHeures === "brutes"
+                                    ? ""
+                                    : ""
+                                }`}
                                 title={
-                                  estModifieManuellement
+                                  modeHeures === "brutes"
+                                    ? "Heures brutes non modifiables"
+                                    : estModifieManuellement
                                     ? "Heures modifiées - Cliquer pour modifier"
                                     : "Cliquer pour modifier les heures"
                                 }
