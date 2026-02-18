@@ -161,23 +161,23 @@ const HeureModal = ({
         let heureSortieDefaut = "";
 
         if (attendance) {
-  // Toujours prendre les heures rectifiées en premier
-  if (attendance.heure_entree_rectifiee) {
-    heureEntreeDefaut = attendance.heure_entree_rectifiee.slice(0, 5);
-  } else if (attendance.heure_entree_comptabilisee) {
-    heureEntreeDefaut = attendance.heure_entree_comptabilisee.slice(0, 5);
-  }
+          // Toujours prendre les heures rectifiées en premier
+          if (attendance.heure_entree_rectifiee) {
+            heureEntreeDefaut = attendance.heure_entree_rectifiee.slice(0, 5);
+          } else if (attendance.heure_entree_comptabilisee) {
+            heureEntreeDefaut = attendance.heure_entree_comptabilisee.slice(0, 5);
+          }
 
-  if (attendance.heure_sortie_rectifiee) {
-    heureSortieDefaut = attendance.heure_sortie_rectifiee.slice(0, 5);
-  } else if (attendance.heure_sortie_comptabilisee) {
-    heureSortieDefaut = attendance.heure_sortie_comptabilisee.slice(0, 5);
-  }
-} else {
-  // Pas de présence : utiliser les horaires prévus
-  heureEntreeDefaut = data.horaires_prevu?.entree?.slice(0, 5) || "";
-  heureSortieDefaut = data.horaires_prevu?.sortie?.slice(0, 5) || "";
-}
+          if (attendance.heure_sortie_rectifiee) {
+            heureSortieDefaut = attendance.heure_sortie_rectifiee.slice(0, 5);
+          } else if (attendance.heure_sortie_comptabilisee) {
+            heureSortieDefaut = attendance.heure_sortie_comptabilisee.slice(0, 5);
+          }
+        } else {
+          // Pas de présence : utiliser les horaires prévus
+          heureEntreeDefaut = data.horaires_prevu?.entree?.slice(0, 5) || "";
+          heureSortieDefaut = data.horaires_prevu?.sortie?.slice(0, 5) || "";
+        }
 
         setFormData({
           heure_entree: heureEntreeDefaut,
@@ -516,43 +516,21 @@ const HeureModal = ({
 const HoraireModal = ({ horaire, onClose, onSave }) => {
   const [saving, setSaving] = useState(false);
 
-  // ========== FONCTIONS DE CONVERSION ==========
-
-  /**
-   * Convertit HH:MM en format décimal
-   * Ex: "08:20" → 8.33
-   */
   const timeToDecimal = (timeStr) => {
     if (!timeStr) return 0;
-
     const [hours, minutes] = timeStr.split(":").map(Number);
-
-    // Convertir les minutes en centièmes d'heure
-    // 60 minutes = 100 centièmes
     const centiemes = (minutes / 60) * 100;
-
-    // Arrondir à 2 décimales
     return parseFloat((hours + centiemes / 100).toFixed(2));
   };
 
-  /**
-   * Convertit le format décimal en HH:MM
-   * Ex: 8.33 → "08:20"
-   */
   const decimalToTimeLocal = (decimal) => {
     if (!decimal && decimal !== 0) return "00:00";
-
     const decimalNum = parseFloat(decimal);
     const hours = Math.floor(decimalNum);
-
-    // Extraire les centièmes et convertir en minutes
     const centiemes = (decimalNum - hours) * 100;
     const minutes = Math.round(centiemes * 0.6);
-
     return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
   };
-
-  // ========== ÉTAT DU FORMULAIRE ==========
 
   const [formData, setFormData] = useState({
     section: horaire?.section || "",
@@ -569,10 +547,7 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
       : "13:00",
   });
 
-  // ========== SOUMISSION DU FORMULAIRE ==========
-
   const handleSubmit = async () => {
-    // Validation
     if (!formData.section) {
       alert("Veuillez entrer un nom de section");
       return;
@@ -580,19 +555,14 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
 
     setSaving(true);
     try {
-      // Conversion HH:MM → Décimal pour l'envoi au backend
       const data = {
         section: formData.section,
         heure_entree: timeToDecimal(formData.heure_entree),
         heure_sortie: timeToDecimal(formData.heure_sortie),
         sortie_samedi: timeToDecimal(formData.sortie_samedi),
-        sortie_vendredi_paiement: timeToDecimal(
-          formData.sortie_vendredi_paiement,
-        ),
+        sortie_vendredi_paiement: timeToDecimal(formData.sortie_vendredi_paiement),
         sortie_samedi_paiement: timeToDecimal(formData.sortie_samedi_paiement),
       };
-
-      console.log("📤 Données converties pour envoi:", data);
 
       await onSave(data);
     } catch (err) {
@@ -603,12 +573,9 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
     }
   };
 
-  // ========== RENDU ==========
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-        {/* En-tête */}
         <div className="flex items-center justify-between p-6 border-b-2 border-gray-800 sticky top-0 bg-white">
           <h3 className="text-xl font-bold">
             {horaire ? "Modifier" : "Ajouter"} un horaire
@@ -622,9 +589,7 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
           </button>
         </div>
 
-        {/* Corps du formulaire */}
         <div className="p-6 space-y-4">
-          {/* Section */}
           <div>
             <label className="block text-sm font-bold mb-1 text-gray-700">
               Section *
@@ -633,10 +598,7 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
               type="text"
               value={formData.section}
               onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  section: e.target.value.toUpperCase(),
-                })
+                setFormData({ ...formData, section: e.target.value.toUpperCase() })
               }
               className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800 focus:outline-none transition-colors"
               disabled={!!horaire}
@@ -649,7 +611,6 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
             )}
           </div>
 
-          {/* Heure d'entrée */}
           <div>
             <label className="block text-sm font-bold mb-1 text-gray-700">
               Heure d'entrée *
@@ -667,7 +628,6 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
             </p>
           </div>
 
-          {/* Heure de sortie normale */}
           <div>
             <label className="block text-sm font-bold mb-1 text-gray-700">
               Heure de sortie (lundi-vendredi normal) *
@@ -685,7 +645,6 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
             </p>
           </div>
 
-          {/* Sortie samedi normal */}
           <div>
             <label className="block text-sm font-bold mb-1 text-gray-700">
               Sortie samedi normal *
@@ -703,14 +662,12 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
             </p>
           </div>
 
-          {/* Séparateur */}
           <div className="border-t-2 border-gray-300 pt-4">
             <h4 className="font-bold text-gray-700 mb-3 flex items-center gap-2">
               <span className="text-yellow-600">●</span>
               Horaires pour jours de paiement (P)
             </h4>
 
-            {/* Sortie vendredi paiement */}
             <div className="mb-3">
               <label className="block text-sm font-bold mb-1 text-gray-700">
                 Sortie vendredi de paiement *
@@ -719,10 +676,7 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
                 type="time"
                 value={formData.sortie_vendredi_paiement}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    sortie_vendredi_paiement: e.target.value,
-                  })
+                  setFormData({ ...formData, sortie_vendredi_paiement: e.target.value })
                 }
                 className="w-full px-3 py-2 border-2 border-yellow-300 rounded focus:border-yellow-600 focus:outline-none transition-colors"
               />
@@ -731,7 +685,6 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
               </p>
             </div>
 
-            {/* Sortie samedi paiement */}
             <div className="mb-3">
               <label className="block text-sm font-bold mb-1 text-gray-700">
                 Sortie samedi de paiement *
@@ -740,10 +693,7 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
                 type="time"
                 value={formData.sortie_samedi_paiement}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    sortie_samedi_paiement: e.target.value,
-                  })
+                  setFormData({ ...formData, sortie_samedi_paiement: e.target.value })
                 }
                 className="w-full px-3 py-2 border-2 border-yellow-300 rounded focus:border-yellow-600 focus:outline-none transition-colors"
               />
@@ -753,7 +703,6 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
             </div>
           </div>
 
-          {/* Boutons d'action */}
           <div className="flex gap-3 pt-4">
             <button
               onClick={onClose}
@@ -959,13 +908,11 @@ const AttendancePage = () => {
   const [periode, setPeriode] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Récupérer l'état de navigation
   const locationState = React.useMemo(
     () => location.state || {},
     [location.state],
   );
 
-  // Initialiser avec l'état de navigation si disponible, sinon date actuelle
   const getInitialMonth = () => {
     if (locationState.month && locationState.returnFromAnomalies) {
       return locationState.month;
@@ -980,7 +927,6 @@ const AttendancePage = () => {
     return new Date().getFullYear();
   };
 
-  // États pour les filtres
   const [currentMonth, setCurrentMonth] = useState(getInitialMonth());
   const [currentYear, setCurrentYear] = useState(getInitialYear());
   const [selectedMonth, setSelectedMonth] = useState(getInitialMonth());
@@ -993,7 +939,7 @@ const AttendancePage = () => {
   const [horaires, setHoraires] = useState([]);
   const [selectedHoraire, setSelectedHoraire] = useState(null);
   const [showHoraireModal, setShowHoraireModal] = useState(false);
-  const [modeHeures, setModeHeures] = useState("rectifiees"); // <-- IMPORTANT: RÉTABLI
+  const [modeHeures, setModeHeures] = useState("rectifiees");
   const [forceRefresh, setForceRefresh] = useState(0);
 
   const [typesEvenement, setTypesEvenement] = useState([]);
@@ -1001,13 +947,11 @@ const AttendancePage = () => {
   const [showEvenementModal, setShowEvenementModal] = useState(false);
   const [evenementsMap, setEvenementsMap] = useState({});
 
-  // NOUVEAUX ÉTATS POUR LA MODIFICATION DES HEURES
   const [showHeureModal, setShowHeureModal] = useState(false);
   const [selectedHeureData, setSelectedHeureData] = useState(null);
 
   const componentRef = useRef();
 
-  // Nettoyer le state de navigation après l'avoir utilisé
   useEffect(() => {
     const state = locationState;
 
@@ -1020,7 +964,6 @@ const AttendancePage = () => {
         setSelectedMonth(state.month);
         setSelectedYear(state.year);
         setFilterChanged(false);
-
         refreshData();
       }
     }
@@ -1031,7 +974,6 @@ const AttendancePage = () => {
     locationState.year,
   ]);
 
-  // Gestionnaires de changement de filtre
   const handleMonthChange = (month) => {
     setSelectedMonth(month);
     setFilterChanged(month !== currentMonth || selectedYear !== currentYear);
@@ -1049,12 +991,10 @@ const AttendancePage = () => {
     refreshData();
   };
 
-  // Fonction pour rafraîchir les données
   const refreshData = useCallback(() => {
     setForceRefresh((prev) => prev + 1);
   }, []);
 
-  // Gestionnaire F5 pour actualiser
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "F5") {
@@ -1072,7 +1012,6 @@ const AttendancePage = () => {
   const fetchEvenementsMois = useCallback(async (annee, mois) => {
     try {
       const evenementsData = await presenceService.getEvenements(annee, mois);
-
       const newEvenementsMap = {};
 
       if (evenementsData.evenements && evenementsData.evenements.length > 0) {
@@ -1100,10 +1039,7 @@ const AttendancePage = () => {
         try {
           await presenceService.genererDates(annee, mois);
         } catch (err) {
-          console.log(
-            "ℹ️ Génération des dates déjà effectuée ou erreur:",
-            err.message,
-          );
+          console.log("ℹ️ Génération des dates déjà effectuée ou erreur:", err.message);
         }
 
         const datesData = await presenceService.getDates(annee, mois);
@@ -1114,11 +1050,6 @@ const AttendancePage = () => {
           mois,
           false,
         );
-        console.log("📊 Données reçues:", {
-          periode: presencesData.periode,
-          nombrePresences: presencesData.presences?.length,
-          statistiques: presencesData.statistiques,
-        });
 
         setPeriode(presencesData.periode);
         setPresences(presencesData.presences || []);
@@ -1152,9 +1083,7 @@ const AttendancePage = () => {
     }
   }, []);
 
-  // FONCTION MODIFIÉE : Gestion du clic sur les heures avec vérification du mode
   const handleHeureClick = useCallback((employee, dateStr, attendance) => {
-    // ❌ INTERDIRE LA MODIFICATION EN MODE HEURES BRUTES
     if (modeHeures === "brutes") {
       alert("Les heures brutes ne sont pas modifiables. Veuillez passer en mode 'Heures Rectifiées' pour modifier.");
       return;
@@ -1172,9 +1101,8 @@ const AttendancePage = () => {
       attendance,
     });
     setShowHeureModal(true);
-  }, [modeHeures]); // ⚠️ AJOUTER modeHeures DANS LES DÉPENDANCES
+  }, [modeHeures]);
 
-  // FONCTION MODIFIÉE : Ne retourne l'événement "X" que si l'employé a une présence
   const getEvenementForCell = useCallback(
     (userId, dateStr, attendance) => {
       const dateFormatted = formatDate(dateStr);
@@ -1183,9 +1111,7 @@ const AttendancePage = () => {
       const key = `${userId}-${dateFormatted}`;
       const eventFromMap = evenementsMap[key];
 
-      // Si l'événement est "X" et qu'il n'y a pas de présence (pas de pointage et pas d'anomalie corrigée)
       if (eventFromMap === "X") {
-        // Si pas d'attendance (null) ou (pas présent et pas d'anomalie corrigée)
         if (
           !attendance ||
           (!attendance.present && !attendance.est_anomalie_corrigee)
@@ -1194,7 +1120,6 @@ const AttendancePage = () => {
         }
       }
 
-      // Sinon, retourner l'événement (même s'il est "X" et qu'il y a présence, ou un autre événement)
       return eventFromMap || "";
     },
     [evenementsMap],
@@ -1250,21 +1175,13 @@ const AttendancePage = () => {
         setShowEvenementModal(false);
         setSelectedEvenement(null);
 
-        console.log("✅ Événement mis à jour");
-
         refreshData();
       } catch (err) {
         console.error("❌ Erreur lors de la sauvegarde:", err);
         alert("Erreur lors de la sauvegarde. Veuillez réessayer.");
       }
     },
-    [
-      selectedEvenement,
-      currentYear,
-      currentMonth,
-      fetchEvenementsMois,
-      refreshData,
-    ],
+    [selectedEvenement, currentYear, currentMonth, fetchEvenementsMois, refreshData],
   );
 
   const handleDeleteEvenement = useCallback(async () => {
@@ -1289,30 +1206,17 @@ const AttendancePage = () => {
       refreshData();
     } catch (err) {
       console.error("❌ Erreur lors de la suppression:", err);
-      alert(
-        "Erreur lors de la suppression de l'événement. Veuillez réessayer.",
-      );
+      alert("Erreur lors de la suppression de l'événement. Veuillez réessayer.");
     }
-  }, [
-    selectedEvenement,
-    currentYear,
-    currentMonth,
-    fetchEvenementsMois,
-    refreshData,
-  ]);
+  }, [selectedEvenement, currentYear, currentMonth, fetchEvenementsMois, refreshData]);
 
   const handleSaveHoraire = useCallback(
     async (data) => {
       try {
         if (selectedHoraire) {
-          const result = await presenceService.updateHoraireSection(
-            selectedHoraire.section,
-            data,
-          );
-          console.log("✅ Horaire mis à jour:", result);
+          await presenceService.updateHoraireSection(selectedHoraire.section, data);
         } else {
-          const result = await presenceService.createHoraireSection(data);
-          console.log("✅ Horaire créé:", result);
+          await presenceService.createHoraireSection(data);
         }
 
         setShowHoraireModal(false);
@@ -1320,22 +1224,15 @@ const AttendancePage = () => {
         await fetchHoraires();
 
         alert("Horaire enregistré avec succès !");
-
         refreshData();
       } catch (err) {
-        console.error(
-          "❌ Erreur détaillée lors de la sauvegarde de l'horaire:",
-          err,
-        );
-        alert(
-          `Erreur lors de la sauvegarde: ${err.response?.data?.message || err.message}`,
-        );
+        console.error("❌ Erreur lors de la sauvegarde de l'horaire:", err);
+        alert(`Erreur lors de la sauvegarde: ${err.response?.data?.message || err.message}`);
       }
     },
     [selectedHoraire, fetchHoraires, refreshData],
   );
 
-  // FONCTION CORRIGÉE : Prend en compte le modeHeures
   const getHeuresAffichees = useCallback(
     (attendance) => {
       if (!attendance) {
@@ -1346,7 +1243,6 @@ const AttendancePage = () => {
       let heureSortieAffichee = "";
 
       if (modeHeures === "brutes") {
-        // Afficher les heures brutes (déjà corrigées automatiquement)
         heureEntreeAffichee = attendance.heure_brute_entree
           ? attendance.heure_brute_entree.slice(0, 5)
           : "";
@@ -1354,7 +1250,6 @@ const AttendancePage = () => {
           ? attendance.heure_brute_sortie.slice(0, 5)
           : "";
       } else {
-        // Afficher les heures rectifiées (après analyse)
         heureEntreeAffichee = attendance.heure_entree_comptabilisee
           ? attendance.heure_entree_comptabilisee.slice(0, 5)
           : "";
@@ -1363,38 +1258,73 @@ const AttendancePage = () => {
           : "";
       }
 
-      return {
-        heureEntreeAffichee,
-        heureSortieAffichee,
-      };
+      return { heureEntreeAffichee, heureSortieAffichee };
     },
-    [modeHeures] // <-- IMPORTANT: modeHeures dans les dépendances
+    [modeHeures],
   );
+
+  const getCellBackgroundColor = useCallback((attendance) => {
+    if (!attendance) return "transparent";
+
+    if (attendance.est_jour_paiement) {
+      return "bg-yellow-50";
+    }
+
+    if (attendance.est_samedi) {
+      return "bg-gray-50";
+    }
+
+    return "transparent";
+  }, []);
+
+  // ========== NOUVELLE FONCTION : couleur rouge pour heures incomplètes ==========
+  const getTimeAnomalyColor = useCallback((attendance) => {
+    if (!attendance) return { entreeColor: "", sortieColor: "" };
+
+    // Si déjà corrigée dans anomalie → couleur normale (noir)
+    if (attendance.est_anomalie_corrigee) {
+      return { entreeColor: "", sortieColor: "" };
+    }
+
+    // Vérifier si entrée ou sortie existe (toutes sources confondues)
+    const hasEntree = !!(
+      attendance.heure_brute_entree ||
+      attendance.heure_entree_reelle ||
+      attendance.heure_entree_comptabilisee ||
+      attendance.heure_entree_rectifiee
+    );
+    const hasSortie = !!(
+      attendance.heure_brute_sortie ||
+      attendance.heure_sortie_reelle ||
+      attendance.heure_sortie_comptabilisee ||
+      attendance.heure_sortie_rectifiee
+    );
+
+    // Entrée présente mais pas sortie → entrée en rouge
+    if (hasEntree && !hasSortie) {
+      return { entreeColor: "text-red-700", sortieColor: "" };
+    }
+
+    // Sortie présente mais pas entrée → sortie en rouge
+    if (!hasEntree && hasSortie) {
+      return { entreeColor: "", sortieColor: "text-red-700" };
+    }
+
+    return { entreeColor: "", sortieColor: "" };
+  }, []);
 
   useEffect(() => {
     fetchPresences(currentYear, currentMonth);
     fetchTypesEvenements();
     fetchHoraires();
-  }, [
-    currentYear,
-    currentMonth,
-    forceRefresh,
-    fetchPresences,
-    fetchTypesEvenements,
-    fetchHoraires,
-  ]);
+  }, [currentYear, currentMonth, forceRefresh, fetchPresences, fetchTypesEvenements, fetchHoraires]);
 
-  // FONCTION MODIFIÉE POUR LA RECHERCHE LOCALE
   const getEmployeeData = useCallback(() => {
     const employeesMap = {};
 
-    // Regrouper les employés ayant des présences dans le mois
     presences.forEach((presence) => {
-      // Ignorer les présences hors période si nécessaire
       if (presence.hors_periode) return;
 
-      // NOUVEAU: Ne pas créer d'entrée pour les jours où il n'y a que l'événement "X" sans présence
-      // et sans anomalie corrigée
       if (
         !presence.present &&
         !presence.est_anomalie_corrigee &&
@@ -1424,33 +1354,24 @@ const AttendancePage = () => {
       }
     });
 
-    // Convertir en tableau et filtrer ceux qui ont au moins une présence
     let employeesArray = Object.values(employeesMap).filter(
       (emp) => emp.hasPresence,
     );
 
-    // Appliquer le filtre de recherche locale
     if (searchFilter.trim()) {
       const query = searchFilter.toLowerCase().trim();
       employeesArray = employeesArray.filter((employee) => {
-        // Recherche par badge number
         const badgeMatch =
           employee.badgenumber &&
           employee.badgenumber.toLowerCase().includes(query);
-
-        // Recherche par nom
         const nameMatch =
           employee.name && employee.name.toLowerCase().includes(query);
-
-        // Recherche par section
         const sectionMatch =
           employee.section && employee.section.toLowerCase().includes(query);
-
         return badgeMatch || nameMatch || sectionMatch;
       });
     }
 
-    // Trier par badge number
     employeesArray.sort((a, b) => {
       if (a.badgenumber && b.badgenumber) {
         return a.badgenumber.localeCompare(b.badgenumber, undefined, {
@@ -1466,19 +1387,16 @@ const AttendancePage = () => {
   const getAttendanceData = useCallback((employee, dateStr) => {
     const dateFormatted = formatDate(dateStr);
     if (!dateFormatted) return null;
-
     return employee.presences[dateFormatted] || null;
   }, []);
 
   const groupDatesByWeek = useCallback(() => {
     const weeks = {};
-
     const datesDansPeriode = dates.filter((date) => !date.hors_periode);
 
     datesDansPeriode.forEach((date) => {
       if (date.code_date && date.code_date.length > 0) {
         const semaine = date.code_date[0];
-
         if (!weeks[semaine]) {
           weeks[semaine] = [];
         }
@@ -1492,36 +1410,11 @@ const AttendancePage = () => {
   const getMonthAbbreviation = useCallback((dateString) => {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return "";
-
     const monthNames = [
-      "Jan",
-      "Fév",
-      "Mar",
-      "Avr",
-      "Mai",
-      "Jun",
-      "Jul",
-      "Aoû",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Déc",
+      "Jan", "Fév", "Mar", "Avr", "Mai", "Jun",
+      "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc",
     ];
     return monthNames[date.getMonth()];
-  }, []);
-
-  const getCellBackgroundColor = useCallback((attendance) => {
-    if (!attendance) return "transparent";
-
-    if (attendance.est_jour_paiement) {
-      return "bg-yellow-50";
-    }
-
-    if (attendance.est_samedi) {
-      return "bg-gray-50";
-    }
-
-    return "transparent";
   }, []);
 
   const handlePrint = useReactToPrint({
@@ -1531,25 +1424,18 @@ const AttendancePage = () => {
 
   const employees = getEmployeeData();
   const weeks = groupDatesByWeek();
-  const weekNumbers = Object.keys(weeks).sort((a, b) => {
-    return parseInt(a) - parseInt(b);
-  });
-
+  const weekNumbers = Object.keys(weeks).sort((a, b) => parseInt(a) - parseInt(b));
   const datesValides = dates.filter((dateObj) => !dateObj.hors_periode);
 
   const getVariableGroups = (array) => {
     if (!array || array.length === 0) return [];
-
     const groups = [];
-
     const firstGroup = array.slice(0, 7);
     groups.push(firstGroup);
-
     const remainingEmployees = array.slice(7);
     for (let i = 0; i < remainingEmployees.length; i += 10) {
       groups.push(remainingEmployees.slice(i, i + 10));
     }
-
     return groups;
   };
 
@@ -1602,59 +1488,33 @@ const AttendancePage = () => {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-gray-100">
-                <th className="border-2 border-gray-800 p-3 text-left font-bold">
-                  SECTION
-                </th>
-                <th className="border-2 border-gray-800 p-3 font-bold">
-                  HEURE ENTRÉE
-                </th>
-                <th className="border-2 border-gray-800 p-3 font-bold">
-                  SORTIE NORMALE
-                </th>
-                <th className="border-2 border-gray-800 p-3 font-bold">
-                  SORTIE SAMEDI NORMAL
-                </th>
-                <th className="border-2 border-gray-800 p-3 font-bold">
-                  SORTIE VENDREDI P
-                </th>
-                <th className="border-2 border-gray-800 p-3 font-bold">
-                  SORTIE SAMEDI P
-                </th>
-                <th className="border-2 border-gray-800 p-3 font-bold">
-                  ACTIONS
-                </th>
+                <th className="border-2 border-gray-800 p-3 text-left font-bold">SECTION</th>
+                <th className="border-2 border-gray-800 p-3 font-bold">HEURE ENTRÉE</th>
+                <th className="border-2 border-gray-800 p-3 font-bold">SORTIE NORMALE</th>
+                <th className="border-2 border-gray-800 p-3 font-bold">SORTIE SAMEDI NORMAL</th>
+                <th className="border-2 border-gray-800 p-3 font-bold">SORTIE VENDREDI P</th>
+                <th className="border-2 border-gray-800 p-3 font-bold">SORTIE SAMEDI P</th>
+                <th className="border-2 border-gray-800 p-3 font-bold">ACTIONS</th>
               </tr>
             </thead>
             <tbody>
               {horaires.map((horaire, idx) => (
                 <tr key={idx} className="border-b-2 border-gray-800">
-                  <td className="border-2 border-gray-800 p-3 font-semibold">
-                    {horaire.section}
+                  <td className="border-2 border-gray-800 p-3 font-semibold">{horaire.section}</td>
+                  <td className="border-2 border-gray-800 p-3 text-center">
+                    {decimalToTime(horaire.heure_entree)}
                   </td>
                   <td className="border-2 border-gray-800 p-3 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      {decimalToTime(horaire.heure_entree)}
-                    </div>
+                    {decimalToTime(horaire.heure_sortie)}
                   </td>
                   <td className="border-2 border-gray-800 p-3 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      {decimalToTime(horaire.heure_sortie)}
-                    </div>
+                    {decimalToTime(horaire.sortie_samedi)}
                   </td>
                   <td className="border-2 border-gray-800 p-3 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      {decimalToTime(horaire.sortie_samedi)}
-                    </div>
+                    {decimalToTime(horaire.sortie_vendredi_paiement)}
                   </td>
                   <td className="border-2 border-gray-800 p-3 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      {decimalToTime(horaire.sortie_vendredi_paiement)}
-                    </div>
-                  </td>
-                  <td className="border-2 border-gray-800 p-3 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      {decimalToTime(horaire.sortie_samedi_paiement)}
-                    </div>
+                    {decimalToTime(horaire.sortie_samedi_paiement)}
                   </td>
                   <td className="border-2 border-gray-800 p-3 text-center">
                     <button
@@ -1706,14 +1566,10 @@ const AttendancePage = () => {
               </h2>
               <div className="flex items-center gap-3 print:hidden">
                 <div className="flex flex-col">
-                  <label className="block text-xs text-gray-600 mb-1">
-                    Mois
-                  </label>
+                  <label className="block text-xs text-gray-600 mb-1">Mois</label>
                   <select
                     value={selectedMonth}
-                    onChange={(e) =>
-                      handleMonthChange(parseInt(e.target.value))
-                    }
+                    onChange={(e) => handleMonthChange(parseInt(e.target.value))}
                     className="px-3 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-gray-500 text-sm"
                   >
                     <option value={1}>Janvier</option>
@@ -1731,9 +1587,7 @@ const AttendancePage = () => {
                   </select>
                 </div>
                 <div className="flex flex-col">
-                  <label className="block text-xs text-gray-600 mb-1">
-                    Année
-                  </label>
+                  <label className="block text-xs text-gray-600 mb-1">Année</label>
                   <select
                     value={selectedYear}
                     onChange={(e) => handleYearChange(parseInt(e.target.value))}
@@ -1742,9 +1596,7 @@ const AttendancePage = () => {
                     {[...Array(11)].map((_, i) => {
                       const year = 2020 + i;
                       return (
-                        <option key={year} value={year}>
-                          {year}
-                        </option>
+                        <option key={year} value={year}>{year}</option>
                       );
                     })}
                   </select>
@@ -1754,7 +1606,6 @@ const AttendancePage = () => {
                   <button
                     onClick={applyFilters}
                     className="flex items-center gap-2 px-4 py-1 text-sm bg-akj text-white rounded mt-5"
-                    title="Appliquer les filtres"
                   >
                     Appliquer
                   </button>
@@ -1781,14 +1632,12 @@ const AttendancePage = () => {
           </div>
 
           <div className="flex flex-wrap gap-3 mt-4 border-t-2 border-gray-800 pt-4 print:hidden">
-            {/* Barre de recherche locale */}
             <div className="h-8 flex items-center min-w-[200px]">
               <div className="[&>*]:h-8 [&_input]:h-8 [&_input]:text-sm [&_input]:py-1 [&_button]:h-8 [&_button]:text-sm w-full">
                 <LocalEmployeeSearch onFilter={setSearchFilter} />
               </div>
             </div>
 
-            {/* Boutons existants - RÉTABLIS */}
             <button
               onClick={() => setShowHoraires(true)}
               className="flex items-center gap-2 px-4 py-1 text-sm bg-akj text-white rounded hover:bg-gray-700"
@@ -1800,10 +1649,7 @@ const AttendancePage = () => {
             <button
               onClick={() =>
                 navigate("/anomalies", {
-                  state: {
-                    month: currentMonth,
-                    year: currentYear,
-                  },
+                  state: { month: currentMonth, year: currentYear },
                 })
               }
               className="flex items-center gap-2 px-4 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
@@ -1811,7 +1657,6 @@ const AttendancePage = () => {
               Anomalies
             </button>
 
-            {/* BOUTONS RÉTABLIS POUR BASCULER entre heures brutes et rectifiées */}
             <button
               onClick={() => setModeHeures("brutes")}
               className={`flex items-center gap-2 px-4 py-1 text-sm rounded border focus:outline-none focus:ring-1 focus:ring-gray-800 ${
@@ -1843,9 +1688,7 @@ const AttendancePage = () => {
           </div>
 
           <div className="mt-4 border-t-2 border-gray-800 pt-4 print:hidden">
-            <div className="text-sm font-bold mb-2">
-              Légende des événements:
-            </div>
+            <div className="text-sm font-bold mb-2">Légende des événements:</div>
             <div className="flex flex-wrap gap-2">
               {typesEvenement.map((type) => (
                 <div
@@ -1891,10 +1734,7 @@ const AttendancePage = () => {
 
                 <tr className="bg-gray-100">
                   {datesValides.map((date, idx) => (
-                    <th
-                      key={idx}
-                      className="border border-gray-600 p-1 min-w-10"
-                    >
+                    <th key={idx} className="border border-gray-600 p-1 min-w-10">
                       <div className="font-bold">{date.code_affichage}</div>
                     </th>
                   ))}
@@ -1932,20 +1772,13 @@ const AttendancePage = () => {
                     <tr className="border-b-2 border-gray-800">
                       <td className="border-2 border-gray-800 p-2 sticky left-0 bg-white z-10">
                         <div className="flex items-baseline gap-2">
-                          <span className="font-bold text-sm">
-                            {employee.badgenumber}
-                          </span>
-                          <span className="italic text-sm">
-                            {employee.name}
-                          </span>
+                          <span className="font-bold text-sm">{employee.badgenumber}</span>
+                          <span className="italic text-sm">{employee.name}</span>
                         </div>
                       </td>
 
                       {datesValides.map((dateObj, dayIdx) => {
-                        const attendance = getAttendanceData(
-                          employee,
-                          dateObj.date,
-                        );
+                        const attendance = getAttendanceData(employee, dateObj.date);
                         const evenementType = getEvenementForCell(
                           employee.userid,
                           dateObj.date,
@@ -1953,11 +1786,13 @@ const AttendancePage = () => {
                         );
                         const { heureEntreeAffichee, heureSortieAffichee } =
                           getHeuresAffichees(attendance);
-                        const backgroundColor =
-                          getCellBackgroundColor(attendance);
+                        const backgroundColor = getCellBackgroundColor(attendance);
                         const anomalieId = attendance?.anomalie_id || null;
                         const estModifieManuellement = anomalieId !== null;
                         const estCorrectionAuto = attendance?.est_correction_auto || false;
+
+                        // ✅ NOUVEAU : couleurs rouge pour heures incomplètes
+                        const { entreeColor, sortieColor } = getTimeAnomalyColor(attendance);
 
                         return (
                           <td
@@ -1980,21 +1815,14 @@ const AttendancePage = () => {
                             )}
 
                             <div className="flex flex-col h-full">
+                              {/* ===== HEURE ENTRÉE ===== */}
                               <button
                                 onClick={() =>
                                   modeHeures !== "brutes" &&
-                                  handleHeureClick(
-                                    employee,
-                                    dateObj.date,
-                                    attendance,
-                                  )
+                                  handleHeureClick(employee, dateObj.date, attendance)
                                 }
                                 disabled={modeHeures === "brutes"}
-                                className={`border-b border-gray-300 px-1 py-0.5 min-h-[20px] w-full transition-colors relative group/entree print:hover:bg-transparent ${
-                                  modeHeures === "brutes"
-                                    ? ""
-                                    : ""
-                                }`}
+                                className="border-b border-gray-300 px-1 py-0.5 min-h-[20px] w-full transition-colors relative group/entree print:hover:bg-transparent"
                                 title={
                                   modeHeures === "brutes"
                                     ? "Heures brutes non modifiables"
@@ -2003,18 +1831,19 @@ const AttendancePage = () => {
                                     : "Cliquer pour modifier les heures"
                                 }
                               >
-                                {heureEntreeAffichee || (
+                                {heureEntreeAffichee ? (
+                                  <span className={entreeColor}>
+                                    {heureEntreeAffichee}
+                                  </span>
+                                ) : (
                                   <span className="text-gray-400 italic text-xs"></span>
                                 )}
                               </button>
 
+                              {/* ===== ÉVÉNEMENT ===== */}
                               <button
                                 onClick={() =>
-                                  handleEvenementClick(
-                                    employee,
-                                    dateObj.date,
-                                    attendance,
-                                  )
+                                  handleEvenementClick(employee, dateObj.date, attendance)
                                 }
                                 className={`print:text-[7pt] border-b border-gray-300 px-1 py-0.5 min-h-[21px] text-xs font-bold w-full hover:bg-gray-50 transition-colors print:hover:bg-transparent ${
                                   evenementType
@@ -2030,21 +1859,14 @@ const AttendancePage = () => {
                                 {evenementType}
                               </button>
 
+                              {/* ===== HEURE SORTIE ===== */}
                               <button
                                 onClick={() =>
                                   modeHeures !== "brutes" &&
-                                  handleHeureClick(
-                                    employee,
-                                    dateObj.date,
-                                    attendance,
-                                  )
+                                  handleHeureClick(employee, dateObj.date, attendance)
                                 }
                                 disabled={modeHeures === "brutes"}
-                                className={`px-1 py-0.5 min-h-[20px] w-full transition-colors relative group/sortie print:hover:bg-transparent ${
-                                  modeHeures === "brutes"
-                                    ? ""
-                                    : ""
-                                }`}
+                                className="px-1 py-0.5 min-h-[20px] w-full transition-colors relative group/sortie print:hover:bg-transparent"
                                 title={
                                   modeHeures === "brutes"
                                     ? "Heures brutes non modifiables"
@@ -2053,7 +1875,11 @@ const AttendancePage = () => {
                                     : "Cliquer pour modifier les heures"
                                 }
                               >
-                                {heureSortieAffichee || (
+                                {heureSortieAffichee ? (
+                                  <span className={sortieColor}>
+                                    {heureSortieAffichee}
+                                  </span>
+                                ) : (
                                   <span className="text-gray-400 italic text-xs"></span>
                                 )}
                               </button>
@@ -2089,7 +1915,7 @@ const AttendancePage = () => {
         />
       )}
 
-      {/* Modals existants */}
+      {/* Modal événements */}
       {showEvenementModal && selectedEvenement && (
         <EvenementModal
           evenement={selectedEvenement}
@@ -2103,6 +1929,7 @@ const AttendancePage = () => {
         />
       )}
 
+      {/* Modal horaires */}
       {showHoraireModal && (
         <HoraireModal
           horaire={selectedHoraire}
