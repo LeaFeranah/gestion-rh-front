@@ -1060,7 +1060,6 @@ const AttendancePage = () => {
                   {type.code}: {type.libelle}
                 </div>
               ))}
-              <div className="px-3 py-1 rounded text-xs font-medium bg-amber-50 text-amber-700">AUT: Autre (saisie libre)</div>
             </div>
           </div>
         </div>
