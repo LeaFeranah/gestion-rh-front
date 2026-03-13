@@ -7,3 +7,31 @@
 .bg-fond{
   background-color: #98FF98;
 }
+
+
+
+@media print {
+  @page {
+    /* margin: 20mm 8mm 20mm 8mm !important; */
+    margin: 8mm 8mm 8mm 8mm !important;
+  }
+
+  .print-container table tbody tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .print-container table th,
+  .print-container table td {
+    position: static !important;
+  }
+
+  .print-container table thead th:first-child,
+  .print-container table tbody td:first-child {
+    width: 120px !important;
+    max-width: 120px !important;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+  }
+}
