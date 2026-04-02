@@ -14,7 +14,6 @@ export default function AppRoutes() {
         {/* <Route path="/dashboard" element={<Societes />} /> */}
         <Route path="/dashboard" element={<DashboardPage/>}/>
         <Route path="/societe" element={<SocietePage/>}/>
-      {/* tu peux ajouter d'autres pages ici */}
     </Routes>
   );
 }

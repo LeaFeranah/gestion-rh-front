@@ -79,7 +79,7 @@
 
 
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 
 import Navbar from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
@@ -95,6 +95,7 @@ import AnomaliesPage from './pages/presence/AnomaliesPage'; // IMPORTANT: Ajoute
 function LayoutWithSidebar() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Déterminer le menu actif basé sur l'URL
   const getActiveMenuFromPath = () => {
@@ -121,7 +122,7 @@ function LayoutWithSidebar() {
       'anomalies': '/anomalies',
     };
     if (routes[menuId]) {
-      window.location.href = routes[menuId];
+      navigate(routes[menuId]);
     }
   };
 
@@ -134,7 +135,7 @@ function LayoutWithSidebar() {
         onMenuChange={handleMenuChange}
       />
       
-      <main className={`pt-16 transition-all duration-500 ${sidebarOpen ? "ml-64" : "ml-20"}`}>
+      <main className={`pt-16 transition-all duration-300 ${sidebarOpen ? "ml-60" : "ml-[68px]"}`}>
         <Routes>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/employees" element={<EmployePage />} />
