@@ -22,6 +22,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import presenceService from "../../services/presenceService";
 import { useReactToPrint } from "react-to-print";
 import "/src/styles/custom.css";
+import PageHeader from "../../components/headers/PageHeader";
 
 // ─── Utilitaires ──────────────────────────────────────────────────────────────
 
@@ -1526,6 +1527,38 @@ const AttendancePage = () => {
           </span>
         </div>
       )}
+
+      <PageHeader
+        pageTag="Fiche de présence"
+        title="Fiche de Présence"
+        subtitle={`Période du ${periode?.du ?? "…"} au ${periode?.au ?? "…"}${selectedSection ? ` · ${selectedSection}` : ""}`}
+        kpis={[
+          {
+            label: "Employés",
+            value: pagination.total_employees,
+            sub: selectedSection || "toutes sections",
+            dotColor: "#3b82f6",
+          },
+          {
+            label: "Période",
+            value: `${periode?.mois ?? "—"} ${periode?.annee ?? ""}`,
+            sub: `${periode?.du} → ${periode?.au}`,
+            dotColor: "#f97316",
+          },
+          {
+            label: "Mode heures",
+            value: modeHeures === "brutes" ? "Brutes" : "Rectifiées",
+            sub: "changer dans la barre d'outils",
+            dotColor: "#6b7280",
+          },
+          {
+            label: "Pagination",
+            value: `${pagination.page ?? 1} / ${pagination.total_pages || 1}`,
+            sub: "50 employés / page",
+            dotColor: "#22c55e",
+          },
+        ]}
+      />
 
       <div ref={componentRef} className="print-container">
         {/* ── En-tête ── */}

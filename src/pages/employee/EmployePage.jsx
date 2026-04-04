@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "/src/styles/custom.css";
+import PageHeader from "../../components/headers/PageHeader";
 import {
   Search,
   Plus,
@@ -722,79 +723,17 @@ const EmployeesPage = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="mx-auto">
         {/* Header avec Statistiques */}
-        <div className="mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Gestion des Employés
-              </h1>
-              <p className="text-gray-600">
-                Gérez efficacement les informations de votre personnel
-              </p>
-            </div>
-          </div>
-
-          {/* Stats Cards améliorées */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:transform hover:scale-105 border border-gray-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">
-                    Total Employés
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
-                    {employees.length}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
-                  <User className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:transform hover:scale-105 border border-gray-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Hommes</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
-                    {employees.filter((emp) => normalizeSexe(emp.sexe) === "Masculin").length}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
-                  <span className="text-blue-600 font-semibold">♂</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:transform hover:scale-105 border border-gray-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Femmes</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
-                    {employees.filter((emp) => normalizeSexe(emp.sexe) === "Féminin").length}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-pink-50 rounded-xl flex items-center justify-center">
-                  <span className="text-pink-600 font-semibold">♀</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:transform hover:scale-105 border border-gray-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Affichage</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
-                    {currentItems.length}/{filteredEmployees.length}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
-                  <Table className="w-6 h-6 text-purple-600" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+  pageTag="Gestion des employés"
+  title="Gestion des Employés"
+  subtitle="Gérez efficacement les informations de votre personnel"
+  kpis={[
+    { label: "Total Employés", value: employees.length,                                                              dotColor: "#3b82f6" },
+    { label: "Hommes",         value: employees.filter(e => normalizeSexe(e.sexe) === "Masculin").length,            dotColor: "#3b82f6" },
+    { label: "Femmes",         value: employees.filter(e => normalizeSexe(e.sexe) === "Féminin").length,             dotColor: "#ec4899" },
+    { label: "Affichage",      value: `${currentItems.length}/${filteredEmployees.length}`, sub: "page courante",    dotColor: "#a855f7" },
+  ]}
+/>
 
         {/* Main Content */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
