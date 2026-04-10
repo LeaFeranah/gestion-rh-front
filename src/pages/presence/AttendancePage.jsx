@@ -218,21 +218,38 @@ const HeureModal = ({
       return;
     }
 
+    // setLoading(true);
+    // try {
+    //   await presenceService.modifierHeuresManuellement({
+    //     userid: employee.userid,
+    //     date,
+    //     heure_entree: formData.heure_entree
+    //       ? `${formData.heure_entree}:00`
+    //       : null,
+    //     heure_sortie: formData.heure_sortie
+    //       ? `${formData.heure_sortie}:00`
+    //       : null,
+    //     commentaire: formData.commentaire || "Ajouté manuellement",
+    //   });
+    //   alert("✅ Présence enregistrée avec succès !");
+    //   onSave();
+    //   onClose();
+    // } catch (err) {
+    //   alert(`❌ Erreur: ${err.response?.data?.error || err.message}`);
+    // } finally {
+    //   setLoading(false);
+    // }
     setLoading(true);
     try {
       await presenceService.modifierHeuresManuellement({
         userid: employee.userid,
         date,
-        heure_entree: formData.heure_entree
-          ? `${formData.heure_entree}:00`
-          : null,
-        heure_sortie: formData.heure_sortie
-          ? `${formData.heure_sortie}:00`
-          : null,
+        heure_entree: formData.heure_entree ? `${formData.heure_entree}:00` : null,
+        heure_sortie: formData.heure_sortie ? `${formData.heure_sortie}:00` : null,
         commentaire: formData.commentaire || "Ajouté manuellement",
       });
       alert("✅ Présence enregistrée avec succès !");
-      onSave();
+      onSave();   // ← déclenche refreshData() dans AttendancePage
       onClose();
     } catch (err) {
       alert(`❌ Erreur: ${err.response?.data?.error || err.message}`);

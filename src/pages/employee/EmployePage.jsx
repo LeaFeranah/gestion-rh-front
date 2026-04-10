@@ -38,10 +38,14 @@ import {
 // Fonction de normalisation du sexe
 const normalizeSexe = (sexe) => {
   if (!sexe) return "";
-  const str = sexe.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const str = sexe
+    .toString()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
   if (str === "masculin" || str === "m") return "Masculin";
   if (str === "feminin" || str === "f") return "Féminin";
-  return sexe; // fallback
+  return sexe;
 };
 
 const EmployeesPage = () => {
@@ -60,6 +64,7 @@ const EmployeesPage = () => {
     section: "",
     fonction: "",
     sexe: "",
+    statut: "", // Ajout du filtre statut
   });
   const [availableSections, setAvailableSections] = useState([]);
 
@@ -76,11 +81,38 @@ const EmployeesPage = () => {
     fetchEmployees();
   }, []);
 
+  const getEffectiveSection = (emp) => {
+    const section = emp.information_professionnelle?.section?.trim() || "";
+    const responsableSection =
+      emp.information_professionnelle?.responsable_section?.trim() || "";
+
+    const upperSection = section.toUpperCase();
+
+    const isResponsableSection =
+      upperSection === "RESPONSABLE" ||
+      upperSection === "RESPONSABLE 0" ||
+      upperSection === "RESPONSABLE 1" ||
+      upperSection === "RESPONSABLE 2" ||
+      upperSection === "RESPONSABLE 3" ||
+      upperSection === "RESPONSABLE RAPHIA" ||
+      upperSection.startsWith("RESPONSABLE ");
+
+    if (isResponsableSection) {
+      return responsableSection || section;
+    }
+
+    if (!responsableSection) {
+      return section;
+    }
+
+    return section;
+  };
   useEffect(() => {
     if (employees.length > 0) {
       const sections = employees
-        .map(emp => emp.information_professionnelle?.section)
-        .filter(section => section && section.trim() !== '');
+        .map((emp) => getEffectiveSection(emp))
+        .filter((section) => section && section.trim() !== "");
+
       const uniqueSections = [...new Set(sections)].sort();
       setAvailableSections(uniqueSections);
     } else {
@@ -96,7 +128,15 @@ const EmployeesPage = () => {
     try {
       setLoading(true);
       const data = await getAllEmployees();
-      const sortedData = data.sort((a, b) => a.id - b.id);
+      // Tri croissant par numero_matricule (version robuste)
+      const sortedData = data.sort((a, b) => {
+        const matA = a.numero_matricule || "";
+        const matB = b.numero_matricule || "";
+        return matA.localeCompare(matB, undefined, {
+          numeric: true,
+          sensitivity: "base",
+        });
+      });
       setEmployees(sortedData);
     } catch (error) {
       console.error("Erreur:", error);
@@ -114,12 +154,19 @@ const EmployeesPage = () => {
       nomComplet.toLowerCase().includes(searchTerm.toLowerCase()) ||
       numeroMatricule.toLowerCase().includes(searchTerm.toLowerCase());
 
+    const isActif = !emp.depart || emp.depart === "0";
+    const isDepart = emp.depart === "1" || emp.depart === "-1";
+
+    const effectiveSection = getEffectiveSection(emp);
+
     const matchesFilters =
-      (!filters.section ||
-        emp.information_professionnelle?.section === filters.section) &&
+      (!filters.section || effectiveSection === filters.section) &&
       (!filters.fonction ||
         emp.information_professionnelle?.fonction === filters.fonction) &&
-      (!filters.sexe || normalizeSexe(emp.sexe) === filters.sexe);
+      (!filters.sexe || normalizeSexe(emp.sexe) === filters.sexe) &&
+      (!filters.statut ||
+        (filters.statut === "actif" && isActif) ||
+        (filters.statut === "depart" && isDepart));
 
     return matchesSearch && matchesFilters;
   });
@@ -128,7 +175,7 @@ const EmployeesPage = () => {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredEmployees.slice(
     indexOfFirstItem,
-    indexOfLastItem
+    indexOfLastItem,
   );
   const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage);
 
@@ -178,7 +225,7 @@ const EmployeesPage = () => {
         value !== null &&
         value !== undefined &&
         value.toString().trim() !== "" &&
-        !Array.isArray(value)
+        !Array.isArray(value),
     );
     return hasAnyData;
   };
@@ -225,7 +272,7 @@ const EmployeesPage = () => {
     } catch (error) {
       console.error(
         "Erreur détaillée lors de la sauvegarde des enfants:",
-        error.response?.data
+        error.response?.data,
       );
       throw error;
     }
@@ -292,6 +339,7 @@ const EmployeesPage = () => {
         permis_categorie_d: formData.permis_categorie_d,
         permis_categorie_e: formData.permis_categorie_e,
         permis_categorie_f: formData.permis_categorie_f,
+        depart: formData.depart, // Ajout du champ depart
       };
 
       Object.entries(personalFields).forEach(([key, value]) => {
@@ -349,7 +397,7 @@ const EmployeesPage = () => {
         if (formData.information_professionnelle.id) {
           await updateInformationProfessionnelle(
             formData.information_professionnelle.id,
-            professionnelleData
+            professionnelleData,
           );
         } else if (hasValidData(professionnelleData)) {
           await createInformationProfessionnelle(professionnelleData);
@@ -462,7 +510,7 @@ const EmployeesPage = () => {
 
       persoData.append(
         "numero_matricule",
-        formData.numero_matricule?.trim() || ""
+        formData.numero_matricule?.trim() || "",
       );
       persoData.append("nom_complet", nomCompletFormatted);
       persoData.append("sexe", normalizeSexe(formData.sexe));
@@ -496,6 +544,7 @@ const EmployeesPage = () => {
         permis_categorie_d: formData.permis_categorie_d,
         permis_categorie_e: formData.permis_categorie_e,
         permis_categorie_f: formData.permis_categorie_f,
+        depart: formData.depart || "0", // Valeur par défaut actif
       };
 
       Object.entries(optionalFields).forEach(([key, value]) => {
@@ -703,6 +752,7 @@ const EmployeesPage = () => {
       permis_categorie_d: "",
       permis_categorie_e: "",
       permis_categorie_f: "",
+      depart: "0", // Par défaut actif
       photo: null,
       bancaire: {},
       information_professionnelle: {},
@@ -715,25 +765,46 @@ const EmployeesPage = () => {
     ...new Set(
       employees
         .map((emp) => emp.information_professionnelle?.fonction)
-        .filter(Boolean)
+        .filter(Boolean),
     ),
-  ];
+  ].sort((a, b) => a.localeCompare(b));
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="mx-auto">
         {/* Header avec Statistiques */}
         <PageHeader
-  pageTag="Gestion des employés"
-  title="Gestion des Employés"
-  subtitle="Gérez efficacement les informations de votre personnel"
-  kpis={[
-    { label: "Total Employés", value: employees.length,                                                              dotColor: "#3b82f6" },
-    { label: "Hommes",         value: employees.filter(e => normalizeSexe(e.sexe) === "Masculin").length,            dotColor: "#3b82f6" },
-    { label: "Femmes",         value: employees.filter(e => normalizeSexe(e.sexe) === "Féminin").length,             dotColor: "#ec4899" },
-    { label: "Affichage",      value: `${currentItems.length}/${filteredEmployees.length}`, sub: "page courante",    dotColor: "#a855f7" },
-  ]}
-/>
+          pageTag="Gestion des employés"
+          title="Gestion des Employés"
+          subtitle="Gérez efficacement les informations de votre personnel"
+          kpis={[
+            {
+              label: "Total Employés",
+              value: employees.length,
+              dotColor: "#3b82f6",
+            },
+            {
+              label: "Hommes",
+              value: employees.filter(
+                (e) => normalizeSexe(e.sexe) === "Masculin",
+              ).length,
+              dotColor: "#3b82f6",
+            },
+            {
+              label: "Femmes",
+              value: employees.filter(
+                (e) => normalizeSexe(e.sexe) === "Féminin",
+              ).length,
+              dotColor: "#ec4899",
+            },
+            {
+              label: "Affichage",
+              value: `${currentItems.length}/${filteredEmployees.length}`,
+              sub: "page courante",
+              dotColor: "#a855f7",
+            },
+          ]}
+        />
 
         {/* Main Content */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -820,7 +891,7 @@ const EmployeesPage = () => {
                 {/* Filtres avancés */}
                 {showFilters && (
                   <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Section
@@ -833,8 +904,12 @@ const EmployeesPage = () => {
                           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:outline-none focus:ring-gray-500"
                         >
                           <option value="">Toutes les sections</option>
-                          {availableSections.map(section => (
-                            <option key={section} value={section}>{section}</option>
+                          {availableSections.map((section) => (
+                            <option key={section} value={section}>
+                              {section === "RESPONSABLE"
+                                ? "Responsable"
+                                : section}
+                            </option>
                           ))}
                         </select>
                       </div>
@@ -875,12 +950,35 @@ const EmployeesPage = () => {
                           <option value="Féminin">Féminin</option>
                         </select>
                       </div>
+
+                      {/* Nouveau filtre statut */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Statut
+                        </label>
+                        <select
+                          value={filters.statut}
+                          onChange={(e) =>
+                            setFilters({ ...filters, statut: e.target.value })
+                          }
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:outline-none focus:ring-gray-500"
+                        >
+                          <option value="">Tous</option>
+                          <option value="actif">Actif</option>
+                          <option value="depart">Départ</option>
+                        </select>
+                      </div>
                     </div>
 
                     <div className="flex justify-end mt-4">
                       <button
                         onClick={() =>
-                          setFilters({ section: "", fonction: "", sexe: "" })
+                          setFilters({
+                            section: "",
+                            fonction: "",
+                            sexe: "",
+                            statut: "",
+                          })
                         }
                         className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-lg transition-colors"
                       >
@@ -906,19 +1004,22 @@ const EmployeesPage = () => {
                   <table className="w-full">
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
-                        <th className="w-1/5 px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        <th className="w-1/6 px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                           Employé
                         </th>
-                        <th className="w-1/5 px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        <th className="w-1/6 px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                           Matricule
                         </th>
-                        <th className="w-1/5 px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        <th className="w-1/6 px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                           Fonction
                         </th>
-                        <th className="w-1/5 px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        <th className="w-1/6 px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                           Section
                         </th>
-                        <th className="w-1/5 px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        <th className="w-1/6 px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          Statut
+                        </th>
+                        <th className="w-1/6 px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                           Actions
                         </th>
                       </tr>
@@ -929,7 +1030,7 @@ const EmployeesPage = () => {
                           key={emp.id}
                           className="hover:bg-gray-50 transition-colors duration-150"
                         >
-                          <td className="w-1/5 px-6">
+                          <td className="px-6">
                             <div className="flex items-center space-x-3">
                               <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center border">
                                 {emp.photo ? (
@@ -952,29 +1053,43 @@ const EmployeesPage = () => {
                               </div>
                             </div>
                           </td>
-                          <td className="w-1/5 px-6">
+                          <td className="px-6">
                             <div className="flex items-center">
                               <span className="text-sm font-bold text-gray-900 px-2 py-1 rounded">
                                 {emp.numero_matricule}
                               </span>
                             </div>
                           </td>
-                          <td className="w-1/5 px-6">
+                          <td className="px-6">
                             <div className="text-sm text-gray-900">
                               {emp.information_professionnelle?.fonction ||
                                 emp.fonction ||
                                 "Non spécifié"}
                             </div>
                           </td>
-                          <td className="w-1/5 px-6">
+                          <td className="px-6">
                             <div className="text-sm text-gray-900">
-                              {emp.information_professionnelle?.responsable_section ||
-                               emp.information_professionnelle?.section ||
-                               emp.section ||
-                               "Non spécifié"}
+                              {emp.information_professionnelle
+                                ?.responsable_section ||
+                                emp.information_professionnelle?.section ||
+                                emp.section ||
+                                "Non spécifié"}
                             </div>
                           </td>
-                          <td className="w-1/5 px-6 py-4">
+                          <td className="px-6">
+                            <span
+                              className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                                !emp.depart || emp.depart === "0"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}
+                            >
+                              {!emp.depart || emp.depart === "0"
+                                ? "Actif"
+                                : "Départ"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
                             <div className="flex items-center justify-start space-x-2">
                               <button
                                 onClick={() => handleViewDetails(emp)}
@@ -1043,10 +1158,27 @@ const EmployeesPage = () => {
                                 Section
                               </span>
                               <span className="text-gray-900 text-right">
-                                {emp.information_professionnelle?.responsable_section ||
-                                 emp.information_professionnelle?.section ||
-                                 emp.section ||
-                                 "Non spécifié"}
+                                {emp.information_professionnelle
+                                  ?.responsable_section ||
+                                  emp.information_professionnelle?.section ||
+                                  emp.section ||
+                                  "Non spécifié"}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs font-medium text-gray-500">
+                                Statut
+                              </span>
+                              <span
+                                className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                                  !emp.depart || emp.depart === "0"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-red-100 text-red-800"
+                                }`}
+                              >
+                                {!emp.depart || emp.depart === "0"
+                                  ? "Actif"
+                                  : "Départ"}
                               </span>
                             </div>
                           </div>
@@ -1125,7 +1257,7 @@ const EmployeesPage = () => {
                           >
                             {page}
                           </button>
-                        )
+                        ),
                       )}
 
                       <button
