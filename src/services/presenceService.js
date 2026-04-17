@@ -269,7 +269,6 @@
 //     }
 //   },
 
-
 //   // Ajouter dans presenceService
 //   getSections: async () => {
 //     try {
@@ -541,6 +540,62 @@ const presenceService = {
       console.error("❌ Erreur récupération sections:", error);
       throw error;
     }
+  },
+
+  // Dans l'objet presenceService :
+
+  getHoraireExceptions: async (date = null) => {
+    const params = date ? { date } : {};
+    const response = await api.get("api/presence/horaire-exceptions/", {
+      params,
+    });
+    return response.data;
+  },
+
+  createHoraireException: async (data) => {
+    const response = await api.post("api/presence/horaire-exceptions/", data);
+    return response.data;
+  },
+
+  deleteHoraireException: async (id) => {
+    const response = await api.delete(`api/presence/horaire-exceptions/${id}/`);
+    return response.data;
+  },
+
+  supprimerJour: async (date, motif = "") => {
+    const response = await api.delete("api/presence/supprimer-jour/", {
+      data: { date, motif },
+    });
+    return response.data;
+  },
+
+  getHeuresTravail: async (
+    annee,
+    mois,
+    section = "",
+    page = 1,
+    pageSize = 50,
+    q = "",
+  ) => {
+    const params = { annee, mois, page, page_size: pageSize };
+    if (section) params.section = section;
+    if (q) params.q = q;
+    const response = await api.get("api/presence/heures-travail/", { params });
+    return response.data;
+  },
+  getIndemniteRepas: async (
+    annee,
+    mois,
+    section = "",
+    page = 1,
+    pageSize = 50,
+    q = "",
+  ) => {
+    const params = { annee, mois, page, page_size: pageSize };
+    if (section) params.section = section;
+    if (q) params.q = q;
+    const response = await api.get("api/presence/indemnite-repas/", { params });
+    return response.data;
   },
 };
 

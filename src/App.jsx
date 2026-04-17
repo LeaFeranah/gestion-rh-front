@@ -90,7 +90,9 @@ import DashboardPage from './pages/Dashboard/DashboardPage';
 import SocietePage from './components/societe/SocietePage';
 import EmployePage from './pages/employee/EmployePage';
 import AttendancePage from './pages/presence/AttendancePage';
-import AnomaliesPage from './pages/presence/AnomaliesPage'; // IMPORTANT: Ajoutez cette importation
+import AnomaliesPage from './pages/presence/AnomaliesPage'; 
+import HeuresTravailPage from './pages/presence/HeuresTravailPage';
+import MealAllowancePage from './pages/presence/MealAllowancePage';
 
 function LayoutWithSidebar() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -105,6 +107,8 @@ function LayoutWithSidebar() {
     if (path.includes('/company')) return 'company';
     if (path.includes('/attendance')) return 'attendance';
     if (path.includes('/anomalies')) return 'attendance'; // On garde "attendance" comme menu actif
+    if (path.includes('/heures-travail')) return 'heures-travail';
+    if (path.includes('/meal-allowance')) return 'meal-allowance'; 
     return 'dashboard';
   };
 
@@ -120,6 +124,8 @@ function LayoutWithSidebar() {
       'company': '/company',
       'attendance': '/attendance',
       'anomalies': '/anomalies',
+      'heures-travail': '/heures-travail',
+      'meal-allowance': '/meal-allowance',
     };
     if (routes[menuId]) {
       navigate(routes[menuId]);
@@ -141,7 +147,9 @@ function LayoutWithSidebar() {
           <Route path="/employees" element={<EmployePage />} />
           <Route path="/company" element={<SocietePage />} />
           <Route path="/attendance" element={<AttendancePage />} />
-          <Route path="/anomalies" element={<AnomaliesPage />} /> {/* AJOUTEZ CETTE ROUTE */}
+          <Route path="/anomalies" element={<AnomaliesPage />} /> 
+          <Route path="/heures-travail" element={<HeuresTravailPage />} />
+          <Route path="/meal-allowance" element={<MealAllowancePage />} />
         </Routes>
       </main>
     </div>

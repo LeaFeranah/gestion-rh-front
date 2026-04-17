@@ -9,7 +9,7 @@ const MENU_GROUPS = [
   },
   {
     label: 'RH',
-    items: ['employees', 'recruitment', 'attendance', 'payroll'],
+    items: ['employees', 'recruitment', 'attendance','heures-travail', 'meal-allowance', 'payroll'],
   },
   {
     label: 'Gestion',
