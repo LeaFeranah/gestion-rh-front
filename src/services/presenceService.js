@@ -569,32 +569,37 @@ const presenceService = {
     return response.data;
   },
 
-  getHeuresTravail: async (
-    annee,
-    mois,
-    section = "",
-    page = 1,
-    pageSize = 50,
-    q = "",
-  ) => {
+  // ← AJOUTER cette méthode (n'importe où dans l'objet)
+  ensureDatesGenerated: async (annee, mois) => {
+    try {
+      const res = await api.get('api/presence/dates/', { params: { annee, mois } });
+      const periodeCount = (res.data || []).filter((d) => !d.hors_periode).length;
+      const daysInMonth = new Date(annee, mois, 0).getDate();
+      if (periodeCount < daysInMonth) {
+        await api.get('api/presence/generer-dates/', { params: { annee, mois } });
+      }
+    } catch (err) {
+      console.error('Erreur génération dates:', err);
+    }
+  },
+
+  // ← MODIFIER getHeuresTravail : ajouter la ligne ensureDatesGenerated
+  getHeuresTravail: async (annee, mois, section = '', page = 1, pageSize = 50, q = '') => {
+    await presenceService.ensureDatesGenerated(annee, mois); // ← ligne ajoutée
     const params = { annee, mois, page, page_size: pageSize };
     if (section) params.section = section;
     if (q) params.q = q;
-    const response = await api.get("api/presence/heures-travail/", { params });
+    const response = await api.get('api/presence/heures-travail/', { params });
     return response.data;
   },
-  getIndemniteRepas: async (
-    annee,
-    mois,
-    section = "",
-    page = 1,
-    pageSize = 50,
-    q = "",
-  ) => {
+
+  // ← MODIFIER getIndemniteRepas : ajouter la ligne ensureDatesGenerated
+  getIndemniteRepas: async (annee, mois, section = '', page = 1, pageSize = 50, q = '') => {
+    await presenceService.ensureDatesGenerated(annee, mois); // ← ligne ajoutée
     const params = { annee, mois, page, page_size: pageSize };
     if (section) params.section = section;
     if (q) params.q = q;
-    const response = await api.get("api/presence/indemnite-repas/", { params });
+    const response = await api.get('api/presence/indemnite-repas/', { params });
     return response.data;
   },
 };
