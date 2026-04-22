@@ -492,10 +492,140 @@ const ExceptionModal = ({ sections, onClose, onSave }) => {
 };
 // ─── Modal Suppression d'un jour complet (nouveau) ────────────────────────────
 
-const SupprimerJourModal = ({ onClose, onConfirm }) => {
+// const SupprimerJourModal = ({ onClose, onConfirm }) => {
+//   const today = new Date().toISOString().slice(0, 10);
+//   const [date, setDate] = useState(today);
+//   const [motif, setMotif] = useState("Jour férié");
+//   const [confirming, setConfirming] = useState(false);
+//   const [confirmed, setConfirmed] = useState(false);
+
+//   const handleSubmit = async () => {
+//     if (!date) {
+//       alert("Veuillez choisir une date.");
+//       return;
+//     }
+//     if (!confirmed) {
+//       alert("Cochez la case de confirmation avant de continuer.");
+//       return;
+//     }
+//     setConfirming(true);
+//     try {
+//       await onConfirm(date, motif);
+//       onClose();
+//     } catch (err) {
+//       alert(`❌ Erreur : ${err.response?.data?.error || err.message}`);
+//     } finally {
+//       setConfirming(false);
+//     }
+//   };
+
+//   return (
+//     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+//       <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+//         {/* Header */}
+//         <div className="sticky top-0 bg-white border-b-2 border-red-600 p-6">
+//           <div className="flex items-center justify-between">
+//             <div className="flex items-center gap-3">
+//               <AlertTriangle className="w-6 h-6 text-red-600" />
+//               <h3 className="text-xl font-bold text-red-700">
+//                 Supprimer un jour complet
+//               </h3>
+//             </div>
+//             <button
+//               onClick={onClose}
+//               disabled={confirming}
+//               className="text-gray-400 hover:text-gray-600"
+//             >
+//               <X className="w-5 h-5" />
+//             </button>
+//           </div>
+//         </div>
+
+//         <div className="p-6 space-y-5">
+//           <div className="bg-red-50 border border-red-200 rounded p-4 text-sm text-red-800">
+//             <p className="font-bold mb-1">⚠️ Action irréversible</p>
+//             <p>
+//               Tous les pointages et anomalies de la date choisie seront
+//               définitivement supprimés. Utilisez cette fonction uniquement pour
+//               les jours fériés ou les journées sans travail.
+//             </p>
+//           </div>
+
+//           <div>
+//             <label className="block text-sm font-bold mb-1 text-gray-700">
+//               Date à supprimer *
+//             </label>
+//             <input
+//               type="date"
+//               value={date}
+//               onChange={(e) => setDate(e.target.value)}
+//               className="w-full px-3 py-2 border-2 border-red-300 rounded focus:border-red-600 focus:outline-none"
+//             />
+//           </div>
+
+//           <div>
+//             <label className="block text-sm font-bold mb-1 text-gray-700">
+//               Motif
+//             </label>
+//             <input
+//               type="text"
+//               value={motif}
+//               onChange={(e) => setMotif(e.target.value)}
+//               placeholder="Ex : Jour férié, Fermeture exceptionnelle..."
+//               className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800 focus:outline-none"
+//             />
+//           </div>
+
+//           <label className="flex items-start gap-3 cursor-pointer select-none">
+//             <input
+//               type="checkbox"
+//               checked={confirmed}
+//               onChange={(e) => setConfirmed(e.target.checked)}
+//               className="mt-0.5 w-5 h-5 accent-red-600 cursor-pointer"
+//             />
+//             <span className="text-sm text-gray-700">
+//               Je confirme vouloir supprimer <strong>tous</strong> les pointages
+//               du <strong>{date || "…"}</strong>. Cette action est{" "}
+//               <strong>irréversible</strong>.
+//             </span>
+//           </label>
+
+//           <div className="flex gap-3 pt-2 border-t border-gray-200">
+//             <button
+//               onClick={onClose}
+//               disabled={confirming}
+//               className="flex-1 px-4 py-2 border-2 border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+//             >
+//               Annuler
+//             </button>
+//             <button
+//               onClick={handleSubmit}
+//               disabled={confirming || !confirmed}
+//               className="flex-1 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-red-300 flex items-center justify-center gap-2"
+//             >
+//               {confirming ? (
+//                 <>
+//                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+//                   Suppression...
+//                 </>
+//               ) : (
+//                 <>
+//                   <Trash2 className="w-4 h-4" />
+//                   Supprimer
+//                 </>
+//               )}
+//             </button>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+const SupprimerJourModal = ({ sections, onClose, onConfirm }) => {
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
   const [motif, setMotif] = useState("Jour férié");
+  const [selectedSec, setSelectedSec] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
 
@@ -510,7 +640,7 @@ const SupprimerJourModal = ({ onClose, onConfirm }) => {
     }
     setConfirming(true);
     try {
-      await onConfirm(date, motif);
+      await onConfirm(date, motif, selectedSec);
       onClose();
     } catch (err) {
       alert(`❌ Erreur : ${err.response?.data?.error || err.message}`);
@@ -519,10 +649,11 @@ const SupprimerJourModal = ({ onClose, onConfirm }) => {
     }
   };
 
+  const sectionLabel = selectedSec || "toutes les sections";
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-        {/* Header */}
         <div className="sticky top-0 bg-white border-b-2 border-red-600 p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -546,8 +677,7 @@ const SupprimerJourModal = ({ onClose, onConfirm }) => {
             <p className="font-bold mb-1">⚠️ Action irréversible</p>
             <p>
               Tous les pointages et anomalies de la date choisie seront
-              définitivement supprimés. Utilisez cette fonction uniquement pour
-              les jours fériés ou les journées sans travail.
+              définitivement supprimés pour <strong>{sectionLabel}</strong>.
             </p>
           </div>
 
@@ -561,6 +691,28 @@ const SupprimerJourModal = ({ onClose, onConfirm }) => {
               onChange={(e) => setDate(e.target.value)}
               className="w-full px-3 py-2 border-2 border-red-300 rounded focus:border-red-600 focus:outline-none"
             />
+          </div>
+
+          {/* ← NOUVEAU : filtre section */}
+          <div>
+            <label className="block text-sm font-bold mb-1 text-gray-700">
+              Section (vide = toutes les sections)
+            </label>
+            <div className="relative">
+              <select
+                value={selectedSec}
+                onChange={(e) => setSelectedSec(e.target.value)}
+                className="w-full pl-3 pr-8 py-2 border-2 border-gray-300 rounded focus:border-gray-800 focus:outline-none appearance-none bg-white"
+              >
+                <option value="">— Toutes les sections —</option>
+                {sections.map((s) => (
+                  <option key={s.section_id} value={s.nom_section}>
+                    {s.nom_section}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
           </div>
 
           <div>
@@ -585,7 +737,8 @@ const SupprimerJourModal = ({ onClose, onConfirm }) => {
             />
             <span className="text-sm text-gray-700">
               Je confirme vouloir supprimer <strong>tous</strong> les pointages
-              du <strong>{date || "…"}</strong>. Cette action est{" "}
+              du <strong>{date || "…"}</strong> pour{" "}
+              <strong>{sectionLabel}</strong>. Cette action est{" "}
               <strong>irréversible</strong>.
             </span>
           </label>
@@ -621,7 +774,6 @@ const SupprimerJourModal = ({ onClose, onConfirm }) => {
     </div>
   );
 };
-
 // ─── Modal Modification des heures ───────────────────────────────────────────
 
 const HeureModal = ({
@@ -1499,9 +1651,17 @@ const AttendancePage = () => {
   }, [refreshData]);
 
   // ─── Suppression d'un jour complet (nouveau handler) ─────────────────────
+  // const handleSupprimerJourConfirm = useCallback(
+  //   async (date, motif) => {
+  //     const result = await presenceService.supprimerJour(date, motif);
+  //     alert(`✅ ${result.message}`);
+  //     refreshData();
+  //   },
+  //   [refreshData],
+  // );
   const handleSupprimerJourConfirm = useCallback(
-    async (date, motif) => {
-      const result = await presenceService.supprimerJour(date, motif);
+    async (date, motif, section) => {
+      const result = await presenceService.supprimerJour(date, motif, section);
       alert(`✅ ${result.message}`);
       refreshData();
     },
@@ -1649,6 +1809,13 @@ const AttendancePage = () => {
         ev.type === "X" &&
         !attendance?.present &&
         !attendance?.est_anomalie_corrigee
+      )
+        return null;
+      // Jour supprimé → pas d'heures rectifiées → cacher l'événement
+      if (
+        attendance?.est_anomalie_corrigee &&
+        !attendance?.heure_entree_rectifiee &&
+        !attendance?.heure_sortie_rectifiee
       )
         return null;
       return ev;
@@ -2256,63 +2423,6 @@ const AttendancePage = () => {
         {employees.length > 0 && (
           <div className="bg-white border-x-2 border-b-2 border-gray-800 print:overflow-visible">
             <table className="w-full border-collapse text-xs print:text-[7.5pt] print:table-fixed">
-              {/* <thead>
-                <tr className="bg-gray-100">
-                  <th
-                    className="border-2 border-gray-800 p-2 sticky left-0 bg-gray-100 z-10 print:w-[120px] print:max-w-[120px]"
-                    rowSpan="4"
-                  >
-                    <div className="font-bold text-sm w-32 print:w-full">
-                      N° / NOM
-                    </div>
-                  </th>
-                  {weekNumbers.map((weekNum) => (
-                    <th
-                      key={weekNum}
-                      colSpan={weeks[weekNum].length}
-                      className="border border-gray-600 p-1 font-bold"
-                    >
-                      Semaine {weekNum}
-                    </th>
-                  ))}
-                </tr>
-
-                <tr className="bg-gray-100">
-                  {datesValides.map((date, idx) => (
-                    <th
-                      key={idx}
-                      className="border border-gray-600 p-1 min-w-10"
-                    >
-                      <div className="font-bold">{date.code_affichage}</div>
-                    </th>
-                  ))}
-                </tr>
-
-                <tr className="bg-gray-100">
-                  {datesValides.map((date, idx) => (
-                    <th key={idx} className="border border-gray-600 p-1">
-                      <div className="text-xs">
-                        {new Date(date.date).toLocaleDateString("fr-FR", {
-                          weekday: "short",
-                        })}
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        {new Date(date.date).getDate()}
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-
-                <tr className="bg-gray-100">
-                  {datesValides.map((date, idx) => (
-                    <th key={idx} className="border border-gray-600 p-1">
-                      <div className="text-xs font-bold text-gray-700">
-                        {getMonthAbbreviation(date.date)}
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead> */}
               <thead className="sticky top-0 z-20">
                 <tr className="bg-gray-100">
                   <th
@@ -2590,9 +2700,9 @@ const AttendancePage = () => {
         />
       )}
 
-      {/* ── Nouveau : Modal Suppression d'un jour complet ── */}
       {showSupprimerJourModal && (
         <SupprimerJourModal
+          sections={sections}
           onClose={() => setShowSupprimerJourModal(false)}
           onConfirm={handleSupprimerJourConfirm}
         />
