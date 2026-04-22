@@ -221,7 +221,6 @@ const ExceptionModal = ({ sections, onClose, onSave }) => {
         <div className="sticky top-0 bg-white border-b-2 border-gray-800 p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Clock className="w-6 h-6 text-orange-600" />
               <h3 className="text-xl font-bold">
                 Exception d'horaire (1 jour)
               </h3>
@@ -234,10 +233,6 @@ const ExceptionModal = ({ sections, onClose, onSave }) => {
               <X className="w-5 h-5" />
             </button>
           </div>
-          <p className="text-sm text-gray-500 mt-1">
-            Modifie les heures pour la date choisie et met à jour les anomalies
-            existantes.
-          </p>
         </div>
 
         <div className="p-6 space-y-5">
@@ -251,7 +246,7 @@ const ExceptionModal = ({ sections, onClose, onSave }) => {
                 type="date"
                 value={form.date}
                 onChange={(e) => setForm({ ...form, date: e.target.value })}
-                className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800 focus:outline-none"
+                className="w-full px-2 py-0.5 border border-gray-300 rounded text-sm h-[25px] focus:ring-1 focus:ring-gray-500 focus:outline-none focus:outline-none"
               />
             </div>
 
@@ -266,7 +261,7 @@ const ExceptionModal = ({ sections, onClose, onSave }) => {
                   onChange={(e) =>
                     setForm({ ...form, section: e.target.value })
                   }
-                  className="w-full pl-3 pr-8 py-2 border-2 border-gray-300 rounded focus:border-gray-800 focus:outline-none appearance-none bg-white"
+                  className="w-full pl-3 pr-8 py-0.5 px-2 border border-gray-300 text-sm rounded focus:ring-1 focus:ring-gray-500 focus:outline-none appearance-none bg-white"
                 >
                   <option value="">— Toutes les sections —</option>
                   {sections.map((s) => (
@@ -290,7 +285,7 @@ const ExceptionModal = ({ sections, onClose, onSave }) => {
                 onChange={(e) =>
                   setForm({ ...form, heure_entree: e.target.value })
                 }
-                className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800 focus:outline-none"
+                className="w-full px-2 py-0.5 border border-gray-300 rounded text-sm h-[25px] focus:ring-1 focus:ring-gray-500 focus:outline-none focus:outline-none"
               />
               <p className="text-xs text-gray-400 mt-0.5">
                 Laisser vide = inchangée
@@ -302,11 +297,11 @@ const ExceptionModal = ({ sections, onClose, onSave }) => {
               <label className="block text-sm font-bold mb-2 text-gray-700">
                 Heure de sortie *
               </label>
-              <div className="flex rounded border-2 border-gray-300 overflow-hidden mb-3">
+              <div className="flex rounded border border-gray-300 overflow-hidden mb-3">
                 <button
                   type="button"
                   onClick={() => setModeSortie("heure")}
-                  className={`flex-1 py-1.5 text-sm font-medium transition-colors ${
+                  className={`flex-1 py-0.5 px-2  text-sm font-medium transition-colors h-[25px] focus:ring-1 focus:ring-gray-500 focus:outline-none focus:outline-none ${
                     modeSortie === "heure"
                       ? "bg-akj text-white"
                       : "bg-white text-gray-600 hover:bg-gray-50"
@@ -317,7 +312,7 @@ const ExceptionModal = ({ sections, onClose, onSave }) => {
                 <button
                   type="button"
                   onClick={() => setModeSortie("duree")}
-                  className={`flex-1 py-1.5 text-sm font-medium transition-colors ${
+                  className={`flex-1 py-0.5 px-2  text-sm font-medium transition-colors h-[25px] focus:ring-1 focus:ring-gray-500 focus:outline-none focus:outline-none ${
                     modeSortie === "duree"
                       ? "bg-akj text-white"
                       : "bg-white text-gray-600 hover:bg-gray-50"
@@ -334,7 +329,7 @@ const ExceptionModal = ({ sections, onClose, onSave }) => {
                   onChange={(e) =>
                     setForm({ ...form, heure_sortie: e.target.value })
                   }
-                  className="w-full px-3 py-2 border-2 border-orange-300 rounded focus:border-orange-600 focus:outline-none"
+                  className="w-full px-2 py-0.3 border border-gray-300 rounded text-sm h-[25px] focus:ring-1 focus:ring-gray-500 focus:outline-none"
                 />
               ) : (
                 <div className="space-y-3">
@@ -350,7 +345,7 @@ const ExceptionModal = ({ sections, onClose, onSave }) => {
                         step="0.5"
                         value={dureeHeures}
                         onChange={(e) => setDureeHeures(e.target.value)}
-                        className="w-28 px-3 py-2 border-2 border-orange-300 rounded focus:border-orange-600 focus:outline-none text-center font-bold text-lg"
+                        className="w-28 px-3 py-0.5 border border-gray-300 rounded text-sm h-[25px] focus:ring-1 focus:ring-gray-500 focus:outline-none text-center text-lg"
                       />
                       <span className="text-sm text-gray-600">heure(s)</span>
                       {/* Raccourcis rapides */}
@@ -362,7 +357,7 @@ const ExceptionModal = ({ sections, onClose, onSave }) => {
                             onClick={() => setDureeHeures(d)}
                             className={`px-2 py-1 text-xs rounded border ${
                               dureeHeures === d
-                                ? "bg-orange-600 text-white border-orange-600"
+                                ? "bg-akj text-white"
                                 : "border-gray-300 text-gray-600 hover:bg-gray-50"
                             }`}
                           >
@@ -373,22 +368,22 @@ const ExceptionModal = ({ sections, onClose, onSave }) => {
                     </div>
                   </div>
                   {heureSortieCalculee && (
-                    <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded px-3 py-2 text-sm">
-                      <span className="text-orange-700">
-                        → Heure de sortie calculée :
+                    <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded px-3 py-0.5 text-sm">
+                      <span className="text-gray-700">
+                        Heure de sortie calculée :
                       </span>
-                      <span className="font-bold text-orange-900 text-base">
+                      <span className="font-bold text-gray-900 text-base">
                         {heureSortieCalculee}
                       </span>
                       {form.heure_entree && (
-                        <span className="text-orange-500 text-xs ml-auto">
+                        <span className="text-gray-500 text-xs ml-auto">
                           ({form.heure_entree} + {dureeHeures}h)
                         </span>
                       )}
                     </div>
                   )}
                   {modeSortie === "duree" && !form.heure_entree && (
-                    <p className="text-xs text-orange-600">
+                    <p className="text-xs text-gray-600">
                       ⚠ Renseignez l'heure d'entrée pour calculer la sortie
                       automatiquement
                     </p>
@@ -407,7 +402,7 @@ const ExceptionModal = ({ sections, onClose, onSave }) => {
                 value={form.motif}
                 onChange={(e) => setForm({ ...form, motif: e.target.value })}
                 placeholder="Ex : Fermeture anticipée, journée de 7h..."
-                className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800 focus:outline-none"
+                className="w-full px-2 py-0.2 border border-gray-300 rounded focus:ring-1 focus:ring-gray-500 focus:outline-none"
               />
             </div>
           </div>
@@ -418,7 +413,7 @@ const ExceptionModal = ({ sections, onClose, onSave }) => {
               Chargement des exceptions...
             </div>
           ) : existantes.length > 0 ? (
-            <div className="bg-orange-50 border border-orange-200 rounded p-4">
+            <div className="bg-orange-50 border border-gray-200 rounded p-4">
               <p className="text-sm font-bold text-orange-800 mb-2">
                 Exceptions déjà définies pour le {form.date} :
               </p>
@@ -426,7 +421,7 @@ const ExceptionModal = ({ sections, onClose, onSave }) => {
                 {existantes.map((ex) => (
                   <div
                     key={ex.id}
-                    className="flex items-center justify-between bg-white border border-orange-200 rounded px-3 py-2 text-sm"
+                    className="flex items-center justify-between bg-white border border-orange-200 rounded px-2 py-0.5 text-sm"
                   >
                     <div>
                       <span className="font-semibold text-gray-700">
@@ -470,7 +465,7 @@ const ExceptionModal = ({ sections, onClose, onSave }) => {
               disabled={
                 saving || (modeSortie === "duree" && !heureSortieCalculee)
               }
-              className="flex-1 px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:bg-orange-400 flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2 bg-akj text-white rounded disabled:bg-akj flex items-center justify-center gap-2"
             >
               {saving ? (
                 <>
@@ -490,137 +485,6 @@ const ExceptionModal = ({ sections, onClose, onSave }) => {
     </div>
   );
 };
-// ─── Modal Suppression d'un jour complet (nouveau) ────────────────────────────
-
-// const SupprimerJourModal = ({ onClose, onConfirm }) => {
-//   const today = new Date().toISOString().slice(0, 10);
-//   const [date, setDate] = useState(today);
-//   const [motif, setMotif] = useState("Jour férié");
-//   const [confirming, setConfirming] = useState(false);
-//   const [confirmed, setConfirmed] = useState(false);
-
-//   const handleSubmit = async () => {
-//     if (!date) {
-//       alert("Veuillez choisir une date.");
-//       return;
-//     }
-//     if (!confirmed) {
-//       alert("Cochez la case de confirmation avant de continuer.");
-//       return;
-//     }
-//     setConfirming(true);
-//     try {
-//       await onConfirm(date, motif);
-//       onClose();
-//     } catch (err) {
-//       alert(`❌ Erreur : ${err.response?.data?.error || err.message}`);
-//     } finally {
-//       setConfirming(false);
-//     }
-//   };
-
-//   return (
-//     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-//       <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-//         {/* Header */}
-//         <div className="sticky top-0 bg-white border-b-2 border-red-600 p-6">
-//           <div className="flex items-center justify-between">
-//             <div className="flex items-center gap-3">
-//               <AlertTriangle className="w-6 h-6 text-red-600" />
-//               <h3 className="text-xl font-bold text-red-700">
-//                 Supprimer un jour complet
-//               </h3>
-//             </div>
-//             <button
-//               onClick={onClose}
-//               disabled={confirming}
-//               className="text-gray-400 hover:text-gray-600"
-//             >
-//               <X className="w-5 h-5" />
-//             </button>
-//           </div>
-//         </div>
-
-//         <div className="p-6 space-y-5">
-//           <div className="bg-red-50 border border-red-200 rounded p-4 text-sm text-red-800">
-//             <p className="font-bold mb-1">⚠️ Action irréversible</p>
-//             <p>
-//               Tous les pointages et anomalies de la date choisie seront
-//               définitivement supprimés. Utilisez cette fonction uniquement pour
-//               les jours fériés ou les journées sans travail.
-//             </p>
-//           </div>
-
-//           <div>
-//             <label className="block text-sm font-bold mb-1 text-gray-700">
-//               Date à supprimer *
-//             </label>
-//             <input
-//               type="date"
-//               value={date}
-//               onChange={(e) => setDate(e.target.value)}
-//               className="w-full px-3 py-2 border-2 border-red-300 rounded focus:border-red-600 focus:outline-none"
-//             />
-//           </div>
-
-//           <div>
-//             <label className="block text-sm font-bold mb-1 text-gray-700">
-//               Motif
-//             </label>
-//             <input
-//               type="text"
-//               value={motif}
-//               onChange={(e) => setMotif(e.target.value)}
-//               placeholder="Ex : Jour férié, Fermeture exceptionnelle..."
-//               className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800 focus:outline-none"
-//             />
-//           </div>
-
-//           <label className="flex items-start gap-3 cursor-pointer select-none">
-//             <input
-//               type="checkbox"
-//               checked={confirmed}
-//               onChange={(e) => setConfirmed(e.target.checked)}
-//               className="mt-0.5 w-5 h-5 accent-red-600 cursor-pointer"
-//             />
-//             <span className="text-sm text-gray-700">
-//               Je confirme vouloir supprimer <strong>tous</strong> les pointages
-//               du <strong>{date || "…"}</strong>. Cette action est{" "}
-//               <strong>irréversible</strong>.
-//             </span>
-//           </label>
-
-//           <div className="flex gap-3 pt-2 border-t border-gray-200">
-//             <button
-//               onClick={onClose}
-//               disabled={confirming}
-//               className="flex-1 px-4 py-2 border-2 border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
-//             >
-//               Annuler
-//             </button>
-//             <button
-//               onClick={handleSubmit}
-//               disabled={confirming || !confirmed}
-//               className="flex-1 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-red-300 flex items-center justify-center gap-2"
-//             >
-//               {confirming ? (
-//                 <>
-//                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-//                   Suppression...
-//                 </>
-//               ) : (
-//                 <>
-//                   <Trash2 className="w-4 h-4" />
-//                   Supprimer
-//                 </>
-//               )}
-//             </button>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
 const SupprimerJourModal = ({ sections, onClose, onConfirm }) => {
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
@@ -689,7 +553,7 @@ const SupprimerJourModal = ({ sections, onClose, onConfirm }) => {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-3 py-2 border-2 border-red-300 rounded focus:border-red-600 focus:outline-none"
+              className="w-full px-2 py-0.5 border border-red-300 rounded focus:border-red-600 focus:outline-none"
             />
           </div>
 
@@ -702,7 +566,7 @@ const SupprimerJourModal = ({ sections, onClose, onConfirm }) => {
               <select
                 value={selectedSec}
                 onChange={(e) => setSelectedSec(e.target.value)}
-                className="w-full pl-3 pr-8 py-2 border-2 border-gray-300 rounded focus:border-gray-800 focus:outline-none appearance-none bg-white"
+                className="w-full pl-3 pr-8 py-0.5 border border-red-300 rounded focus:border-red-600 focus:outline-none appearance-none bg-white"
               >
                 <option value="">— Toutes les sections —</option>
                 {sections.map((s) => (
@@ -724,7 +588,7 @@ const SupprimerJourModal = ({ sections, onClose, onConfirm }) => {
               value={motif}
               onChange={(e) => setMotif(e.target.value)}
               placeholder="Ex : Jour férié, Fermeture exceptionnelle..."
-              className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800 focus:outline-none"
+              className="w-full px-3 py-0.2 border border-red-300 rounded focus:border-red-600 focus:outline-none"
             />
           </div>
 
@@ -2359,7 +2223,6 @@ const AttendancePage = () => {
               className="flex items-center gap-2 px-3 h-7 text-sm bg-orange-500 text-white rounded hover:bg-orange-600"
               title="Modifier l'horaire de sortie pour un seul jour"
             >
-              <Clock className="w-3.5 h-3.5" />
               Horaire du jour
             </button>
 
@@ -2369,7 +2232,6 @@ const AttendancePage = () => {
               className="flex items-center gap-2 px-3 h-7 text-sm bg-red-800 text-white rounded hover:bg-red-900"
               title="Supprimer tous les pointages d'un jour (jour férié...)"
             >
-              <CalendarOff className="w-3.5 h-3.5" />
               Supprimer un jour
             </button>
 

@@ -104,7 +104,7 @@ const Sidebar = ({ isOpen, activeMenu, onMenuChange }) => {
               <p style={{ fontSize: '11px', fontWeight: 700, color: '#56656b', letterSpacing: '0.05em', margin: 0 }}>
                 AKANJO
               </p>
-              <p style={{ fontSize: '10px', color: '#9eacb1', margin: 0 }}>RH Platform v2</p>
+              <p style={{ fontSize: '10px', color: '#9eacb1', margin: 0 }}>RH Platform</p>
             </div>
           )}
         </div>
