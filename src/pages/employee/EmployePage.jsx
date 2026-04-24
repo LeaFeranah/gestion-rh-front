@@ -127,7 +127,8 @@ const EmployeesPage = () => {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const data = await getAllEmployees();
+      //const data = await getAllEmployees();
+      const data = await getAllEmployees(1, 100);
       // Tri croissant par numero_matricule (version robuste)
       const sortedData = data.sort((a, b) => {
         const matA = a.numero_matricule || "";
@@ -1212,6 +1213,7 @@ const EmployeesPage = () => {
               {filteredEmployees.length > 0 && (
                 <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    {/* Items par page */}
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-gray-600">Afficher</span>
                       <select
@@ -1225,47 +1227,139 @@ const EmployeesPage = () => {
                         <option value={10}>10</option>
                         <option value={20}>20</option>
                         <option value={50}>50</option>
+                        <option value={100}>100</option>
                       </select>
                       <span className="text-sm text-gray-600">par page</span>
                     </div>
 
+                    {/* Info */}
                     <div className="text-sm text-gray-600">
-                      {indexOfFirstItem + 1}-
+                      {indexOfFirstItem + 1}–
                       {Math.min(indexOfLastItem, filteredEmployees.length)} sur{" "}
                       {filteredEmployees.length}
                     </div>
 
+                    {/* Boutons pagination intelligente */}
                     <div className="flex items-center gap-1">
+                      {/* Précédent */}
+                      <button
+                        onClick={() => setCurrentPage(1)}
+                        disabled={currentPage === 1}
+                        className="px-2 py-2 border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-white transition-colors text-xs"
+                        title="Première page"
+                      >
+                        «
+                      </button>
                       <button
                         onClick={() => setCurrentPage(currentPage - 1)}
                         disabled={currentPage === 1}
-                        className="p-2 border border-gray-300 rounded-lg disabled:opacity-50 hover:bg-white transition-colors"
+                        className="p-2 border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-white transition-colors"
                       >
                         <ChevronLeft className="w-4 h-4" />
                       </button>
 
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                        (page) => (
+                      {/* Numéros de pages intelligents */}
+                      {(() => {
+                        const pages = [];
+                        const delta = 2; // pages autour de la page courante
+
+                        const left = Math.max(2, currentPage - delta);
+                        const right = Math.min(
+                          totalPages - 1,
+                          currentPage + delta,
+                        );
+
+                        // Toujours page 1
+                        pages.push(
                           <button
-                            key={page}
-                            onClick={() => setCurrentPage(page)}
-                            className={`min-w-[40px] px-3 py-2 border text-sm rounded-lg transition-colors ${
-                              page === currentPage
-                                ? "bg-akj text-white"
+                            key={1}
+                            onClick={() => setCurrentPage(1)}
+                            className={`min-w-[36px] px-3 py-2 border text-sm rounded-lg transition-colors ${
+                              currentPage === 1
+                                ? "bg-akj text-white border-akj"
                                 : "border-gray-300 text-gray-700 hover:bg-gray-50"
                             }`}
                           >
-                            {page}
-                          </button>
-                        ),
-                      )}
+                            1
+                          </button>,
+                        );
 
+                        // "..." gauche
+                        if (left > 2) {
+                          pages.push(
+                            <span
+                              key="left-dots"
+                              className="px-2 text-gray-400 text-sm"
+                            >
+                              ...
+                            </span>,
+                          );
+                        }
+
+                        // Pages du milieu
+                        for (let i = left; i <= right; i++) {
+                          pages.push(
+                            <button
+                              key={i}
+                              onClick={() => setCurrentPage(i)}
+                              className={`min-w-[36px] px-3 py-2 border text-sm rounded-lg transition-colors ${
+                                currentPage === i
+                                  ? "bg-akj text-white border-akj"
+                                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                              }`}
+                            >
+                              {i}
+                            </button>,
+                          );
+                        }
+
+                        // "..." droite
+                        if (right < totalPages - 1) {
+                          pages.push(
+                            <span
+                              key="right-dots"
+                              className="px-2 text-gray-400 text-sm"
+                            >
+                              ...
+                            </span>,
+                          );
+                        }
+
+                        // Toujours dernière page
+                        if (totalPages > 1) {
+                          pages.push(
+                            <button
+                              key={totalPages}
+                              onClick={() => setCurrentPage(totalPages)}
+                              className={`min-w-[36px] px-3 py-2 border text-sm rounded-lg transition-colors ${
+                                currentPage === totalPages
+                                  ? "bg-akj text-white border-akj"
+                                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                              }`}
+                            >
+                              {totalPages}
+                            </button>,
+                          );
+                        }
+
+                        return pages;
+                      })()}
+
+                      {/* Suivant */}
                       <button
                         onClick={() => setCurrentPage(currentPage + 1)}
                         disabled={currentPage === totalPages}
-                        className="p-2 border border-gray-300 rounded-lg disabled:opacity-50 hover:bg-white transition-colors"
+                        className="p-2 border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-white transition-colors"
                       >
                         <ChevronRight className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setCurrentPage(totalPages)}
+                        disabled={currentPage === totalPages}
+                        className="px-2 py-2 border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-white transition-colors text-xs"
+                        title="Dernière page"
+                      >
+                        »
                       </button>
                     </div>
                   </div>

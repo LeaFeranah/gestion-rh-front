@@ -1,8 +1,14 @@
 import api from '../api/api'; // ✅ Importer l'instance configurée avec l'intercepteur
 
 // ==================== EMPLOYÉS ====================
-export const getAllEmployees = async () => {
-  const response = await api.get('api/personnel/employes/');
+// export const getAllEmployees = async () => {
+//   const response = await api.get('api/personnel/employes/');
+//   return response.data;
+// };
+export const getAllEmployees = async (page = 1, pageSize = 50) => {
+  const response = await api.get('api/personnel/employes/', {
+    params: { page, page_size: pageSize }
+  });
   return response.data;
 };
 

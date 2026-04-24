@@ -135,14 +135,14 @@ const ExceptionModal = ({ sections, onClose, onSave }) => {
     heure_sortie: "",
     motif: "",
   });
-  // ← NOUVEAU : mode "heure" (saisie directe) ou "duree" (calcul auto)
+
   const [modeSortie, setModeSortie] = useState("heure");
   const [dureeHeures, setDureeHeures] = useState("7");
   const [saving, setSaving] = useState(false);
   const [existantes, setExistantes] = useState([]);
   const [loadingExistantes, setLoadingExistantes] = useState(false);
 
-  // ── Calcul automatique de l'heure de sortie en mode "durée" ──────────────
+  //  Calcul automatique de l'heure de sortie en mode "durée"
   const heureSortieCalculee = useMemo(() => {
     if (modeSortie !== "duree" || !form.heure_entree || !dureeHeures) return "";
     const [h, m] = form.heure_entree.split(":").map(Number);

@@ -24,74 +24,6 @@ const MOIS_NOMS = [
 
 const getPeriodLabel = (mois, annee) => `${MOIS_NOMS[mois - 1]} ${annee}`;
 
-// ─── Mini bar chart SVG ───────────────────────────────────────────────────────
-
-// const BarChart = ({ data, onClick }) => {
-//   if (!data || data.length === 0) return null;
-//   const maxVal = Math.max(...data.map((d) => d.value), 1);
-//   const W = 420,
-//     H = 140,
-//     padL = 8,
-//     padR = 8,
-//     padB = 28,
-//     barGap = 4;
-//   const barW = (W - padL - padR) / data.length - barGap;
-
-//   return (
-//     <svg
-//       viewBox={`0 0 ${W} ${H}`}
-//       className="w-full h-full"
-//       style={{ fontFamily: "'DM Mono', monospace" }}
-//     >
-//       {data.map((d, i) => {
-//         const barH = Math.max(4, (d.value / maxVal) * (H - padB - 12));
-//         const x = padL + i * ((W - padL - padR) / data.length) + barGap / 2;
-//         const y = H - padB - barH;
-//         return (
-//           <g
-//             key={i}
-//             className="cursor-pointer"
-//             onClick={() => onClick && onClick(d)}
-//           >
-//             <rect
-//               x={x}
-//               y={y}
-//               width={barW}
-//               height={barH}
-//               fill="#56656b"
-//               opacity="0.82"
-//               rx="2"
-//               style={{ transition: "opacity 0.15s" }}
-//               onMouseEnter={(e) => e.target.setAttribute("opacity", "1")}
-//               onMouseLeave={(e) => e.target.setAttribute("opacity", "0.82")}
-//             />
-//             <text
-//               x={x + barW / 2}
-//               y={H - padB + 14}
-//               textAnchor="middle"
-//               fontSize="9"
-//               fill="#6b7280"
-//             >
-//               {d.label.length > 8 ? d.label.slice(0, 7) + "…" : d.label}
-//             </text>
-//             <text
-//               x={x + barW / 2}
-//               y={y - 4}
-//               textAnchor="middle"
-//               fontSize="10"
-//               fill="#374151"
-//               fontWeight="600"
-//             >
-//               {d.value}
-//             </text>
-//           </g>
-//         );
-//       })}
-//     </svg>
-//   );
-// };
-
-
 const BarChart = ({ data, onClick }) => {
   if (!data || data.length === 0) return null;
   const maxVal = Math.max(...data.map((d) => d.value), 1);
@@ -288,63 +220,6 @@ const DashboardPage = () => {
     setUsername(localStorage.getItem("username") || "");
   }, []);
 
-  // const fetchAll = useCallback(async () => {
-  //   setLoading(true);
-  //   try {
-  //     const [employees, anomaliesData, sectionsData] = await Promise.all([
-  //       getAllEmployees().catch(() => []),
-  //       anomalieService
-  //         .getAnomalies(currentYear, currentMonth)
-  //         .catch(() => null),
-  //       presenceService.getSections().catch(() => null),
-  //     ]);
-
-  //     // Employés stats
-  //     const hommes = employees.filter((e) => e.sexe === "Masculin").length;
-  //     const femmes = employees.filter((e) => e.sexe === "Féminin").length;
-
-  //     // Anomalies stats
-  //     const totalAno = anomaliesData?.statistiques?.total ?? 0;
-  //     const corrigees = anomaliesData?.statistiques?.corrigees ?? 0;
-  //     const nonCorrigees = anomaliesData?.statistiques?.non_corrigees ?? 0;
-
-  //     // Recent anomalies (last 6)
-  //     const anomaliesList =
-  //       anomaliesData?.anomalies ??
-  //       anomaliesData?.results ??
-  //       anomaliesData?.data ??
-  //       [];
-  //     setRecentAnomalies(anomaliesList.slice(0, 6));
-
-  //     // Sections bar chart
-  //     if (sectionsData?.sections) {
-  //       const topSections = sectionsData.sections
-  //         .sort((a, b) => b.nb_employes - a.nb_employes)
-  //         .slice(0, 10)
-  //         .map((s) => ({
-  //           label: s.nom_section,
-  //           value: s.nb_employes,
-  //           section: s.nom_section,
-  //         }));
-  //       setSectionData(topSections);
-  //     }
-
-  //     setStats({
-  //       totalEmployes: employees.length,
-  //       hommes,
-  //       femmes,
-  //       totalAnomalies: totalAno,
-  //       anomaliesCorrigees: corrigees,
-  //       anomaliesNonCorrigees: nonCorrigees,
-  //       totalPresences: null,
-  //     });
-  //   } catch (err) {
-  //     console.error("Erreur dashboard:", err);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }, [currentMonth, currentYear]);
-
   const fetchAll = useCallback(async () => {
   setLoading(true);
 
@@ -355,10 +230,15 @@ const DashboardPage = () => {
 
   // Afficher les employés dès que dispo
   employeesPromise.then((employees) => {
-    const hommes = employees.filter((e) => e.sexe === "Masculin").length;
-    const femmes = employees.filter((e) => e.sexe === "Féminin").length;
-    setStats((prev) => ({ ...prev, totalEmployes: employees.length, hommes, femmes }));
-  });
+  const normalizeSexe = (sexe) => {
+    if (!sexe) return "";
+    return sexe.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  };
+
+  const hommes = employees.filter((e) => normalizeSexe(e.sexe) === "masculin").length;
+  const femmes = employees.filter((e) => normalizeSexe(e.sexe) === "feminin").length;
+  setStats((prev) => ({ ...prev, totalEmployes: employees.length, hommes, femmes }));
+});
 
   // Afficher les anomalies dès que dispo
   anomaliesPromise.then((anomaliesData) => {
@@ -443,7 +323,7 @@ const DashboardPage = () => {
         subtitle={`Synthèse de la période — ${getPeriodLabel(currentMonth, currentYear)}`}
         kpis={[
           {
-            label: "Employés actifs",
+            label: "Employés",
             value: stats.totalEmployes,
             sub: `${stats.hommes ?? "—"} H · ${stats.femmes ?? "—"} F`,
             dotColor: "#3b82f6",
