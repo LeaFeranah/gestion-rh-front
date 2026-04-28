@@ -4749,9 +4749,8 @@ const EmployeeBlock = ({
             <button
               type="button"
               onClick={onEdit}
-              className="flex items-center gap-2 px-4 py-2 bg-akj text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+              className="flex items-center gap-2 px-3 py-1 bg-akj text-white rounded transition-colors text-sm font-medium"
             >
-              <Edit2 className="w-4 h-4" />
               Modifier
             </button>
           )}
