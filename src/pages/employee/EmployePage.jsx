@@ -81,31 +81,64 @@ const EmployeesPage = () => {
     fetchEmployees();
   }, []);
 
-  const getEffectiveSection = (emp) => {
-    const section = emp.information_professionnelle?.section?.trim() || "";
-    const responsableSection =
-      emp.information_professionnelle?.responsable_section?.trim() || "";
+  // const getEffectiveSection = (emp) => {
+  //   const section = emp.information_professionnelle?.section?.trim() || "";
+  //   const responsableSection =
+  //     emp.information_professionnelle?.responsable_section?.trim() || "";
 
-    const upperSection = section.toUpperCase();
+  //   const upperSection = section.toUpperCase();
+
+  //   const isResponsableSection =
+  //     upperSection === "RESPONSABLE" ||
+  //     upperSection === "RESPONSABLE 0" ||
+  //     upperSection === "RESPONSABLE 1" ||
+  //     upperSection === "RESPONSABLE 2" ||
+  //     upperSection === "RESPONSABLE 3" ||
+  //     upperSection === "RESPONSABLE RAPHIA" ||
+  //     upperSection.startsWith("RESPONSABLE ");
+
+  //   if (isResponsableSection) {
+  //     return responsableSection || section;
+  //   }
+
+  //   if (!responsableSection) {
+  //     return section;
+  //   }
+
+  //   return section;
+  // };
+  const getEffectiveSection = (emp) => {
+    // Récupérer section : d'abord dans info pro, sinon à la racine
+    const section = (
+      emp.information_professionnelle?.section?.trim() ||
+      emp.section?.trim() ||
+      ""
+    ).toUpperCase();
+    // Récupérer responsable_section : d'abord dans info pro, sinon à la racine
+    const responsableSection =
+      emp.information_professionnelle?.responsable_section?.trim() ||
+      emp.responsable_section?.trim() ||
+      "";
 
     const isResponsableSection =
-      upperSection === "RESPONSABLE" ||
-      upperSection === "RESPONSABLE 0" ||
-      upperSection === "RESPONSABLE 1" ||
-      upperSection === "RESPONSABLE 2" ||
-      upperSection === "RESPONSABLE 3" ||
-      upperSection === "RESPONSABLE RAPHIA" ||
-      upperSection.startsWith("RESPONSABLE ");
+      section === "RESPONSABLE" ||
+      section === "RESPONSABLE 0" ||
+      section === "RESPONSABLE 1" ||
+      section === "RESPONSABLE 2" ||
+      section === "RESPONSABLE 3" ||
+      section === "RESPONSABLE RAPHIA" ||
+      section.startsWith("RESPONSABLE ");
 
     if (isResponsableSection) {
-      return responsableSection || section;
+      return responsableSection || section; // si responsableSection vide, on garde section (ex: "RESPONSABLE")
     }
 
-    if (!responsableSection) {
-      return section;
-    }
-
-    return section;
+    // Sinon, la section effective est la section courante
+    return (
+      emp.information_professionnelle?.section?.trim() ||
+      emp.section?.trim() ||
+      ""
+    );
   };
   useEffect(() => {
     if (employees.length > 0) {
@@ -762,10 +795,21 @@ const EmployeesPage = () => {
     });
   };
 
+  // const fonctions = [
+  //   ...new Set(
+  //     employees
+  //       .map((emp) => emp.information_professionnelle?.fonction)
+  //       .filter(Boolean),
+  //   ),
+  // ].sort((a, b) => a.localeCompare(b));
   const fonctions = [
     ...new Set(
       employees
-        .map((emp) => emp.information_professionnelle?.fonction)
+        .map(
+          (emp) =>
+            emp.information_professionnelle?.fonction?.trim() ||
+            emp.fonction?.trim(),
+        )
         .filter(Boolean),
     ),
   ].sort((a, b) => a.localeCompare(b));
