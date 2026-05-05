@@ -18,6 +18,7 @@ import {
 import EmployeeBlock from "../../components/employee/EmployeeBlock";
 import {
   getAllEmployees,
+  getEmployeeById,
   createEmployee,
   updateEmployee,
   deleteEmployee,
@@ -192,11 +193,12 @@ const EmployeesPage = () => {
     const isDepart = emp.depart === "1" || emp.depart === "-1";
 
     const effectiveSection = getEffectiveSection(emp);
+    const empFonction =
+      emp.information_professionnelle?.fonction || emp.fonction || "";
 
     const matchesFilters =
       (!filters.section || effectiveSection === filters.section) &&
-      (!filters.fonction ||
-        emp.information_professionnelle?.fonction === filters.fonction) &&
+      (!filters.fonction || empFonction === filters.fonction) &&
       (!filters.sexe || normalizeSexe(emp.sexe) === filters.sexe) &&
       (!filters.statut ||
         (filters.statut === "actif" && isActif) ||
@@ -312,21 +314,27 @@ const EmployeesPage = () => {
     }
   };
 
+ 
   const handleViewDetails = async (emp) => {
     try {
       setLoading(true);
-      const data = await initFormData(emp);
+
+      // ✅ Appel l'endpoint détail qui retourne TOUT (bancaire, familiale, etc.)
+      const fullEmp = await getEmployeeById(emp.id);
+      const data = await initFormData(fullEmp);
+
       setFormData(data);
-      setSelectedEmployee(emp);
+      setSelectedEmployee(fullEmp);
       setEditMode(false);
     } catch (error) {
-      console.error("Erreur chargement données:", error);
-      alert("Erreur lors du chargement des données de l'employé");
+      console.error("Status:", error.response?.status);
+      console.error("Data:", error.response?.data);
+      console.error("URL:", error.config?.url);
+      alert("Erreur " + (error.response?.status || error.message));
     } finally {
       setLoading(false);
     }
   };
-
   const handleEditEmployee = () => {
     setEditMode(true);
   };
@@ -805,11 +813,7 @@ const EmployeesPage = () => {
   const fonctions = [
     ...new Set(
       employees
-        .map(
-          (emp) =>
-            emp.information_professionnelle?.fonction?.trim() ||
-            emp.fonction?.trim(),
-        )
+        .map((emp) => emp.information_professionnelle?.fonction || emp.fonction)
         .filter(Boolean),
     ),
   ].sort((a, b) => a.localeCompare(b));

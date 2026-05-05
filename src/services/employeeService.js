@@ -5,10 +5,23 @@ import api from '../api/api'; // ✅ Importer l'instance configurée avec l'inte
 //   const response = await api.get('api/personnel/employes/');
 //   return response.data;
 // };
-export const getAllEmployees = async (page = 1, pageSize = 50) => {
+// export const getAllEmployees = async (page = 1, pageSize = 50) => {
+//   const response = await api.get('api/personnel/employes/', {
+//     params: { page, page_size: pageSize }
+//   });
+//   return response.data;
+// };
+export const getAllEmployees = async (page = 1, pageSize = 100) => {
   const response = await api.get('api/personnel/employes/', {
     params: { page, page_size: pageSize }
   });
+  // Si paginé → retourner results, sinon retourner data directement
+  return response.data.results || response.data;
+};
+
+// ✅ AJOUTER cette fonction qui manque
+export const getEmployeeById = async (id) => {
+  const response = await api.get(`api/personnel/employes/${id}/`);
   return response.data;
 };
 
