@@ -25,6 +25,7 @@ import presenceService from "../../services/presenceService";
 import { useReactToPrint } from "react-to-print";
 import "/src/styles/custom.css";
 import PageHeader from "../../components/headers/PageHeader";
+import AppFooter from "../../components/layout/AppFooter";
 
 // ─── Utilitaires ──────────────────────────────────────────────────────────────
 
@@ -67,7 +68,10 @@ const getEvenementTextColor = (type) => {
     PS: "text-orange-700",
     HA: "text-purple-700",
     OS: "text-indigo-700",
+    MP: "text-red-700",
+    AMP: "text-blue-700",
     A: "text-red-700",
+    CM: "text-blue-700",
     AUT: "text-amber-700",
   };
   return textColors[type] || "text-gray-700";
@@ -2513,6 +2517,7 @@ const AttendancePage = () => {
           </div>
         )}
       </div>
+      <AppFooter />
 
       {/* ── Modals ── */}
       {showHeureModal && selectedHeureData && (

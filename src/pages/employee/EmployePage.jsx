@@ -35,6 +35,7 @@ import {
   createInformationProfessionnelle,
   updateInformationProfessionnelle,
 } from "../../services/employeeService";
+import AppFooter from "../../components/layout/AppFooter";
 
 // Fonction de normalisation du sexe
 const normalizeSexe = (sexe) => {
@@ -314,7 +315,6 @@ const EmployeesPage = () => {
     }
   };
 
- 
   const handleViewDetails = async (emp) => {
     try {
       setLoading(true);
@@ -1468,6 +1468,7 @@ const EmployeesPage = () => {
             />
           )}
         </div>
+        <AppFooter />
       </div>
     </div>
   );

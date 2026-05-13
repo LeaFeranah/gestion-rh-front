@@ -336,6 +336,22 @@ const presenceService = {
     const response = await api.get("api/presence/indemnite-repas/", { params });
     return response.data;
   },
+
+   getAbsencesMois: async (
+    annee,
+    mois,
+    section = "",
+    page = 1,
+    pageSize = 50,
+    q = "",
+  ) => {
+    await presenceService.ensureDatesGenerated(annee, mois);
+    const params = { annee, mois, page, page_size: pageSize };
+    if (section) params.section = section;
+    if (q) params.q = q;
+    const response = await api.get("api/presence/absences-mois/", { params });
+    return response.data;
+  },
 };
 
 export default presenceService;

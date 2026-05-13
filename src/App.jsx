@@ -93,6 +93,7 @@ import AttendancePage from './pages/presence/AttendancePage';
 import AnomaliesPage from './pages/presence/AnomaliesPage'; 
 import HeuresTravailPage from './pages/presence/HeuresTravailPage';
 import MealAllowancePage from './pages/presence/MealAllowancePage';
+import AbsencesPage from "./pages/presence/AbsencesPage";
 
 function LayoutWithSidebar() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -149,6 +150,7 @@ function LayoutWithSidebar() {
           <Route path="/attendance" element={<AttendancePage />} />
           <Route path="/anomalies" element={<AnomaliesPage />} /> 
           <Route path="/heures-travail" element={<HeuresTravailPage />} />
+          <Route path="/absences" element={<AbsencesPage />} />
           <Route path="/meal-allowance" element={<MealAllowancePage />} />
         </Routes>
       </main>

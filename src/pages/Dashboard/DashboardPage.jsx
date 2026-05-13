@@ -4,6 +4,7 @@ import { getAllEmployees } from "../../services/employeeService";
 import presenceService from "../../services/presenceService";
 import anomalieService from "../../services/anomalieService";
 import PageHeader from "../../components/headers/PageHeader";
+import AppFooter from "../../components/layout/AppFooter";
 
 // ─── Utilitaires ──────────────────────────────────────────────────────────────
 
@@ -27,21 +28,43 @@ const getPeriodLabel = (mois, annee) => `${MOIS_NOMS[mois - 1]} ${annee}`;
 const BarChart = ({ data, onClick }) => {
   if (!data || data.length === 0) return null;
   const maxVal = Math.max(...data.map((d) => d.value), 1);
-  const W = 480, H = 160, padL = 36, padR = 12, padT = 16, padB = 32;
+  const W = 480,
+    H = 160,
+    padL = 36,
+    padR = 12,
+    padT = 16,
+    padB = 32;
   const chartW = W - padL - padR;
   const chartH = H - padT - padB;
-  const barW = Math.min(28, (chartW / data.length) - 8);
+  const barW = Math.min(28, chartW / data.length - 8);
   const gridLines = [0, 0.25, 0.5, 0.75, 1];
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full" style={{ fontFamily: "system-ui, sans-serif" }}>
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      className="w-full h-full"
+      style={{ fontFamily: "system-ui, sans-serif" }}
+    >
       {/* Grille horizontale */}
       {gridLines.map((g, i) => {
         const y = padT + chartH - g * chartH;
         return (
           <g key={i}>
-            <line x1={padL} y1={y} x2={W - padR} y2={y} stroke="#f3f4f6" strokeWidth="1" />
-            <text x={padL - 6} y={y + 3.5} textAnchor="end" fontSize="9" fill="#9ca3af">
+            <line
+              x1={padL}
+              y1={y}
+              x2={W - padR}
+              y2={y}
+              stroke="#f3f4f6"
+              strokeWidth="1"
+            />
+            <text
+              x={padL - 6}
+              y={y + 3.5}
+              textAnchor="end"
+              fontSize="9"
+              fill="#9ca3af"
+            >
               {Math.round(g * maxVal)}
             </text>
           </g>
@@ -49,15 +72,27 @@ const BarChart = ({ data, onClick }) => {
       })}
 
       {/* Axe Y */}
-      <line x1={padL} y1={padT} x2={padL} y2={padT + chartH} stroke="#e5e7eb" strokeWidth="1" />
+      <line
+        x1={padL}
+        y1={padT}
+        x2={padL}
+        y2={padT + chartH}
+        stroke="#e5e7eb"
+        strokeWidth="1"
+      />
 
       {/* Barres */}
       {data.map((d, i) => {
         const barH = Math.max(3, (d.value / maxVal) * chartH);
-        const x = padL + (i * chartW) / data.length + (chartW / data.length - barW) / 2;
+        const x =
+          padL + (i * chartW) / data.length + (chartW / data.length - barW) / 2;
         const y = padT + chartH - barH;
         return (
-          <g key={i} className="cursor-pointer group" onClick={() => onClick && onClick(d)}>
+          <g
+            key={i}
+            className="cursor-pointer group"
+            onClick={() => onClick && onClick(d)}
+          >
             {/* Barre fond (hover) */}
             <rect
               x={padL + (i * chartW) / data.length}
@@ -69,8 +104,10 @@ const BarChart = ({ data, onClick }) => {
             />
             {/* Barre principale */}
             <rect
-              x={x} y={y}
-              width={barW} height={barH}
+              x={x}
+              y={y}
+              width={barW}
+              height={barH}
               fill="#56656b"
               rx="3"
               opacity="0.85"
@@ -78,17 +115,22 @@ const BarChart = ({ data, onClick }) => {
             />
             {/* Valeur au dessus */}
             <text
-              x={x + barW / 2} y={y - 5}
-              textAnchor="middle" fontSize="10"
-              fontWeight="600" fill="#374151"
+              x={x + barW / 2}
+              y={y - 5}
+              textAnchor="middle"
+              fontSize="10"
+              fontWeight="600"
+              fill="#374151"
             >
               {d.value}
             </text>
             {/* Label en bas */}
             <text
-              x={padL + (i * chartW) / data.length + (chartW / data.length) / 2}
+              x={padL + (i * chartW) / data.length + chartW / data.length / 2}
               y={padT + chartH + 16}
-              textAnchor="middle" fontSize="9" fill="#6b7280"
+              textAnchor="middle"
+              fontSize="9"
+              fill="#6b7280"
             >
               {d.label.length > 9 ? d.label.slice(0, 8) + "…" : d.label}
             </text>
@@ -221,50 +263,77 @@ const DashboardPage = () => {
   }, []);
 
   const fetchAll = useCallback(async () => {
-  setLoading(true);
+    setLoading(true);
 
-  // Les 3 appels partent en parallèle
-  const employeesPromise   = getAllEmployees().catch(() => []);
-  const anomaliesPromise   = anomalieService.getAnomalies(currentYear, currentMonth).catch(() => null);
-  const sectionsPromise    = presenceService.getSections().catch(() => null);
+    // Les 3 appels partent en parallèle
+    const employeesPromise = getAllEmployees().catch(() => []);
+    const anomaliesPromise = anomalieService
+      .getAnomalies(currentYear, currentMonth)
+      .catch(() => null);
+    const sectionsPromise = presenceService.getSections().catch(() => null);
 
-  // Afficher les employés dès que dispo
-  employeesPromise.then((employees) => {
-  const normalizeSexe = (sexe) => {
-    if (!sexe) return "";
-    return sexe.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  };
+    // Afficher les employés dès que dispo
+    employeesPromise.then((employees) => {
+      const normalizeSexe = (sexe) => {
+        if (!sexe) return "";
+        return sexe
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "");
+      };
 
-  const hommes = employees.filter((e) => normalizeSexe(e.sexe) === "masculin").length;
-  const femmes = employees.filter((e) => normalizeSexe(e.sexe) === "feminin").length;
-  setStats((prev) => ({ ...prev, totalEmployes: employees.length, hommes, femmes }));
-});
+      const hommes = employees.filter(
+        (e) => normalizeSexe(e.sexe) === "masculin",
+      ).length;
+      const femmes = employees.filter(
+        (e) => normalizeSexe(e.sexe) === "feminin",
+      ).length;
+      setStats((prev) => ({
+        ...prev,
+        totalEmployes: employees.length,
+        hommes,
+        femmes,
+      }));
+    });
 
-  // Afficher les anomalies dès que dispo
-  anomaliesPromise.then((anomaliesData) => {
-    if (!anomaliesData) return;
-    const totalAno    = anomaliesData?.statistiques?.total ?? 0;
-    const corrigees   = anomaliesData?.statistiques?.corrigees ?? 0;
-    const nonCorrigees = anomaliesData?.statistiques?.non_corrigees ?? 0;
-    const anomaliesList = anomaliesData?.anomalies ?? anomaliesData?.results ?? anomaliesData?.data ?? [];
-    setRecentAnomalies(anomaliesList.slice(0, 6));
-    setStats((prev) => ({ ...prev, totalAnomalies: totalAno, anomaliesCorrigees: corrigees, anomaliesNonCorrigees: nonCorrigees }));
-  });
+    // Afficher les anomalies dès que dispo
+    anomaliesPromise.then((anomaliesData) => {
+      if (!anomaliesData) return;
+      const totalAno = anomaliesData?.statistiques?.total ?? 0;
+      const corrigees = anomaliesData?.statistiques?.corrigees ?? 0;
+      const nonCorrigees = anomaliesData?.statistiques?.non_corrigees ?? 0;
+      const anomaliesList =
+        anomaliesData?.anomalies ??
+        anomaliesData?.results ??
+        anomaliesData?.data ??
+        [];
+      setRecentAnomalies(anomaliesList.slice(0, 6));
+      setStats((prev) => ({
+        ...prev,
+        totalAnomalies: totalAno,
+        anomaliesCorrigees: corrigees,
+        anomaliesNonCorrigees: nonCorrigees,
+      }));
+    });
 
-  // Afficher le graphe section dès que dispo
-  sectionsPromise.then((sectionsData) => {
-    if (!sectionsData?.sections) return;
-    const topSections = sectionsData.sections
-      .sort((a, b) => b.nb_employes - a.nb_employes)
-      .slice(0, 10)
-      .map((s) => ({ label: s.nom_section, value: s.nb_employes, section: s.nom_section }));
-    setSectionData(topSections);
-  });
+    // Afficher le graphe section dès que dispo
+    sectionsPromise.then((sectionsData) => {
+      if (!sectionsData?.sections) return;
+      const topSections = sectionsData.sections
+        .sort((a, b) => b.nb_employes - a.nb_employes)
+        .slice(0, 10)
+        .map((s) => ({
+          label: s.nom_section,
+          value: s.nb_employes,
+          section: s.nom_section,
+        }));
+      setSectionData(topSections);
+    });
 
-  // Fin du loading global quand tout est terminé
-  await Promise.all([employeesPromise, anomaliesPromise, sectionsPromise]);
-  setLoading(false);
-}, [currentMonth, currentYear]);
+    // Fin du loading global quand tout est terminé
+    await Promise.all([employeesPromise, anomaliesPromise, sectionsPromise]);
+    setLoading(false);
+  }, [currentMonth, currentYear]);
 
   useEffect(() => {
     fetchAll();
@@ -609,17 +678,7 @@ const DashboardPage = () => {
       </div>
 
       {/* ── Pied ── */}
-      <div className="mt-8 pt-6 border-t border-gray-100 flex items-center justify-between">
-        <p className="text-xs text-gray-300">AKANJO — Système de Gestion RH</p>
-        <p className="text-xs text-gray-300">
-          {now.toLocaleDateString("fr-FR", {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })}
-        </p>
-      </div>
+      <AppFooter />
     </div>
   );
 };
