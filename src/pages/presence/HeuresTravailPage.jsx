@@ -176,17 +176,33 @@ const TypeBadge = ({ typeKey }) => {
   );
 };
 
+
+
 // ─── Légende ──────────────────────────────────────────────────────────────────
-const Legende = () => (
+const Legende = ({ activeTypes, onToggle }) => (
   <div className="flex flex-wrap gap-1.5 text-[11px]">
-    {ABS_TYPES.map((t) => (
-      <span
-        key={t.key}
-        className={`px-1.5 py-0.5 rounded font-bold border border-current border-opacity-30 ${t.color}`}
+    {ABS_TYPES.map((t) => {
+      const selected = activeTypes.has(t.key);
+      return (
+        <button
+          key={t.key}
+          onClick={() => onToggle(t.key)}
+          className={`px-1.5 py-0.5 rounded font-bold border border-current ${t.color} transition-colors ${
+            selected ? "bg-gray-400" : ""
+          }`}
+        >
+          {t.label}
+        </button>
+      );
+    })}
+    {activeTypes.size > 0 && (
+      <button
+        onClick={() => onToggle(null)}
+        className="px-1.5 py-0.5 rounded font-bold border border-gray-300 text-gray-400 hover:bg-gray-100 transition-colors"
       >
-        {t.label}
-      </span>
-    ))}
+        ✕
+      </button>
+    )}
   </div>
 );
 
@@ -217,7 +233,13 @@ const ViewToggle = ({ value, onChange }) => (
 );
 
 // ─── TableJour  (modèle AbsencesPage + HT/HS) ────────────────────────────────
-const TableJour = ({ employes, datesList, semaineNums, selectedSection }) => {
+const TableJour = ({
+  employes,
+  datesList,
+  semaineNums,
+  selectedSection,
+  activeTypes,
+}) => {
   const datesBySemaine = useMemo(() => {
     const map = {};
     datesList.forEach((d) => {
@@ -316,7 +338,9 @@ const TableJour = ({ employes, datesList, semaineNums, selectedSection }) => {
               (emp.details_jours || []).map((j) => [j.date, j]),
             );
             const typesActifs = ABS_TYPES.filter(
-              (t) => (emp[`total_${t.key}`] || 0) > 0,
+              (t) =>
+                (emp[`total_${t.key}`] || 0) > 0 &&
+                (activeTypes.size === 0 || activeTypes.has(t.key)),
             );
 
             // Employé sans aucune valeur
@@ -649,7 +673,12 @@ const TableJour = ({ employes, datesList, semaineNums, selectedSection }) => {
 //     </div>
 //   );
 // };
-const TableSemaine = ({ employes, semaineNums, selectedSection }) => {
+const TableSemaine = ({
+  employes,
+  semaineNums,
+  selectedSection,
+  activeTypes,
+}) => {
   return (
     <div className="bg-white border-2 border-gray-800">
       <table className="w-full border-collapse text-sm">
@@ -701,9 +730,10 @@ const TableSemaine = ({ employes, semaineNums, selectedSection }) => {
         <tbody>
           {employes.map((emp) => {
             const typesActifs = ABS_TYPES.filter(
-              (t) => (emp[`total_${t.key}`] || 0) > 0,
+              (t) =>
+                (emp[`total_${t.key}`] || 0) > 0 &&
+                (activeTypes.size === 0 || activeTypes.has(t.key)),
             );
-
             if (typesActifs.length === 0) {
               return (
                 <tr
@@ -834,7 +864,25 @@ const HeuresTravailPage = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [forceRefresh, setForceRefresh] = useState(0);
+  // const [viewMode, setViewMode] = useState("jour");
+  // const componentRef = useRef();
   const [viewMode, setViewMode] = useState("jour");
+  const [activeTypes, setActiveTypes] = useState(new Set()); // ← AJOUT
+
+  const toggleType = useCallback((key) => {
+    // ← AJOUT
+    if (key === null) {
+      setActiveTypes(new Set());
+      return;
+    }
+    setActiveTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
+
   const componentRef = useRef();
 
   // debounce recherche
@@ -1170,7 +1218,7 @@ const HeuresTravailPage = () => {
           <ViewToggle value={viewMode} onChange={setViewMode} />
 
           <div className="ml-auto">
-            <Legende />
+            <Legende activeTypes={activeTypes} onToggle={toggleType} />
           </div>
         </div>
       </div>
@@ -1208,6 +1256,7 @@ const HeuresTravailPage = () => {
                   employes={data.employes}
                   semaineNums={semaineNums}
                   selectedSection={selectedSection}
+                  activeTypes={activeTypes}
                 />
               ) : (
                 <TableJour
@@ -1215,6 +1264,7 @@ const HeuresTravailPage = () => {
                   datesList={datesList}
                   semaineNums={semaineNums}
                   selectedSection={selectedSection}
+                  activeTypes={activeTypes}
                 />
               )}
             </div>
