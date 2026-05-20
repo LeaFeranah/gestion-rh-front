@@ -176,8 +176,6 @@ const TypeBadge = ({ typeKey }) => {
   );
 };
 
-
-
 // ─── Légende ──────────────────────────────────────────────────────────────────
 const Legende = ({ activeTypes, onToggle }) => (
   <div className="flex flex-wrap gap-1.5 text-[11px]">
@@ -428,27 +426,28 @@ const TableJour = ({
                   </td>
 
                   {/* Cellules par date */}
-                  {/* {datesList.map((d, i) => {
-                    const jour = jourMap.get(d.date);
-                    const val = jour ? jour[t.key] || 0 : 0;
-                    const disp = fmtVal(val, t.unit);
-                    return (
-                      <td
-                        key={i}
-                        className={`border border-gray-200 p-0.5 text-center ${
-                          isFirst ? "border-t border-t-gray-300" : ""
-                        } ${disp ? `font-semibold ${t.color}` : "text-gray-200"}`}
-                      >
-                        {disp}
-                      </td>
-                    );
-                  })} */}
                   {datesList.map((d, i) => {
                     const jour = jourMap.get(d.date);
                     const val = jour ? jour[t.key] || 0 : 0;
                     const disp = fmtVal(val, t.unit);
-                    const cellColor =
-                      t.key === "hs" && val >= 2 ? "text-red-600" : t.color;
+                    // const cellColor =
+                    //   t.key === "hs" && val >= 2 ? "text-red-600" : t.color;
+                    const dayOfWeek = new Date(d.date).getDay();
+                    const isSaturday = dayOfWeek === 6;
+                    const isSunday = dayOfWeek === 0;
+
+                    let cellColor;
+                    if (isSunday) {
+                      cellColor = "text-amber-800"; // Dimanche → marron
+                    } else if (t.key === "hs") {
+                      if (isSaturday) {
+                        cellColor = val >= 7 ? "text-red-600" : "text-blue-700"; // Samedi → rouge ≥7h, bleu sinon
+                      } else {
+                        cellColor = val >= 2 ? "text-red-600" : t.color; // Jours normaux → rouge ≥2h ✅
+                      }
+                    } else {
+                      cellColor = t.color;
+                    }
                     return (
                       <td
                         key={i}
@@ -480,199 +479,6 @@ const TableJour = ({
 };
 
 // ─── TableSemaine  (résumé HT / HS / Abs. par semaine) ───────────────────────
-// const TableSemaine = ({ employes, semaineNums, selectedSection }) => {
-//   const absHKeys = ABS_TYPES.filter(
-//     (t) => t.unit === "h" && t.key !== "ht" && t.key !== "hs",
-//   );
-//   const absJKeys = ABS_TYPES.filter((t) => t.unit === "j");
-
-//   const absDisplay = (sem) => {
-//     const h = absHKeys.reduce((s, t) => s + (sem[t.key] || 0), 0);
-//     const j = absJKeys.reduce((s, t) => s + (sem[t.key] || 0), 0);
-//     return [h > 0 ? fmtH(h) : "", j > 0 ? `${j}j` : ""]
-//       .filter(Boolean)
-//       .join(" ");
-//   };
-
-//   return (
-//     <div className="bg-white border-2 border-gray-800">
-//       <table
-//         className="w-full border-collapse text-sm"
-//         style={{ tableLayout: "fixed" }}
-//       >
-//         <colgroup>
-//           <col style={{ width: 185 }} />
-//           {semaineNums.flatMap((s) => [
-//             <col key={`ht-${s}`} />,
-//             <col key={`hs-${s}`} />,
-//             <col key={`ab-${s}`} />,
-//           ])}
-//           <col />
-//           <col />
-//           <col />
-//         </colgroup>
-
-//         <thead>
-//           <tr className="bg-gray-100">
-//             <th className="border-2 border-gray-800 py-3 px-2 text-left sticky left-0 bg-gray-100 z-10">
-//               Badge / Nom{!selectedSection && " / Section"}
-//             </th>
-//             {semaineNums.map((s) => (
-//               <th
-//                 key={s}
-//                 colSpan={3}
-//                 className="border border-gray-600 py-3 px-1 text-center font-bold bg-gray-200"
-//               >
-//                 Semaine {s}
-//               </th>
-//             ))}
-//             <th
-//               colSpan={3}
-//               className="border-2 border-gray-800 py-3 px-1 text-center font-bold bg-gray-300"
-//             >
-//               Total mois
-//             </th>
-//           </tr>
-
-//           <tr className="bg-gray-100">
-//             <th className="border-2 border-gray-800 py-2 px-2 sticky left-0 bg-gray-100 z-10" />
-//             {semaineNums.map((s) => (
-//               <React.Fragment key={`sub-${s}`}>
-//                 <th className="border border-gray-800 py-2 px-1 text-center text-xs bg-green-50 text-green-700 font-semibold">
-//                   HT
-//                 </th>
-//                 <th className="border border-gray-800 py-2 px-1 text-center text-xs bg-blue-50 text-blue-700 font-semibold">
-//                   HS
-//                 </th>
-//                 <th className="border border-gray-800 py-2 px-1 text-center text-xs bg-red-50 text-red-700 font-semibold">
-//                   Abs.
-//                 </th>
-//               </React.Fragment>
-//             ))}
-//             <th className="border border-gray-600 py-2 px-1 text-center text-xs bg-green-100 text-green-700 font-bold">
-//               HT
-//             </th>
-//             <th className="border border-gray-600 py-2 px-1 text-center text-xs bg-blue-100 text-blue-700 font-bold">
-//               HS
-//             </th>
-//             <th className="border-2 border-gray-800 py-2 px-1 text-center text-xs bg-red-100 text-red-700 font-bold">
-//               Abs.
-//             </th>
-//           </tr>
-//         </thead>
-
-//         <tbody>
-//           {employes.map((emp) => {
-//             const totAbsH = absHKeys.reduce(
-//               (s, t) => s + (emp[`total_${t.key}`] || 0),
-//               0,
-//             );
-//             const totAbsJ = absJKeys.reduce(
-//               (s, t) => s + (emp[`total_${t.key}`] || 0),
-//               0,
-//             );
-//             const totAbsStr = [
-//               totAbsH > 0 ? fmtH(totAbsH) : "",
-//               totAbsJ > 0 ? `${totAbsJ}j` : "",
-//             ]
-//               .filter(Boolean)
-//               .join(" ");
-
-//             return (
-//               <tr
-//                 key={emp.userid}
-//                 className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
-//               >
-//                 <td className="border-2 border-gray-800 py-2 px-2 sticky left-0 bg-white z-10">
-//                   <div className="flex items-center gap-1.5">
-//                     <span className="font-bold text-sm shrink-0">
-//                       {emp.badgenumber}
-//                     </span>
-//                     <span
-//                       className="italic text-sm print:text-[7pt] print:leading-tight print:break-words print:overflow-hidden print:line-clamp-2"
-//                       title={emp.name}
-//                     >
-//                       {emp.name}
-//                     </span>
-//                   </div>
-//                   {!selectedSection && (
-//                     <div className="text-gray-400 mt-0.5 print:hidden">
-//                       {emp.section}
-//                     </div>
-//                   )}
-//                 </td>
-
-//                 {semaineNums.map((s) => {
-//                   const sem = emp.par_semaine[s] || {};
-//                   const absStr = absDisplay(sem);
-//                   return (
-//                     <React.Fragment key={`sem-${s}`}>
-//                       <td
-//                         className={`border border-gray-800 py-2 px-1 text-center font-semibold text-sm ${
-//                           sem.ht > 0
-//                             ? "bg-green-50 text-green-800"
-//                             : "text-gray-300"
-//                         }`}
-//                       >
-//                         {sem.ht > 0 ? fmtH(sem.ht) : "-"}
-//                       </td>
-//                       <td
-//                         className={`border border-gray-800 py-2 px-1 text-center font-medium text-sm ${
-//                           sem.hs >= 2
-//                             ? "bg-red-100 text-red-800"
-//                             : sem.hs > 0
-//                               ? "bg-blue-100 text-blue-800"
-//                               : "text-gray-300"
-//                         }`}
-//                       >
-//                         {sem.hs > 0 ? fmtH(sem.hs) : "-"}
-//                       </td>
-//                       <td
-//                         className={`border border-gray-800 py-2 px-1 text-center font-medium text-sm ${
-//                           absStr ? "bg-red-50 text-red-700" : "text-gray-300"
-//                         }`}
-//                       >
-//                         {absStr || "-"}
-//                       </td>
-//                     </React.Fragment>
-//                   );
-//                 })}
-
-//                 <td
-//                   className={`border border-gray-600 py-2 px-1 text-center font-bold text-sm ${
-//                     emp.total_ht > 0
-//                       ? "bg-green-100 text-green-800"
-//                       : "text-gray-300"
-//                   }`}
-//                 >
-//                   {fmtH(emp.total_ht) || "-"}
-//                 </td>
-//                 <td
-//                   className={`border border-gray-600 py-2 px-1 text-center font-bold text-sm ${
-//                     emp.total_hs >= 2
-//                       ? "bg-red-100 text-red-800"
-//                       : emp.total_hs > 0
-//                         ? "bg-blue-100 text-blue-800"
-//                         : "text-gray-300"
-//                   }`}
-//                 >
-//                   {emp.total_hs > 0 ? fmtH(emp.total_hs) : "-"}
-//                 </td>
-//                 <td
-//                   className={`border-2 border-gray-800 py-2 px-1 text-center font-bold text-sm ${
-//                     totAbsStr ? "bg-red-50 text-red-700" : "text-gray-300"
-//                   }`}
-//                 >
-//                   {totAbsStr || "-"}
-//                 </td>
-//               </tr>
-//             );
-//           })}
-//         </tbody>
-//       </table>
-//     </div>
-//   );
-// };
 const TableSemaine = ({
   employes,
   semaineNums,
@@ -1047,53 +853,6 @@ const HeuresTravailPage = () => {
           </div>
 
           {/* Sélecteurs mois / année */}
-          {/* <div className="flex items-center gap-2">
-            <div className="flex flex-col">
-              <label className="text-xs text-gray-500 mb-1">Mois</label>
-              <select
-                value={selectedMois}
-                onChange={(e) => {
-                  setSelectedMois(+e.target.value);
-                  setFilterChanged(true);
-                }}
-                className="px-3 py-1 border border-gray-300 rounded text-sm"
-              >
-                {MOIS_FR.map((m, i) => (
-                  <option key={i + 1} value={i + 1}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-col">
-              <label className="text-xs text-gray-500 mb-1">Année</label>
-              <select
-                value={selectedAnnee}
-                onChange={(e) => {
-                  setSelectedAnnee(+e.target.value);
-                  setFilterChanged(true);
-                }}
-                className="px-3 py-1 border border-gray-300 rounded text-sm"
-              >
-                {[...Array(7)].map((_, i) => {
-                  const y = 2020 + i;
-                  return (
-                    <option key={y} value={y}>
-                      {y}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
-            {filterChanged && (
-              <button
-                onClick={applyFilters}
-                className="mt-4 px-4 py-1 bg-akj text-white text-sm rounded hover:bg-gray-700"
-              >
-                Appliquer
-              </button>
-            )}
-          </div> */}
           <div className="text-right">
             <h2 className="text-xl font-bold mb-3">
               {periode.mois} {periode.annee}
