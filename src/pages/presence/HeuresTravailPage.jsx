@@ -404,7 +404,7 @@ const TableJour = ({ employes, datesList, semaineNums, selectedSection }) => {
                   </td>
 
                   {/* Cellules par date */}
-                  {datesList.map((d, i) => {
+                  {/* {datesList.map((d, i) => {
                     const jour = jourMap.get(d.date);
                     const val = jour ? jour[t.key] || 0 : 0;
                     const disp = fmtVal(val, t.unit);
@@ -414,6 +414,23 @@ const TableJour = ({ employes, datesList, semaineNums, selectedSection }) => {
                         className={`border border-gray-200 p-0.5 text-center ${
                           isFirst ? "border-t border-t-gray-300" : ""
                         } ${disp ? `font-semibold ${t.color}` : "text-gray-200"}`}
+                      >
+                        {disp}
+                      </td>
+                    );
+                  })} */}
+                  {datesList.map((d, i) => {
+                    const jour = jourMap.get(d.date);
+                    const val = jour ? jour[t.key] || 0 : 0;
+                    const disp = fmtVal(val, t.unit);
+                    const cellColor =
+                      t.key === "hs" && val >= 2 ? "text-red-600" : t.color;
+                    return (
+                      <td
+                        key={i}
+                        className={`border border-gray-200 p-0.5 text-center ${
+                          isFirst ? "border-t border-t-gray-300" : ""
+                        } ${disp ? `font-semibold ${cellColor}` : "text-gray-200"}`}
                       >
                         {disp}
                       </td>
@@ -684,7 +701,7 @@ const TableSemaine = ({ employes, semaineNums, selectedSection }) => {
         <tbody>
           {employes.map((emp) => {
             const typesActifs = ABS_TYPES.filter(
-              (t) => (emp[`total_${t.key}`] || 0) > 0
+              (t) => (emp[`total_${t.key}`] || 0) > 0,
             );
 
             if (typesActifs.length === 0) {
@@ -710,7 +727,10 @@ const TableSemaine = ({ employes, semaineNums, selectedSection }) => {
                     <span className="text-gray-300">—</span>
                   </td>
                   {semaineNums.map((s) => (
-                    <td key={s} className="border border-gray-200 p-1 text-center text-gray-200">
+                    <td
+                      key={s}
+                      className="border border-gray-200 p-1 text-center text-gray-200"
+                    >
                       —
                     </td>
                   ))}
@@ -723,9 +743,9 @@ const TableSemaine = ({ employes, semaineNums, selectedSection }) => {
 
             return typesActifs.map((t, tIdx) => {
               const isFirst = tIdx === 0;
-              const isLast  = tIdx === typesActifs.length - 1;
+              const isLast = tIdx === typesActifs.length - 1;
               const rowSpan = typesActifs.length;
-              const total   = emp[`total_${t.key}`] || 0;
+              const total = emp[`total_${t.key}`] || 0;
               const totalStr = fmtVal(total, t.unit);
 
               return (
@@ -751,7 +771,9 @@ const TableSemaine = ({ employes, semaineNums, selectedSection }) => {
                         </span>
                       </div>
                       {!selectedSection && (
-                        <div className="text-gray-400 mt-0.5">{emp.section}</div>
+                        <div className="text-gray-400 mt-0.5">
+                          {emp.section}
+                        </div>
                       )}
                     </td>
                   )}
@@ -763,7 +785,7 @@ const TableSemaine = ({ employes, semaineNums, selectedSection }) => {
 
                   {/* Valeur par semaine */}
                   {semaineNums.map((s) => {
-                    const val  = (emp.par_semaine[s] || {})[t.key] || 0;
+                    const val = (emp.par_semaine[s] || {})[t.key] || 0;
                     const disp = fmtVal(val, t.unit);
                     return (
                       <td

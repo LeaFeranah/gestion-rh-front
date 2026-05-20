@@ -73,7 +73,7 @@ const Sidebar = ({ isOpen, activeMenu, onMenuChange }) => {
         {/* Bottom brand strip */}
         <div
           style={{
-            padding: isOpen ? '12px 20px' : '12px 0',
+            padding: isOpen ? '6px 20px' : '12px 0',
             borderTop: '1px solid #e8eaeb',
             display: 'flex',
             alignItems: 'center',
