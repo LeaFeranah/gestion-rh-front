@@ -642,6 +642,345 @@ const SupprimerJourModal = ({ sections, onClose, onConfirm }) => {
     </div>
   );
 };
+
+const PeriodeFermetureModal = ({ onClose, onSave }) => {
+  const MOIS_FR = [
+    "Janvier",
+    "Février",
+    "Mars",
+    "Avril",
+    "Mai",
+    "Juin",
+    "Juillet",
+    "Août",
+    "Septembre",
+    "Octobre",
+    "Novembre",
+    "Décembre",
+  ];
+
+  const today = new Date();
+  const [form, setForm] = useState({
+    annee: today.getFullYear(),
+    mois: today.getMonth() + 1,
+    date_fermeture: "",
+    motif: "",
+  });
+  const [existing, setExisting] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Charger toutes les fermetures existantes
+  useEffect(() => {
+    setLoading(true);
+    presenceService
+      .getPeriodesFermeture()
+      .then((d) => setExisting(Array.isArray(d) ? d : []))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Date min/max pour le mois sélectionné
+  const { minDate, maxDate, defaultFermeture } = useMemo(() => {
+    const lastDay = new Date(form.annee, form.mois, 0).getDate();
+    const pad = (n) => String(n).padStart(2, "0");
+    return {
+      minDate: `${form.annee}-${pad(form.mois)}-01`,
+      maxDate: `${form.annee}-${pad(form.mois)}-${pad(lastDay)}`,
+      defaultFermeture: `${form.annee}-${pad(form.mois)}-20`,
+    };
+  }, [form.annee, form.mois]);
+
+  // Pré-remplir la date si une fermeture existe déjà pour ce mois
+  useEffect(() => {
+    const found = existing.find(
+      (e) => e.annee === form.annee && e.mois === form.mois,
+    );
+    setForm((f) => ({
+      ...f,
+      date_fermeture: found ? found.date_fermeture : "",
+      motif: found ? found.motif : "",
+    }));
+  }, [form.annee, form.mois, existing]);
+
+  const handleSave = async () => {
+    if (!form.date_fermeture) {
+      alert("Veuillez choisir une date de fermeture.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await presenceService.createPeriodeFermeture({
+        annee: form.annee,
+        mois: form.mois,
+        date_fermeture: form.date_fermeture,
+        motif: form.motif,
+      });
+      // Rafraîchir la liste
+      const updated = await presenceService.getPeriodesFermeture();
+      setExisting(Array.isArray(updated) ? updated : []);
+      alert(
+        `✅ Fermeture du ${MOIS_FR[form.mois - 1]} ${form.annee} enregistrée.`,
+      );
+      onSave(form.annee, form.mois); // ← APRÈS
+    } catch (err) {
+      const detail =
+        err.response?.data?.non_field_errors?.[0] ||
+        err.response?.data?.detail ||
+        JSON.stringify(err.response?.data) ||
+        err.message;
+      alert(`❌ ${detail}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id, annee, mois) => {
+    if (
+      !window.confirm(
+        `Supprimer la fermeture de ${MOIS_FR[mois - 1]} ${annee} ?`,
+      )
+    )
+      return;
+    try {
+      await presenceService.deletePeriodeFermeture(id);
+      setExisting((prev) => prev.filter((e) => e.id !== id));
+      onSave(annee, mois);
+      alert(
+        "✅ Fermeture supprimée. Le mois reprendra la date par défaut (20).",
+      );
+    } catch (err) {
+      alert(`❌ ${err.message}`);
+    }
+  };
+
+  // Calcul du libellé de la prochaine ouverture
+  const nextOpening = useMemo(() => {
+    if (!form.date_fermeture) return null;
+    const d = new Date(form.date_fermeture);
+    d.setDate(d.getDate() + 1);
+    const day = d.getDate();
+    const mNext = d.getMonth() + 1;
+    const yNext = d.getFullYear();
+    return `${day} ${MOIS_FR[mNext - 1]} ${yNext}`;
+  }, [form.date_fermeture]);
+
+  const existingForCurrentMonth = existing.find(
+    (e) => e.annee === form.annee && e.mois === form.mois,
+  );
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="sticky top-0 bg-white border-b-2 border-indigo-600 p-5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold text-indigo-900">
+              Fermeture anticipée de période
+            </h3>
+            <button
+              onClick={onClose}
+              disabled={saving}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Par défaut : ouverture le 21, fermeture le 20. Vous pouvez fermer un
+            compte plus tôt — le mois suivant s'ouvrira automatiquement le
+            lendemain.
+          </p>
+        </div>
+
+        <div className="p-5 space-y-5">
+          {/* Sélecteurs mois / année */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-bold mb-1 text-gray-700">
+                Mois *
+              </label>
+              <select
+                value={form.mois}
+                onChange={(e) => setForm({ ...form, mois: +e.target.value })}
+                className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-400 focus:outline-none"
+              >
+                {MOIS_FR.map((m, i) => (
+                  <option key={i + 1} value={i + 1}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-bold mb-1 text-gray-700">
+                Année *
+              </label>
+              <select
+                value={form.annee}
+                onChange={(e) => setForm({ ...form, annee: +e.target.value })}
+                className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-400 focus:outline-none"
+              >
+                {[...Array(7)].map((_, i) => {
+                  const y = 2022 + i;
+                  return (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+          </div>
+
+          {/* Date de fermeture */}
+          <div>
+            <label className="block text-sm font-bold mb-1 text-gray-700">
+              Date de fermeture *
+              <span className="ml-2 font-normal text-gray-400">
+                (défaut : {defaultFermeture})
+              </span>
+            </label>
+            <input
+              type="date"
+              value={form.date_fermeture}
+              min={minDate}
+              max={maxDate}
+              onChange={(e) =>
+                setForm({ ...form, date_fermeture: e.target.value })
+              }
+              className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-400 focus:outline-none"
+            />
+            {nextOpening && form.date_fermeture !== defaultFermeture && (
+              <p className="text-xs mt-1 text-indigo-700 font-medium">
+                → Le mois suivant s'ouvrira le <strong>{nextOpening}</strong>
+              </p>
+            )}
+            {form.date_fermeture === defaultFermeture && (
+              <p className="text-xs mt-1 text-gray-400 italic">
+                Date identique au défaut — aucune modification nécessaire.
+              </p>
+            )}
+          </div>
+
+          {/* Motif */}
+          <div>
+            <label className="block text-sm font-bold mb-1 text-gray-700">
+              Motif
+            </label>
+            <input
+              type="text"
+              value={form.motif}
+              onChange={(e) => setForm({ ...form, motif: e.target.value })}
+              placeholder="Ex : Avance sur salaire, fermeture exceptionnelle..."
+              className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-400 focus:outline-none"
+            />
+          </div>
+
+          {/* Indicateur fermeture existante */}
+          {existingForCurrentMonth && (
+            <div className="bg-indigo-50 border border-indigo-200 rounded p-3 text-sm">
+              <p className="font-bold text-indigo-800 mb-1">
+                ✏️ Fermeture déjà définie pour ce mois :
+              </p>
+              <p className="text-indigo-700">
+                {existingForCurrentMonth.date_fermeture}
+                {existingForCurrentMonth.motif && (
+                  <span className="ml-2 text-gray-500 italic">
+                    ({existingForCurrentMonth.motif})
+                  </span>
+                )}
+              </p>
+              <p className="text-xs text-indigo-500 mt-1">
+                En enregistrant, vous remplacerez cette valeur.
+              </p>
+            </div>
+          )}
+
+          {/* Boutons actions */}
+          <div className="flex gap-3 border-t border-gray-200 pt-4">
+            <button
+              onClick={onClose}
+              disabled={saving}
+              className="flex-1 px-4 py-2 border-2 border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 text-sm"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={
+                saving ||
+                !form.date_fermeture ||
+                form.date_fermeture === defaultFermeture
+              }
+              className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:bg-indigo-300 flex items-center justify-center gap-2 text-sm"
+            >
+              {saving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                  Enregistrement...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Enregistrer
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Liste de toutes les fermetures existantes */}
+          {loading ? (
+            <div className="text-sm text-gray-400 text-center">
+              Chargement...
+            </div>
+          ) : existing.length > 0 ? (
+            <div className="border-t border-gray-200 pt-4">
+              <p className="text-sm font-bold text-gray-700 mb-2">
+                Fermetures anticipées configurées :
+              </p>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {existing.map((e) => (
+                  <div
+                    key={e.id}
+                    className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm"
+                  >
+                    <div>
+                      <span className="font-semibold text-gray-800">
+                        {e.mois_nom} {e.annee}
+                      </span>
+                      <span className="ml-2 text-indigo-700 font-medium">
+                        → {e.date_fermeture}
+                      </span>
+                      {e.motif && (
+                        <span className="ml-2 text-gray-400 italic text-xs">
+                          ({e.motif})
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleDelete(e.id, e.annee, e.mois)}
+                      className="text-red-500 hover:text-red-700 ml-2"
+                      title="Supprimer → retour au défaut (20)"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-gray-400 text-center pt-2">
+              Aucune fermeture anticipée — toutes les périodes suivent la règle
+              21→20.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── Modal Modification des heures ───────────────────────────────────────────
 
 const HeureModal = ({
@@ -1440,6 +1779,8 @@ const AttendancePage = () => {
   // Nouveaux états pour les deux nouvelles fonctionnalités
   const [showExceptionModal, setShowExceptionModal] = useState(false);
   const [showSupprimerJourModal, setShowSupprimerJourModal] = useState(false);
+  const [showPeriodeFermetureModal, setShowPeriodeFermetureModal] =
+    useState(false);
 
   useEffect(() => {
     if (locationState.section) {
@@ -2190,7 +2531,7 @@ const AttendancePage = () => {
               />
             </div>
 
-            <div className="flex items-center px-3 h-7 bg-gray-100 rounded text-sm text-gray-600 border border-gray-300">
+            <div className="flex items-center px-2 h-7 bg-gray-100 rounded text-sm text-gray-600 border border-gray-300">
               <span className="font-semibold text-gray-800">
                 {pagination.total_employees || 0}
               </span>
@@ -2201,7 +2542,7 @@ const AttendancePage = () => {
 
             <button
               onClick={() => setShowHoraires(true)}
-              className="flex items-center gap-2 px-3 h-7 text-sm bg-akj text-white rounded hover:bg-gray-700"
+              className="flex items-center gap-2 px-2 h-7 text-sm bg-akj text-white rounded hover:bg-gray-700"
             >
               Horaires
             </button>
@@ -2216,7 +2557,7 @@ const AttendancePage = () => {
                   },
                 })
               }
-              className="flex items-center gap-2 px-3 h-7 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+              className="flex items-center gap-2 px-2 h-7 text-sm bg-red-600 text-white rounded hover:bg-red-700"
             >
               Anomalies
             </button>
@@ -2224,7 +2565,7 @@ const AttendancePage = () => {
             {/* ── Nouveau bouton : Exception d'horaire ── */}
             <button
               onClick={() => setShowExceptionModal(true)}
-              className="flex items-center gap-2 px-3 h-7 text-sm bg-orange-500 text-white rounded hover:bg-orange-600"
+              className="flex items-center gap-2 px-2 h-7 text-sm bg-orange-500 text-white rounded hover:bg-orange-600"
               title="Modifier l'horaire de sortie pour un seul jour"
             >
               Horaire du jour
@@ -2233,29 +2574,38 @@ const AttendancePage = () => {
             {/* ── Nouveau bouton : Supprimer un jour complet ── */}
             <button
               onClick={() => setShowSupprimerJourModal(true)}
-              className="flex items-center gap-2 px-3 h-7 text-sm bg-red-800 text-white rounded hover:bg-red-900"
+              className="flex items-center gap-2 px-2 h-7 text-sm bg-red-800 text-white rounded hover:bg-red-900"
               title="Supprimer tous les pointages d'un jour (jour férié...)"
             >
               Supprimer un jour
             </button>
 
+            {/* ── Fermeture période ← AJOUTER ICI ── */}
+            <button
+              onClick={() => setShowPeriodeFermetureModal(true)}
+              className="flex items-center gap-2 px-2 h-7 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
+              title="Définir une date de fermeture anticipée pour un mois"
+            >
+              Fermeture période
+            </button>
+
             <button
               onClick={() => setModeHeures("brutes")}
-              className={`px-3 h-7 text-sm rounded border focus:outline-none ${modeHeures === "brutes" ? "border-gray-400 bg-gray-50 text-gray-700 font-semibold" : "border-gray-300 text-gray-700 hover:bg-gray-100"}`}
+              className={`px-2 h-7 text-sm rounded border focus:outline-none ${modeHeures === "brutes" ? "border-gray-400 bg-gray-50 text-gray-700 font-semibold" : "border-gray-300 text-gray-700 hover:bg-gray-100"}`}
             >
               Heures Brutes
             </button>
 
             <button
               onClick={() => setModeHeures("rectifiees")}
-              className={`px-3 h-7 text-sm rounded border focus:outline-none ${modeHeures === "rectifiees" ? "border-gray-400 bg-gray-50 text-gray-700 font-semibold" : "border-gray-300 text-gray-700 hover:bg-gray-100"}`}
+              className={`px-2 h-7 text-sm rounded border focus:outline-none ${modeHeures === "rectifiees" ? "border-gray-400 bg-gray-50 text-gray-700 font-semibold" : "border-gray-300 text-gray-700 hover:bg-gray-100"}`}
             >
               Heures Rectifiées
             </button>
 
             <button
               onClick={() => handlePrint()}
-              className="ml-auto flex items-center gap-2 px-3 h-7 text-sm bg-akj text-white rounded hover:bg-gray-700"
+              className="ml-auto flex items-center gap-2 px-2 h-7 text-sm bg-akj text-white rounded hover:bg-gray-700"
             >
               Imprimer
             </button>
@@ -2572,6 +2922,24 @@ const AttendancePage = () => {
           sections={sections}
           onClose={() => setShowSupprimerJourModal(false)}
           onConfirm={handleSupprimerJourConfirm}
+        />
+      )}
+
+      {showPeriodeFermetureModal && (
+        <PeriodeFermetureModal
+          onClose={() => setShowPeriodeFermetureModal(false)}
+          onSave={async (annee, mois) => {
+            const moisSuivant = mois === 12 ? 1 : mois + 1;
+            const anneeSuivant = mois === 12 ? annee + 1 : annee;
+            try {
+              await presenceService.genererDates(annee, mois);
+              await presenceService.genererDates(anneeSuivant, moisSuivant);
+            } catch (err) {
+              console.error("Erreur régénération dates:", err);
+            }
+            setShowPeriodeFermetureModal(false);
+            refreshData();
+          }}
         />
       )}
     </div>

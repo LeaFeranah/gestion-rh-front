@@ -352,6 +352,30 @@ const presenceService = {
     const response = await api.get("api/presence/absences-mois/", { params });
     return response.data;
   },
+
+
+  getPeriodesFermeture: async (annee = null, mois = null) => {
+    const params = {};
+    if (annee) params.annee = annee;
+    if (mois)  params.mois  = mois;
+    const response = await api.get("api/presence/periodes-fermeture/", { params });
+    return response.data;
+  },
+
+  createPeriodeFermeture: async (data) => {
+    const response = await api.post("api/presence/periodes-fermeture/", data);
+    return response.data;
+  },
+
+  updatePeriodeFermeture: async (id, data) => {
+    const response = await api.patch(`api/presence/periodes-fermeture/${id}/`, data);
+    return response.data;
+  },
+
+  deletePeriodeFermeture: async (id) => {
+    const response = await api.delete(`api/presence/periodes-fermeture/${id}/`);
+    return response.data;
+  },
 };
 
 export default presenceService;
