@@ -29,11 +29,12 @@ export default function Login() {
 
     try {
       const response = await api.post("api/personnel/login/", credentials);
-      const { token, username: userUsername, email } = response.data;
+      const { token, username: userUsername, email, is_admin } = response.data;
 
       localStorage.setItem("token", token);
       localStorage.setItem("username", userUsername);
       localStorage.setItem("email", email);
+      localStorage.setItem("is_admin", String(is_admin));
 
       navigate("/dashboard");
     } catch (error) {

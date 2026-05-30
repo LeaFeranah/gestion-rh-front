@@ -19,6 +19,7 @@ import presenceService from "../../services/presenceService";
 import PageHeader from "../../components/headers/PageHeader";
 import "/src/styles/custom.css";
 import AppFooter from "../../components/layout/AppFooter";
+import useIsAdmin from "../../hooks/useIsAdmin";
 
 const MOIS_FR = [
   "Janvier",
@@ -355,6 +356,7 @@ const TableJour = ({
 
 // ─── Page principale ──────────────────────────────────────────────────────────
 const MealAllowancePage = () => {
+  const isAdmin = useIsAdmin();
   const today = new Date();
   const [annee, setAnnee] = useState(today.getFullYear());
   const [mois, setMois] = useState(today.getMonth() + 1);
@@ -610,7 +612,7 @@ const MealAllowancePage = () => {
             </span>
           </div>
           <ViewToggle value={viewMode} onChange={setViewMode} />
-          <div className="flex items-center gap-2 px-3 py-1.5S">
+          {/* <div className="flex items-center gap-2 px-3 py-1.5S">
             <label className="text-xs font-semibold text-gray-700 whitespace-nowrap">
               Montant/jour (Ar) :
             </label>
@@ -624,6 +626,29 @@ const MealAllowancePage = () => {
               step="100"
               min="0"
             />
+          </div> */}
+          <div className="flex items-center gap-2 px-3 py-1.5S">
+            <label className="text-xs font-semibold text-gray-700 whitespace-nowrap">
+              Montant/jour (Ar) :
+            </label>
+            {isAdmin ? (
+              <input
+                type="number"
+                value={montantJournalier}
+                onChange={(e) =>
+                  setMontantJournalier(
+                    Math.max(0, parseInt(e.target.value) || 0),
+                  )
+                }
+                className="px-3 py-0.5 border border-gray-300 rounded text-sm w-24 focus:ring-1 focus:outline-none focus:ring-gray-500"
+                step="100"
+                min="0"
+              />
+            ) : (
+              <span className="px-3 py-0.5 bg-gray-100 border border-gray-200 rounded text-sm w-24 text-center font-semibold text-gray-700">
+                {montantJournalier.toLocaleString()}
+              </span>
+            )}
           </div>
           <div className="ml-auto flex items-center gap-2 text-xs">
             <span className="px-2 py-0.5 bg-green-100 text-green-800 rounded font-medium">
@@ -695,7 +720,7 @@ const MealAllowancePage = () => {
           </button>
         </div>
       )}
-       <AppFooter /> 
+      <AppFooter />
     </div>
   );
 };

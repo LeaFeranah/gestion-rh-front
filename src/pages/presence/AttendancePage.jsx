@@ -26,6 +26,7 @@ import { useReactToPrint } from "react-to-print";
 import "/src/styles/custom.css";
 import PageHeader from "../../components/headers/PageHeader";
 import AppFooter from "../../components/layout/AppFooter";
+import useIsAdmin from "../../hooks/useIsAdmin";
 
 // ─── Utilitaires ──────────────────────────────────────────────────────────────
 
@@ -803,7 +804,7 @@ const PeriodeFermetureModal = ({ onClose, onSave }) => {
               <select
                 value={form.mois}
                 onChange={(e) => setForm({ ...form, mois: +e.target.value })}
-                className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-400 focus:outline-none"
+                className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-gray-400 focus:outline-none"
               >
                 {MOIS_FR.map((m, i) => (
                   <option key={i + 1} value={i + 1}>
@@ -819,7 +820,7 @@ const PeriodeFermetureModal = ({ onClose, onSave }) => {
               <select
                 value={form.annee}
                 onChange={(e) => setForm({ ...form, annee: +e.target.value })}
-                className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-400 focus:outline-none"
+                className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-gray-400 focus:outline-none"
               >
                 {[...Array(7)].map((_, i) => {
                   const y = 2022 + i;
@@ -849,7 +850,7 @@ const PeriodeFermetureModal = ({ onClose, onSave }) => {
               onChange={(e) =>
                 setForm({ ...form, date_fermeture: e.target.value })
               }
-              className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-400 focus:outline-none"
+              className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-400 focus:outline-none"
             />
             {nextOpening && form.date_fermeture !== defaultFermeture && (
               <p className="text-xs mt-1 text-indigo-700 font-medium">
@@ -864,7 +865,7 @@ const PeriodeFermetureModal = ({ onClose, onSave }) => {
           </div>
 
           {/* Motif */}
-          <div>
+          {/* <div>
             <label className="block text-sm font-bold mb-1 text-gray-700">
               Motif
             </label>
@@ -875,7 +876,7 @@ const PeriodeFermetureModal = ({ onClose, onSave }) => {
               placeholder="Ex : Avance sur salaire, fermeture exceptionnelle..."
               className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-indigo-400 focus:outline-none"
             />
-          </div>
+          </div> */}
 
           {/* Indicateur fermeture existante */}
           {existingForCurrentMonth && (
@@ -1740,6 +1741,7 @@ const EvenementModal = ({
 const AttendancePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const isAdmin = useIsAdmin();
 
   const [presences, setPresences] = useState([]);
   const [periode, setPeriode] = useState(null);
@@ -2540,12 +2542,20 @@ const AttendancePage = () => {
               </span>
             </div>
 
-            <button
+            {/* <button
               onClick={() => setShowHoraires(true)}
               className="flex items-center gap-2 px-2 h-7 text-sm bg-akj text-white rounded hover:bg-gray-700"
             >
               Horaires
-            </button>
+            </button> */}
+            {isAdmin && (
+              <button
+                onClick={() => setShowHoraires(true)}
+                className="flex items-center gap-2 px-2 h-7 text-sm bg-akj text-white rounded hover:bg-gray-700"
+              >
+                Horaires
+              </button>
+            )}
 
             <button
               onClick={() =>
@@ -2563,31 +2573,63 @@ const AttendancePage = () => {
             </button>
 
             {/* ── Nouveau bouton : Exception d'horaire ── */}
-            <button
+            {/* <button
               onClick={() => setShowExceptionModal(true)}
               className="flex items-center gap-2 px-2 h-7 text-sm bg-orange-500 text-white rounded hover:bg-orange-600"
               title="Modifier l'horaire de sortie pour un seul jour"
             >
               Horaire du jour
-            </button>
+            </button> */}
 
             {/* ── Nouveau bouton : Supprimer un jour complet ── */}
-            <button
+            {/* <button
               onClick={() => setShowSupprimerJourModal(true)}
               className="flex items-center gap-2 px-2 h-7 text-sm bg-red-800 text-white rounded hover:bg-red-900"
               title="Supprimer tous les pointages d'un jour (jour férié...)"
             >
               Supprimer un jour
-            </button>
+            </button> */}
 
             {/* ── Fermeture période ← AJOUTER ICI ── */}
-            <button
+            {/* <button
               onClick={() => setShowPeriodeFermetureModal(true)}
               className="flex items-center gap-2 px-2 h-7 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
               title="Définir une date de fermeture anticipée pour un mois"
             >
               Fermeture période
-            </button>
+            </button> */}
+            {/* Horaire du jour */}
+            {isAdmin && (
+              <button
+                onClick={() => setShowExceptionModal(true)}
+                className="flex items-center gap-2 px-2 h-7 text-sm bg-orange-500 text-white rounded hover:bg-orange-600"
+                title="Modifier l'horaire de sortie pour un seul jour"
+              >
+                Horaire du jour
+              </button>
+            )}
+
+            {/* Supprimer un jour */}
+            {isAdmin && (
+              <button
+                onClick={() => setShowSupprimerJourModal(true)}
+                className="flex items-center gap-2 px-2 h-7 text-sm bg-red-800 text-white rounded hover:bg-red-900"
+                title="Supprimer tous les pointages d'un jour"
+              >
+                Supprimer un jour
+              </button>
+            )}
+
+            {/* Fermeture période */}
+            {isAdmin && (
+              <button
+                onClick={() => setShowPeriodeFermetureModal(true)}
+                className="flex items-center gap-2 px-2 h-7 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                title="Définir une date de fermeture anticipée"
+              >
+                Fermeture période
+              </button>
+            )}
 
             <button
               onClick={() => setModeHeures("brutes")}

@@ -402,8 +402,14 @@ const AnomaliesPage = () => {
         if (selectedDate !== "all" && dateStr !== selectedDate) return;
         if (!anomalies || anomalies.length === 0) return;
 
+        // if (!parDate[dateStr]) parDate[dateStr] = [];
+        // parDate[dateStr].push({ section: section.section, anomalies });
+        // APRÈS
         if (!parDate[dateStr]) parDate[dateStr] = [];
-        parDate[dateStr].push({ section: section.section, anomalies });
+        const sortedAnomalies = [...anomalies].sort((a, b) =>
+          String(a.badgenumber).localeCompare(String(b.badgenumber), undefined, { numeric: true })
+        );
+        parDate[dateStr].push({ section: section.section, anomalies: sortedAnomalies });
       });
     });
 
