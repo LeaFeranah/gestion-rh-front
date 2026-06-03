@@ -30,7 +30,7 @@ export const MENU_ITEMS = [
   { id: "meal-allowance", icon: Utensils, label: "Indemnité repas", color: "gray" },
   { id: "payroll", icon: DollarSign, label: "Paie", color: "gray" },
   // { id: "performance", icon: TrendingUp, label: "Performance", color: "gray" },
-  { id: "leave", icon: Calendar, label: "Congés", color: "gray" },
+  { id: 'calendrier',    label: 'Calendrier',       icon: Calendar },
   // { id: "documents", icon: FileText, label: "Documents", color: "gray" },
   // { id: "awards", icon: Award, label: "Récompenses", color: "gray" },
   // { id: "settings", icon: Settings, label: "Paramètres", color: "gray" },

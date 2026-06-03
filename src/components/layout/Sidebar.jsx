@@ -13,7 +13,7 @@ const MENU_GROUPS = [
   },
   {
     label: 'Gestion',
-    items: ['performance', 'leave', 'documents', 'awards'],
+    items: ['performance', 'leave', 'documents', 'awards','calendrier'],
   },
   {
     label: 'Système',

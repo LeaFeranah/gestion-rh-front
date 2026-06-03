@@ -183,7 +183,7 @@ const TableJour = ({
   }, [employes, datesList]);
 
   return (
-    <div className="bg-white border-1 border-gray-800 w-full">
+    <div className="bg-white border-2 border-gray-600 w-full">
       {/*
         Pas de table-fixed, pas de min-width sur les colonnes jour :
         le navigateur compresse librement → 5 ou 6 semaines, tout rentre.

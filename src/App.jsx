@@ -93,6 +93,7 @@ import AttendancePage from './pages/presence/AttendancePage';
 import AnomaliesPage from './pages/presence/AnomaliesPage'; 
 import HeuresTravailPage from './pages/presence/HeuresTravailPage';
 import MealAllowancePage from './pages/presence/MealAllowancePage';
+import CalendrierPage from './pages/calendrier/CalendrierPage';
 // import AbsencesPage from "./pages/presence/AbsencesPage";
 
 function LayoutWithSidebar() {
@@ -110,6 +111,7 @@ function LayoutWithSidebar() {
     if (path.includes('/anomalies')) return 'attendance'; // On garde "attendance" comme menu actif
     if (path.includes('/heures-travail')) return 'heures-travail';
     if (path.includes('/meal-allowance')) return 'meal-allowance'; 
+    if (path.includes('/calendrier'))     return 'calendrier'; 
     return 'dashboard';
   };
 
@@ -127,6 +129,7 @@ function LayoutWithSidebar() {
       'anomalies': '/anomalies',
       'heures-travail': '/heures-travail',
       'meal-allowance': '/meal-allowance',
+      'calendrier':     '/calendrier',
     };
     if (routes[menuId]) {
       navigate(routes[menuId]);
@@ -152,6 +155,7 @@ function LayoutWithSidebar() {
           <Route path="/heures-travail" element={<HeuresTravailPage />} />
           {/* <Route path="/absences" element={<AbsencesPage />} /> */}
           <Route path="/meal-allowance" element={<MealAllowancePage />} />
+          <Route path="/calendrier"      element={<CalendrierPage />} />
         </Routes>
       </main>
     </div>

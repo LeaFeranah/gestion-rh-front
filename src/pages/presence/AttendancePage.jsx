@@ -2695,7 +2695,7 @@ const AttendancePage = () => {
                     <th
                       key={weekNum}
                       colSpan={weeks[weekNum].length}
-                      className="border border-gray-600 p-1 font-bold bg-gray-100"
+                      className="border-2 border-gray-600 p-1 font-bold bg-gray-100"
                     >
                       Semaine {weekNum}
                     </th>

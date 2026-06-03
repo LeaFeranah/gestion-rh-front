@@ -276,7 +276,8 @@ const TableJour = ({
                 <th
                   key={s}
                   colSpan={count}
-                  className="border border-gray-600 p-1 text-center font-bold bg-gray-100"
+                  className="border-2
+                   border-gray-600 p-1 text-center font-bold bg-gray-100"
                 >
                   Semaine {s}
                 </th>
@@ -361,8 +362,8 @@ const TableJour = ({
                       <div className="text-gray-400 mt-0.5">{emp.section}</div>
                     )}
                   </td>
-                  <td className="border border-gray-300 p-1 text-center sticky left-36 bg-white z-10 w-14">
-                    <span className="text-gray-300">—</span>
+                  <td className="border-2 border-gray-800 p-1 text-center sticky left-36 bg-white z-10 w-14">
+                    <span className="text-gray-300">-</span>
                   </td>
                   {datesList.map((_, i) => (
                     <td
@@ -438,12 +439,12 @@ const TableJour = ({
 
                     let cellColor;
                     if (isSunday) {
-                      cellColor = "text-amber-800"; // Dimanche → marron
+                      cellColor = "text-amber-800"; 
                     } else if (t.key === "hs") {
                       if (isSaturday) {
-                        cellColor = val >= 7 ? "text-red-600" : "text-blue-700"; // Samedi → rouge ≥7h, bleu sinon
+                        cellColor = val >= 7 ? "text-red-600" : "text-blue-700"; 
                       } else {
-                        cellColor = val >= 2 ? "text-red-600" : t.color; // Jours normaux → rouge ≥2h ✅
+                        cellColor = val >= 2 ? "text-red-600" : t.color; 
                       }
                     } else {
                       cellColor = t.color;
@@ -559,8 +560,8 @@ const TableSemaine = ({
                       <div className="text-gray-400 mt-0.5">{emp.section}</div>
                     )}
                   </td>
-                  <td className="border border-gray-300 p-1 text-center sticky left-36 bg-white z-10 w-14">
-                    <span className="text-gray-300">—</span>
+                  <td className="border-2 border-gray-800 p-1 text-center sticky left-36 bg-white z-10 w-14">
+                    <span className="text-gray-300">-</span>
                   </td>
                   {semaineNums.map((s) => (
                     <td
@@ -615,7 +616,7 @@ const TableSemaine = ({
                   )}
 
                   {/* Colonne Type */}
-                  <td className="border border-gray-300 p-1 text-center sticky left-36 bg-white z-10 w-14 min-w-[56px]">
+                  <td className="border-2 border-gray-800 p-1 text-center sticky left-36 bg-white z-10 w-14 min-w-[56px]">
                     <TypeBadge typeKey={t.key} />
                   </td>
 
