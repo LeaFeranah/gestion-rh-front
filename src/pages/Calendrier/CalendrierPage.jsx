@@ -1405,7 +1405,7 @@ const CalendrierPage = () => {
                       {/* Desktop */}
                       <div className="hidden md:block overflow-x-auto">
                         <table className="w-full text-sm">
-                          <thead>
+                          {/* <thead>
                             <tr className="border-b border-gray-200 bg-gray-50">
                               {['Date', 'Titre', 'Type','Couleur', 'Récurrent', ...(isAdmin ? ['Actions'] : [])].map((h, idx) => (
                                 <th key={idx} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -1478,7 +1478,82 @@ const CalendrierPage = () => {
                                 </tr>
                               );
                             })}
-                          </tbody>
+                          </tbody> */}
+                          
+<thead>
+  <tr className="border-b border-gray-100 bg-gray-200">
+    {['Date', 'Titre', 'Type', 'Couleur', 'Récurrent', ...(isAdmin ? ['Actions'] : [])].map((h, idx) => (
+      <th key={idx} className="px-4 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
+        {h}
+      </th>
+    ))}
+  </tr>
+</thead>
+<tbody className="divide-y divide-gray-200">
+  {joursFiltered.map(j => {
+    const info   = typeInfo(j.type_jour);
+    const isPast = new Date(j.date) < new Date();
+    return (
+      <tr
+        key={j.id}
+        className={`hover:bg-gray-50 transition-colors ${isPast ? 'opacity-60' : ''}`}
+      >
+        <td className="px-4 py-3 text-sm text-gray-700 align-top whitespace-nowrap">
+          <div className="text-xs text-gray-400 mb-0.5">{j.jour_semaine}</div>
+          <div className="text-sm font-medium text-gray-900">
+            {new Date(j.date).toLocaleDateString('fr-FR', {
+              day: '2-digit', month: 'long', year: 'numeric',
+            })}
+          </div>
+        </td>
+        <td className="px-4 py-3 text-sm text-gray-700 align-top">
+          <div className="text-sm text-gray-900">{j.titre}</div>
+          {j.description && (
+            <div className="text-xs text-gray-500 truncate max-w-xs mt-0.5">{j.description}</div>
+          )}
+        </td>
+        <td className="px-4 py-3 text-sm text-gray-700 align-top">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium border bg-gray-100 text-gray-700 border-gray-300">
+            {info.label}
+          </span>
+        </td>
+        <td className="px-4 py-3 text-sm text-gray-700 align-top">
+          <span
+            className="inline-block w-5 h-5 rounded-full border border-gray-200 shadow-sm"
+            style={{ backgroundColor: j.couleur }}
+            title={COULEURS.find(c => c.value === j.couleur)?.label}
+          />
+        </td>
+        <td className="px-4 py-3 text-sm text-gray-700 align-top">
+          {j.est_recurrent
+            ? <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">↻ Récurrent</span>
+            : <span className="text-gray-400 text-sm">—</span>
+          }
+        </td>
+        {isAdmin && (
+          <td className="px-4 py-3 text-sm text-gray-700 align-top">
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => { setEditingJour(j); setShowJourModal(true); }}
+                className="p-1.5 border border-gray-200 rounded-md hover:bg-gray-100 text-gray-900 hover:text-gray-700"
+                title="Modifier"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setConfirmDelete({ type: 'jour', obj: j })}
+                className="p-1.5 border border-gray-200 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-600"
+                title="Supprimer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </td>
+        )}
+      </tr>
+    );
+  })}
+</tbody>
                         </table>
                       </div>
 

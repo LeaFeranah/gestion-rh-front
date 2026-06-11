@@ -64,6 +64,7 @@ const getEvenementTextColor = (type) => {
     RC: "text-yellow-700",
     ANO: "text-gray-700",
     CP: "text-teal-700",
+    CE: "text-teal-700",
     EF: "text-pink-700",
     F: "text-indigo-700",
     PS: "text-orange-700",
@@ -2390,39 +2391,43 @@ const AttendancePage = () => {
         pageTag="Fiche de présence"
         title="Fiche de Présence"
         subtitle={`Période du ${periode?.du ?? "…"} au ${periode?.au ?? "…"}${selectedSection ? ` · ${selectedSection}` : ""}`}
-        kpis={[
-          {
-            label: "Employés",
-            value: pagination.total_employees,
-            sub: selectedSection || "toutes sections",
-            dotColor: "#3b82f6",
-          },
-          {
-            label: "Période",
-            value: `${periode?.mois ?? "—"} ${periode?.annee ?? ""}`,
-            sub: `${periode?.du} → ${periode?.au}`,
-            dotColor: "#f97316",
-          },
-          {
-            label: "Mode heures",
-            value: modeHeures === "brutes" ? "Brutes" : "Rectifiées",
-            sub: "changer dans la barre d'outils",
-            dotColor: "#6b7280",
-          },
-          {
-            label: "Pagination",
-            value: `${pagination.page ?? 1} / ${pagination.total_pages || 1}`,
-            sub: "50 employés / page",
-            dotColor: "#22c55e",
-          },
-        ]}
+        kpis={
+          [
+            // {
+            //   label: "Employés",
+            //   value: pagination.total_employees,
+            //   sub: selectedSection || "toutes sections",
+            //   dotColor: "#3b82f6",
+            // },
+            // {
+            //   label: "Période",
+            //   value: `${periode?.mois ?? "—"} ${periode?.annee ?? ""}`,
+            //   sub: `${periode?.du} → ${periode?.au}`,
+            //   dotColor: "#f97316",
+            // },
+            // {
+            //   label: "Mode heures",
+            //   value: modeHeures === "brutes" ? "Brutes" : "Rectifiées",
+            //   sub: "changer dans la barre d'outils",
+            //   dotColor: "#6b7280",
+            // },
+            // {
+            //   label: "Pagination",
+            //   value: `${pagination.page ?? 1} / ${pagination.total_pages || 1}`,
+            //   sub: "50 employés / page",
+            //   dotColor: "#22c55e",
+            // },
+          ]
+        }
       />
 
       <div ref={componentRef} className="print-container">
         {/* ── En-tête ── */}
         <div className="bg-white border-2 border-gray-800 mb-4 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
+          {/* <div className="flex items-center justify-between mb-4"> */}
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+            {/* <div className="flex items-center gap-4"> */}
+            <div className="flex items-center gap-4 flex-wrap">
               <div className="bg-akj text-white px-6 py-3 font-bold text-lg">
                 AKANJO
               </div>
@@ -2434,7 +2439,8 @@ const AttendancePage = () => {
               <h2 className="text-xl font-bold mb-3">
                 {periode?.mois} {periode?.annee}
               </h2>
-              <div className="flex items-center gap-3 print:hidden">
+              {/* <div className="flex items-center gap-3 print:hidden"> */}
+              <div className="flex items-center gap-3 print:hidden flex-wrap">
                 <div className="flex flex-col">
                   <label className="block text-xs text-gray-600 mb-1">
                     Mois
@@ -2513,7 +2519,8 @@ const AttendancePage = () => {
           </div>
 
           {/* ── Barre d'outils ── */}
-          <div className="flex flex-wrap gap-2 mt-4 border-t-2 border-gray-800 pt-3 print:hidden items-center">
+          {/* <div className="flex flex-wrap gap-2 mt-4 border-t-2 border-gray-800 pt-3 print:hidden items-center"> */}
+          <div className="flex flex-wrap gap-2 mt-4 border-t-2 border-gray-800 pt-3 print:hidden items-center overflow-x-auto pb-1">
             <div className="h-7 flex items-center min-w-[200px] [&_input]:h-7 [&_input]:py-0 [&_input]:text-sm">
               <LocalEmployeeSearch
                 value={searchFilter}
@@ -2679,12 +2686,16 @@ const AttendancePage = () => {
 
         {/* ── Tableau ── */}
         {employees.length > 0 && (
-          <div className="bg-white border-x-2 border-b-2 border-gray-800 print:overflow-visible">
-            <table className="w-full border-collapse text-xs print:text-[7.5pt] print:table-fixed">
-              <thead className="sticky top-0 z-20">
+          // <div className="bg-white border-x-2 border-b-2 border-gray-800 print:overflow-visible">
+          <div className="bg-white border-2 border-gray-800 overflow-auto max-h-[calc(100vh-300px)] print:overflow-visible print:max-h-none">
+            <table className="w-full border-collapse text-xs print:text-[7.5pt] print:table-fixed attendance-table">
+              {/* <thead className="sticky top-0 z-20"> */}
+              <thead className="sticky top-0 z-20 shadow-[0_2px_0_0_#1f2937,0_-2px_0_0_#1f2937]">
                 <tr className="bg-gray-100">
                   <th
-                    className="border-2 border-gray-800 p-2 sticky left-0 bg-gray-100 z-30 print:w-[120px] print:max-w-[120px]"
+                    // className="border-2 border-gray-800 p-2 sticky left-0 bg-gray-100 z-30 print:w-[120px] print:max-w-[120px]"
+                    // rowSpan={4}
+                    className="border-2 border-gray-800 p-2 sticky left-0 bg-gray-100 z-30 shadow-[2px_0_5px_rgba(0,0,0,0.12)] print:w-[120px] print:max-w-[120px]"
                     rowSpan={4}
                   >
                     <div className="font-bold text-sm w-32 print:w-full">
@@ -2749,7 +2760,8 @@ const AttendancePage = () => {
                 {employees.map((employee, empIdx) => (
                   <React.Fragment key={empIdx}>
                     <tr className="border-b-2 border-gray-800">
-                      <td className="border-2 border-gray-800 p-2 sticky left-0 bg-white z-10 print:w-[120px] print:max-w-[120px]">
+                      {/* <td className="border-2 border-gray-800 p-2 sticky left-0 bg-white z-10 print:w-[120px] print:max-w-[120px]"> */}
+                      <td className="border-2 border-gray-800 p-2 sticky left-0 bg-white z-10 shadow-[2px_0_5px_rgba(0,0,0,0.08)] print:w-[120px] print:max-w-[120px]">
                         <div className="flex items-baseline gap-2 print:flex-col print:gap-0">
                           <span className="font-bold text-sm shrink-0">
                             {employee.badgenumber}

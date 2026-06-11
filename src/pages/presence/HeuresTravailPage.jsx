@@ -249,15 +249,19 @@ const TableJour = ({
   }, [datesList]);
 
   return (
-    <div className="bg-white">
-      <table className="w-full border-collapse text-sm">
+    // <div className="bg-white">
+    <div className="bg-white w-full overflow-auto max-h-[calc(100vh-220px)] border-2 border-gray-800">
+      {/* <table className="w-full border-collapse text-sm"> */}
+      <table
+        className="border-collapse text-sm attendance-table"
+        style={{ minWidth: "max-content", width: "100%" }}
+      >
         {/* ── EN-TÊTES ── */}
-        <thead className="sticky top-0 z-20">
-          {/* Ligne 1 : groupes semaine */}
+        <thead className="sticky top-0 z-20 shadow-[0_2px_0px_#1f2937,0_3px_4px_rgba(0,0,0,0.15)]">
           <tr className="bg-gray-100">
             <th
               rowSpan={4}
-              className="border-2 border-gray-800 p-2 text-left sticky left-0 bg-gray-100 z-30 w-36 min-w-[140px]"
+              className="outline outline-2 outline-gray-800 border-r-2 border-gray-800 p-2 text-left sticky left-0 bg-gray-100 z-30 w-36 min-w-[140px] shadow-[2px_0_5px_rgba(0,0,0,0.12)]"
             >
               <div className="font-bold text-sm">N° / NOM</div>
               {!selectedSection && (
@@ -266,7 +270,7 @@ const TableJour = ({
             </th>
             <th
               rowSpan={4}
-              className="border-2 border-gray-800 p-1 text-center sticky left-36 bg-gray-100 z-30 w-14 min-w-[56px]"
+              className="border-2 border-gray-800 p-1 text-center sticky left-36 bg-gray-100 z-30 w-14 min-w-[56px] shadow-[2px_0_5px_rgba(0,0,0,0.08)]"
             >
               <div className="font-bold">Type</div>
             </th>
@@ -276,8 +280,7 @@ const TableJour = ({
                 <th
                   key={s}
                   colSpan={count}
-                  className="border-2
-                   border-gray-600 p-1 text-center font-bold bg-gray-100"
+                  className="border-2 border-gray-600 p-1 text-center font-bold bg-gray-100"
                 >
                   Semaine {s}
                 </th>
@@ -292,7 +295,6 @@ const TableJour = ({
             </th>
           </tr>
 
-          {/* Ligne 2 : code_date */}
           <tr className="bg-gray-100">
             {datesList.map((d, i) => (
               <th
@@ -304,7 +306,6 @@ const TableJour = ({
             ))}
           </tr>
 
-          {/* Ligne 3 : jour + numéro */}
           <tr className="bg-gray-100">
             {datesList.map((d, i) => (
               <th
@@ -317,7 +318,6 @@ const TableJour = ({
             ))}
           </tr>
 
-          {/* Ligne 4 : mois */}
           <tr className="bg-gray-100">
             {datesList.map((d, i) => (
               <th
@@ -347,7 +347,7 @@ const TableJour = ({
               return (
                 <tr
                   key={emp.userid}
-                  className="border-b border-gray-200 hover:bg-gray-50"
+                  className="border-b-2 border-gray-800 hover:bg-gray-50"
                 >
                   <td className="border-2 border-gray-800 p-2 sticky left-0 bg-white z-10 w-36 min-w-[140px]">
                     <div className="flex items-baseline gap-1.5">
@@ -372,7 +372,7 @@ const TableJour = ({
                     />
                   ))}
                   <td className="border-2 border-gray-800 p-1 text-center text-gray-300">
-                    —
+                    -
                   </td>
                 </tr>
               );
@@ -439,12 +439,12 @@ const TableJour = ({
 
                     let cellColor;
                     if (isSunday) {
-                      cellColor = "text-amber-800"; 
+                      cellColor = "text-amber-800";
                     } else if (t.key === "hs") {
                       if (isSaturday) {
-                        cellColor = val >= 7 ? "text-red-600" : "text-blue-700"; 
+                        cellColor = val >= 7 ? "text-red-600" : "text-blue-700";
                       } else {
-                        cellColor = val >= 2 ? "text-red-600" : t.color; 
+                        cellColor = val >= 2 ? "text-red-600" : t.color;
                       }
                     } else {
                       cellColor = t.color;
@@ -467,7 +467,7 @@ const TableJour = ({
                       isFirst ? "align-top" : ""
                     } ${totalStr ? "text-gray-800" : "text-transparent"}`}
                   >
-                    {totalStr || "—"}
+                    {totalStr || "-"}
                   </td>
                 </tr>
               );
@@ -487,46 +487,53 @@ const TableSemaine = ({
   activeTypes,
 }) => {
   return (
-    <div className="bg-white border-2 border-gray-800">
-      <table className="w-full border-collapse text-sm">
+    <div className="border-x-2 border-b-2 border-gray-800 overflow-auto max-h-[calc(100vh-300px)]">
+      <table className="border-separate border-spacing-0 text-sm w-full">
+
+        {/* ── THEAD ── */}
         <thead className="sticky top-0 z-20">
           <tr className="bg-gray-100">
             <th
               rowSpan={2}
-              className="border-2 border-gray-800 p-2 text-left sticky left-0 bg-gray-100 z-30 w-36 min-w-[140px]"
+              className="border-t-2 border-b-2 border-r-2 border-l-2 border-gray-800 px-3 py-3 text-left sticky left-0 bg-gray-100 z-30 w-36 min-w-[140px]"
             >
               <div className="font-bold text-sm">N° / NOM</div>
               {!selectedSection && (
-                <div className="font-normal text-gray-400">Section</div>
+                <div className="font-normal text-xs text-gray-400 mt-0.5">Section</div>
               )}
             </th>
             <th
               rowSpan={2}
-              className="border-2 border-gray-800 p-1 text-center sticky left-36 bg-gray-100 z-30 w-14 min-w-[56px]"
+              className="border-t-2 border-b-2 border-r-2 border-gray-800 px-3 py-3 text-center sticky left-36 bg-gray-100 z-30 w-16 min-w-[64px]"
             >
-              <div className="font-bold">Type</div>
+              <div className="font-bold text-sm">Type</div>
             </th>
-            {semaineNums.map((s) => (
+            {semaineNums.map((s, idx) => (
               <th
                 key={s}
-                className="border border-gray-600 p-1 text-center font-bold bg-gray-200"
+                className={`border-t-2 border-b border-r border-t-gray-800 border-b-gray-600 border-r-gray-600 px-4 py-2 text-center font-bold text-sm bg-gray-100 tracking-wide ${
+                  idx === 0 ? "border-l-2 border-l-gray-800" : ""
+                }`}
               >
                 Semaine {s}
               </th>
             ))}
             <th
               rowSpan={2}
-              className="border-2 border-gray-800 p-1 text-center bg-gray-300 w-14 min-w-[52px]"
+              className="border-t-2 border-b-2 border-r-2 border-l border-gray-800 px-3 py-3 text-center bg-gray-200 w-16 min-w-[56px]"
             >
-              <div className="font-bold">Total</div>
-              <div className="font-normal text-gray-500">(h/j)</div>
+              <div className="font-bold text-sm">Total</div>
+              <div className="font-normal text-xs text-gray-500 mt-0.5">(h/j)</div>
             </th>
           </tr>
+
           <tr className="bg-gray-100">
-            {semaineNums.map((s) => (
+            {semaineNums.map((s, idx) => (
               <th
                 key={s}
-                className="border border-gray-600 p-0.5 text-center text-xs text-gray-500 bg-gray-100 font-normal"
+                className={`border-b-2 border-r border-b-gray-800 border-r-gray-600 px-4 py-1.5 text-center text-xs text-gray-400 bg-gray-100 font-normal ${
+                  idx === 0 ? "border-l-2 border-l-gray-800" : ""
+                }`}
               >
                 S{s}
               </th>
@@ -534,6 +541,7 @@ const TableSemaine = ({
           </tr>
         </thead>
 
+        {/* ── TBODY ── */}
         <tbody>
           {employes.map((emp) => {
             const typesActifs = ABS_TYPES.filter(
@@ -541,108 +549,117 @@ const TableSemaine = ({
                 (emp[`total_${t.key}`] || 0) > 0 &&
                 (activeTypes.size === 0 || activeTypes.has(t.key)),
             );
+
+            /* ── Employé sans valeur ── */
             if (typesActifs.length === 0) {
               return (
-                <tr
-                  key={emp.userid}
-                  className="border-b border-gray-200 hover:bg-gray-50"
-                >
-                  <td className="border-2 border-gray-800 p-2 sticky left-0 bg-white z-10 w-36 min-w-[140px]">
+                <tr key={emp.userid} className="hover:bg-gray-50">
+                  {/* N°/NOM */}
+                  <td className="border-l-2 border-r-2 border-b-2 border-l-gray-800 border-r-gray-800 border-b-gray-800 px-3 py-3 sticky left-0 bg-white z-10 w-36 min-w-[140px] shadow-[2px_0_5px_rgba(0,0,0,0.08)]">
                     <div className="flex items-baseline gap-1.5">
                       <span className="font-bold text-sm shrink-0">
                         {emp.badgenumber}
                       </span>
-                      <span className="italic text-sm" title={emp.name}>
+                      <span className="italic text-sm text-gray-700" title={emp.name}>
                         {emp.name}
                       </span>
                     </div>
                     {!selectedSection && (
-                      <div className="text-gray-400 mt-0.5">{emp.section}</div>
+                      <div className="text-xs text-gray-400 mt-0.5">{emp.section}</div>
                     )}
                   </td>
-                  <td className="border-2 border-gray-800 p-1 text-center sticky left-36 bg-white z-10 w-14">
+                  {/* Type */}
+                  <td className="border-r-2 border-b-2 border-r-gray-800 border-b-gray-800 px-3 py-3 text-center sticky left-36 bg-white z-10 w-16 shadow-[2px_0_5px_rgba(0,0,0,0.08)]">
                     <span className="text-gray-300">-</span>
                   </td>
-                  {semaineNums.map((s) => (
+                  {/* Semaines */}
+                  {semaineNums.map((s, idx) => (
                     <td
                       key={s}
-                      className="border border-gray-200 p-1 text-center text-gray-200"
-                    >
-                      —
-                    </td>
+                      className={`border-r border-b border-b-gray-800 border-r-gray-200 px-4 py-3 text-center ${
+                        idx === 0 ? "border-l border-l-gray-200" : ""
+                      }`}
+                    />
                   ))}
-                  <td className="border-2 border-gray-800 p-1 text-center text-gray-300">
-                    —
+                  {/* Total */}
+                  <td className="border-r-2 border-b-2 border-l border-r-gray-800 border-b-gray-800 border-l-gray-200 px-3 py-3 text-center text-gray-300">
+                    -
                   </td>
                 </tr>
               );
             }
 
+            /* ── Sous-lignes par type ── */
             return typesActifs.map((t, tIdx) => {
               const isFirst = tIdx === 0;
-              const isLast = tIdx === typesActifs.length - 1;
+              const isLast  = tIdx === typesActifs.length - 1;
               const rowSpan = typesActifs.length;
-              const total = emp[`total_${t.key}`] || 0;
+              const total   = emp[`total_${t.key}`] || 0;
               const totalStr = fmtVal(total, t.unit);
 
               return (
-                <tr
-                  key={`${emp.userid}-${t.key}`}
-                  className={`${
-                    isLast
-                      ? "border-b-2 border-gray-800"
-                      : "border-b border-gray-100"
-                  } hover:bg-gray-50`}
-                >
+                <tr key={`${emp.userid}-${t.key}`} className="hover:bg-gray-50">
+
+                  {/* N°/NOM — rowspan isFirst */}
                   {isFirst && (
                     <td
                       rowSpan={rowSpan}
-                      className="border-2 border-gray-800 p-2 sticky left-0 bg-white z-10 w-36 min-w-[140px] align-top"
+                      className="border-l-2 border-r-2 border-b-2 border-l-gray-800 border-r-gray-800 border-b-gray-800 px-3 py-3 sticky left-0 bg-white z-10 w-36 min-w-[140px] align-middle shadow-[2px_0_5px_rgba(0,0,0,0.08)]"
                     >
                       <div className="flex items-baseline gap-1.5">
                         <span className="font-bold text-sm shrink-0">
                           {emp.badgenumber}
                         </span>
-                        <span className="italic text-sm" title={emp.name}>
+                        <span className="italic text-sm text-gray-700" title={emp.name}>
                           {emp.name}
                         </span>
                       </div>
                       {!selectedSection && (
-                        <div className="text-gray-400 mt-0.5">
-                          {emp.section}
-                        </div>
+                        <div className="text-xs text-gray-400 mt-0.5">{emp.section}</div>
                       )}
                     </td>
                   )}
 
-                  {/* Colonne Type */}
-                  <td className="border-2 border-gray-800 p-1 text-center sticky left-36 bg-white z-10 w-14 min-w-[56px]">
+                  {/* Type */}
+                  <td
+                    className={`border-r-2 border-r-gray-800 px-3 py-2 text-center sticky left-36 bg-white z-10 w-16 min-w-[64px] shadow-[2px_0_5px_rgba(0,0,0,0.08)] ${
+                      isFirst ? "pt-3" : ""
+                    } ${isLast ? "pb-3 border-b-2 border-b-gray-800" : "border-b border-b-gray-200"}`}
+                  >
                     <TypeBadge typeKey={t.key} />
                   </td>
 
-                  {/* Valeur par semaine */}
-                  {semaineNums.map((s) => {
-                    const val = (emp.par_semaine[s] || {})[t.key] || 0;
+                  {/* Valeurs semaines */}
+                  {semaineNums.map((s, idx) => {
+                    const val  = (emp.par_semaine[s] || {})[t.key] || 0;
                     const disp = fmtVal(val, t.unit);
                     return (
                       <td
                         key={s}
-                        className={`border border-gray-200 p-0.5 text-center ${
-                          disp ? `font-semibold ${t.color}` : "text-gray-200"
-                        }`}
+                        className={`border-r border-r-gray-200 px-4 py-2 text-center ${
+                          idx === 0 ? "border-l border-l-gray-200" : ""
+                        } ${isFirst ? "pt-3" : ""} ${
+                          isLast
+                            ? "pb-3 border-b-2 border-b-gray-800"
+                            : "border-b border-b-gray-200"
+                        } ${disp ? `font-semibold ${t.color}` : ""}`}
                       >
-                        {disp}
+                        {disp || ""}
                       </td>
                     );
                   })}
 
                   {/* Total */}
                   <td
-                    className={`border-2 border-gray-800 p-1 text-center font-bold w-14 ${
-                      isFirst ? "align-top" : ""
+                    className={`border-r-2 border-l border-r-gray-800 border-l-gray-200 px-3 py-2 text-center font-bold w-16 ${
+                      isFirst ? "pt-3 align-top" : ""
+                    } ${
+                      isLast
+                        ? "pb-3 border-b-2 border-b-gray-800"
+                        : "border-b border-b-gray-200"
                     } ${totalStr ? "text-gray-800" : "text-transparent"}`}
                   >
-                    {totalStr || "—"}
+                    {totalStr || "-"}
                   </td>
                 </tr>
               );
@@ -758,18 +775,18 @@ const HeuresTravailPage = () => {
   };
 
   // ── Stats KPI ────────────────────────────────────────────────────────────
-  const stats = useMemo(() => {
-    if (!data?.employes?.length) return null;
-    const emp = data.employes;
-    const absOnlyKs = ABS_TYPES.filter((t) => t.key !== "ht" && t.key !== "hs");
-    return {
-      totalHT: emp.reduce((s, e) => s + e.total_ht, 0),
-      totalHS: emp.reduce((s, e) => s + e.total_hs, 0),
-      avecAbsence: emp.filter((e) =>
-        absOnlyKs.some((t) => (e[`total_${t.key}`] || 0) > 0),
-      ).length,
-    };
-  }, [data]);
+  // const stats = useMemo(() => {
+  //   if (!data?.employes?.length) return null;
+  //   const emp = data.employes;
+  //   const absOnlyKs = ABS_TYPES.filter((t) => t.key !== "ht" && t.key !== "hs");
+  //   return {
+  //     totalHT: emp.reduce((s, e) => s + e.total_ht, 0),
+  //     totalHS: emp.reduce((s, e) => s + e.total_hs, 0),
+  //     avecAbsence: emp.filter((e) =>
+  //       absOnlyKs.some((t) => (e[`total_${t.key}`] || 0) > 0),
+  //     ).length,
+  //   };
+  // }, [data]);
 
   // datesList et semaines depuis le 1er employé
   const datesList = useMemo(
@@ -813,32 +830,34 @@ const HeuresTravailPage = () => {
         pageTag="Heures & Absences"
         title="Heures de Travail & Absences"
         subtitle={`Période du ${periode.du ?? "…"} au ${periode.au ?? "…"}`}
-        kpis={[
-          {
-            label: "Employés",
-            value: pagination.total_employees ?? 0,
-            sub: "actifs",
-            dotColor: "#3b82f6",
-          },
-          {
-            label: "Total HT",
-            value: stats ? fmtH(stats.totalHT) || "0h" : "—",
-            sub: "page courante",
-            dotColor: "#22c55e",
-          },
-          {
-            label: "Total HS",
-            value: stats ? fmtH(stats.totalHS) || "0h" : "—",
-            sub: "page courante",
-            dotColor: "#eab308",
-          },
-          {
-            label: "Avec absence",
-            value: stats?.avecAbsence ?? 0,
-            sub: "employés",
-            dotColor: "#ef4444",
-          },
-        ]}
+        kpis={
+          [
+            // {
+            //   label: "Employés",
+            //   value: pagination.total_employees ?? 0,
+            //   sub: "actifs",
+            //   dotColor: "#3b82f6",
+            // },
+            // {
+            //   label: "Total HT",
+            //   value: stats ? fmtH(stats.totalHT) || "0h" : "—",
+            //   sub: "page courante",
+            //   dotColor: "#22c55e",
+            // },
+            // {
+            //   label: "Total HS",
+            //   value: stats ? fmtH(stats.totalHS) || "0h" : "—",
+            //   sub: "page courante",
+            //   dotColor: "#eab308",
+            // },
+            // {
+            //   label: "Avec absence",
+            //   value: stats?.avecAbsence ?? 0,
+            //   sub: "employés",
+            //   dotColor: "#ef4444",
+            // },
+          ]
+        }
       />
 
       {/* ── En-tête contrôles ── */}
@@ -1008,28 +1027,28 @@ const HeuresTravailPage = () => {
 
       {/* ── Tableau principal ── */}
       {data?.employes?.length > 0 && (
-        <div>
-          <div ref={componentRef} className="bg-white">
-            <div ref={componentRef} className="bg-white">
-              {viewMode === "semaine" ? (
-                <TableSemaine
-                  employes={data.employes}
-                  semaineNums={semaineNums}
-                  selectedSection={selectedSection}
-                  activeTypes={activeTypes}
-                />
-              ) : (
-                <TableJour
-                  employes={data.employes}
-                  datesList={datesList}
-                  semaineNums={semaineNums}
-                  selectedSection={selectedSection}
-                  activeTypes={activeTypes}
-                />
-              )}
-            </div>
-          </div>
+        // <div>
+        <div ref={componentRef} className="bg-white">
+          {/* <div ref={componentRef} className="bg-white"> */}
+          {viewMode === "semaine" ? (
+            <TableSemaine
+              employes={data.employes}
+              semaineNums={semaineNums}
+              selectedSection={selectedSection}
+              activeTypes={activeTypes}
+            />
+          ) : (
+            <TableJour
+              employes={data.employes}
+              datesList={datesList}
+              semaineNums={semaineNums}
+              selectedSection={selectedSection}
+              activeTypes={activeTypes}
+            />
+          )}
+          {/* </div> */}
         </div>
+        // </div>
       )}
 
       {/* ── Pagination ── */}

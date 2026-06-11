@@ -75,9 +75,9 @@ const TableSemaine = ({
   }, [employes, semaineNums]);
 
   return (
-    <div className="bg-white border-2 border-gray-800">
-      <table className="w-full table-fixed border-collapse text-sm">
-        <thead>
+    <div className="border-2 border-gray-800 overflow-auto max-h-[calc(100vh-220px)] w-full">
+      <table className="w-full table-fixed border-collapse text-sm min-w-[600px]">
+        <thead className="sticky top-0 z-20 shadow-[0_2px_0_0_#1f2937]">
           <tr className="bg-gray-100">
             <th className="border-2 border-gray-800 py-3 px-2 font-bold text-sm text-left w-40">
               Badge / Nom{!selectedSection && " / Section"}
@@ -123,7 +123,7 @@ const TableSemaine = ({
                     key={s}
                     className={`border border-gray-600 py-3 px-1 text-center font-semibold ${n > 0 ? "bg-green-50" : "text-gray-300"}`}
                   >
-                    {n > 0 ? n : "—"}
+                    {n > 0 ? n : "-"}
                   </td>
                 );
               })}
@@ -183,13 +183,12 @@ const TableJour = ({
   }, [employes, datesList]);
 
   return (
-    <div className="bg-white border-2 border-gray-600 w-full">
-      {/*
-        Pas de table-fixed, pas de min-width sur les colonnes jour :
-        le navigateur compresse librement → 5 ou 6 semaines, tout rentre.
-      */}
-      <table className="w-full border-collapse text-xs">
-        <thead className="sticky top-0 z-20">
+    <div className="w-full overflow-auto max-h-[calc(100vh-220px)] border-2 border-gray-600">
+      <table
+        className="border-collapse text-xs attendance-table"
+        style={{ minWidth: "max-content", width: "100%" }}
+      >
+        <thead className="sticky top-0 z-20 shadow-[0_2px_0px_#1f2937,0_3px_4px_rgba(0,0,0,0.15)]">
           {/* Ligne 1 : groupes Semaine */}
           <tr className="bg-gray-100">
             <th
@@ -213,20 +212,20 @@ const TableJour = ({
               );
             })}
             <th
-              className="border border-gray-600 p-1 text-center font-bold bg-gray-200 w-[50px]"
+              className="border border-gray-600 p-1 text-center font-bold bg-gray-200 w-[50px] sticky right-[90px] z-30"
               rowSpan={4}
             >
               Jours
             </th>
             <th
-              className="border border-gray-600 p-1 text-center font-bold bg-green-50 w-[90px]"
+              className="border border-gray-600 p-1 text-center font-bold bg-green-50 w-[90px] sticky right-0 z-30"
               rowSpan={4}
             >
               Total (Ar)
             </th>
           </tr>
 
-          {/* Ligne 2 : code_date — PAS de min-w pour laisser le navigateur comprimer */}
+          {/* Ligne 2 : code_date */}
           <tr className="bg-gray-100">
             {datesList.map((d, idx) => (
               <th
@@ -283,36 +282,43 @@ const TableJour = ({
                 key={emp.userid}
                 className="border-b border-gray-200 hover:bg-gray-50"
               >
+                {/* Colonne Badge/Nom — sticky left */}
                 <td className="border-2 border-gray-800 py-3 px-2 sticky left-0 bg-white z-10 w-[140px] break-words">
                   <div className="flex flex-col gap-0.5">
                     <div className="flex items-baseline gap-1 flex-wrap">
                       <span className="font-bold shrink-0">
                         {emp.badgenumber}
                       </span>
-                      <span className="italic text-sm print:text-[7pt] print:leading-tight print:break-words print:overflow-hidden print:line-clamp-2">
-                        {emp.name}
-                      </span>
+                      <span className="italic text-sm">{emp.name}</span>
                     </div>
                     {!selectedSection && (
                       <div className="text-gray-400">{emp.section}</div>
                     )}
                   </div>
                 </td>
+
+                {/* Colonnes jours */}
                 {datesList.map((d, idx) => {
                   const indem = joursMap.get(d.date) || false;
                   return (
                     <td
                       key={idx}
-                      className={`border border-gray-600 py-3 text-center font-bold ${indem ? "bg-green-100 text-green-700" : "text-gray-200"}`}
+                      className={`border border-gray-600 py-3 text-center font-bold ${
+                        indem ? "bg-green-100 text-green-700" : "text-gray-200"
+                      }`}
                     >
                       {indem ? "✓" : "·"}
                     </td>
                   );
                 })}
-                <td className="border border-gray-600 py-3 px-1 text-center font-bold bg-gray-100">
+
+                {/* Jours — sticky right */}
+                <td className="border border-gray-600 py-3 px-1 text-center font-bold bg-gray-100 sticky right-[90px] z-10">
                   {emp.total_jours}
                 </td>
-                <td className="border border-gray-800 py-3 px-1 text-center font-bold bg-green-50 text-green-800">
+
+                {/* Total — sticky right */}
+                <td className="border border-gray-800 py-3 px-1 text-center font-bold bg-green-50 text-green-800 sticky right-0 z-10">
                   {formatMoney(emp.total_jours * montantJournalier)}
                 </td>
               </tr>
@@ -322,24 +328,31 @@ const TableJour = ({
 
         <tfoot>
           <tr className="bg-gray-100 font-bold border-t-2 border-gray-800">
+            {/* Label — sticky left */}
             <td className="border-2 border-gray-800 py-3 px-2 text-right sticky left-0 bg-gray-100 z-10 w-[140px]">
               TOTAL ({employes.length})
             </td>
+
+            {/* Totaux par jour */}
             {datesList.map((d, idx) => {
               const n = totauxJour.get(d.date) || 0;
               return (
                 <td
                   key={idx}
-                  className="border-2 border-gray-600 py-3 text-center text-[10px]"
+                  className="border border-gray-600 py-3 text-center text-[10px]"
                 >
                   {n > 0 ? n : ""}
                 </td>
               );
             })}
-            <td className="border-2 border-gray-600 py-3 px-1 text-center bg-gray-200 font-bold">
+
+            {/* Jours total — sticky right */}
+            <td className="border-2 border-gray-600 py-3 px-1 text-center bg-gray-200 font-bold sticky right-[90px] z-10">
               {employes.reduce((a, e) => a + e.total_jours, 0)}
             </td>
-            <td className="border-2 border-gray-600 py-3 px-1 text-center bg-green-100 font-bold">
+
+            {/* Montant total — sticky right */}
+            <td className="border-2 border-gray-600 py-3 px-1 text-center bg-green-100 font-bold sticky right-0 z-10">
               {formatMoney(
                 employes.reduce(
                   (a, e) => a + e.total_jours * montantJournalier,
@@ -427,11 +440,11 @@ const MealAllowancePage = () => {
     setPage(1);
   };
 
-  const stats = useMemo(() => {
-    if (!data?.employes?.length) return null;
-    const totalJours = data.employes.reduce((s, e) => s + e.total_jours, 0);
-    return { totalJours, totalMontant: totalJours * montantJournalier };
-  }, [data, montantJournalier]);
+  // const stats = useMemo(() => {
+  //   if (!data?.employes?.length) return null;
+  //   const totalJours = data.employes.reduce((s, e) => s + e.total_jours, 0);
+  //   return { totalJours, totalMontant: totalJours * montantJournalier };
+  // }, [data, montantJournalier]);
 
   const datesList = data?.dates || [];
   const semaineNums = data?.semaines || [];
@@ -460,32 +473,34 @@ const MealAllowancePage = () => {
         pageTag="Indemnités repas"
         title="Indemnités repas"
         subtitle={`Période du ${periode.du || "…"} au ${periode.au || "…"}`}
-        kpis={[
-          {
-            label: "Employés",
-            value: pagination.total_employees ?? 0,
-            sub: "actifs",
-            dotColor: "#3b82f6",
-          },
-          {
-            label: "Total jours",
-            value: stats?.totalJours ?? "—",
-            sub: "indemnisés",
-            dotColor: "#f97316",
-          },
-          {
-            label: "Total (Ar)",
-            value: stats ? formatMoney(stats.totalMontant) : "—",
-            sub: "toutes sections",
-            dotColor: "#22c55e",
-          },
-          {
-            label: "Montant/jour",
-            value: formatMoney(montantJournalier),
-            sub: "taux journalier",
-            dotColor: "#a855f7",
-          },
-        ]}
+        kpis={
+          [
+            // {
+            //   label: "Employés",
+            //   value: pagination.total_employees ?? 0,
+            //   sub: "actifs",
+            //   dotColor: "#3b82f6",
+            // },
+            // {
+            //   label: "Total jours",
+            //   value: stats?.totalJours ?? "—",
+            //   sub: "indemnisés",
+            //   dotColor: "#f97316",
+            // },
+            // {
+            //   label: "Total (Ar)",
+            //   value: stats ? formatMoney(stats.totalMontant) : "—",
+            //   sub: "toutes sections",
+            //   dotColor: "#22c55e",
+            // },
+            // {
+            //   label: "Montant/jour",
+            //   value: formatMoney(montantJournalier),
+            //   sub: "taux journalier",
+            //   dotColor: "#a855f7",
+            // },
+          ]
+        }
       />
 
       <div className="bg-white border-2 border-gray-800 mb-4 p-5">
@@ -612,21 +627,6 @@ const MealAllowancePage = () => {
             </span>
           </div>
           <ViewToggle value={viewMode} onChange={setViewMode} />
-          {/* <div className="flex items-center gap-2 px-3 py-1.5S">
-            <label className="text-xs font-semibold text-gray-700 whitespace-nowrap">
-              Montant/jour (Ar) :
-            </label>
-            <input
-              type="number"
-              value={montantJournalier}
-              onChange={(e) =>
-                setMontantJournalier(Math.max(0, parseInt(e.target.value) || 0))
-              }
-              className="px-3 py-0.5 border border-gray-300 rounded text-sm w-24 focus:ring-1 focus:outline-none focus:ring-gray-500"
-              step="100"
-              min="0"
-            />
-          </div> */}
           <div className="flex items-center gap-2 px-3 py-1.5S">
             <label className="text-xs font-semibold text-gray-700 whitespace-nowrap">
               Montant/jour (Ar) :
