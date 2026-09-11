@@ -95,6 +95,7 @@ import HeuresTravailPage from './pages/presence/HeuresTravailPage';
 import MealAllowancePage from './pages/presence/MealAllowancePage';
 import CalendrierPage from './pages/calendrier/CalendrierPage';
 // import AbsencesPage from "./pages/presence/AbsencesPage";
+import VerificationPresencesPage from './pages/presence/VerificationPresencesPage';
 
 function LayoutWithSidebar() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -112,6 +113,7 @@ function LayoutWithSidebar() {
     if (path.includes('/heures-travail')) return 'heures-travail';
     if (path.includes('/meal-allowance')) return 'meal-allowance'; 
     if (path.includes('/calendrier'))     return 'calendrier'; 
+    if (path.includes('/verification-presences')) return 'verification-presences';
     return 'dashboard';
   };
 
@@ -130,6 +132,7 @@ function LayoutWithSidebar() {
       'heures-travail': '/heures-travail',
       'meal-allowance': '/meal-allowance',
       'calendrier':     '/calendrier',
+      'verification-presences': '/verification-presences',
     };
     if (routes[menuId]) {
       navigate(routes[menuId]);
@@ -156,6 +159,7 @@ function LayoutWithSidebar() {
           {/* <Route path="/absences" element={<AbsencesPage />} /> */}
           <Route path="/meal-allowance" element={<MealAllowancePage />} />
           <Route path="/calendrier"      element={<CalendrierPage />} />
+          <Route path="/verification-presences" element={<VerificationPresencesPage />} />
         </Routes>
       </main>
     </div>

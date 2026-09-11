@@ -13,6 +13,7 @@ import {
   Utensils,
   Timer,
   UserCheck,
+  ShieldAlert,
 } from "lucide-react";
 
 export const MENU_ITEMS = [
@@ -28,6 +29,7 @@ export const MENU_ITEMS = [
     path: "/heures-travail",
   },
   { id: "meal-allowance", icon: Utensils, label: "Indemnité repas", color: "gray" },
+  { id: "verification-presences", icon: ShieldAlert, label: "Vérification", color: "gray" },
   { id: "payroll", icon: DollarSign, label: "Paie", color: "gray" },
   // { id: "performance", icon: TrendingUp, label: "Performance", color: "gray" },
   { id: 'calendrier',    label: 'Calendrier',       icon: Calendar },

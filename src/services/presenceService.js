@@ -283,7 +283,6 @@ const presenceService = {
     return response.data;
   },
 
-  
   ensureDatesGenerated: async (annee, mois) => {
     try {
       const res = await api.get("api/presence/dates/", {
@@ -303,7 +302,6 @@ const presenceService = {
     }
   },
 
-  
   getHeuresTravail: async (
     annee,
     mois,
@@ -320,7 +318,6 @@ const presenceService = {
     return response.data;
   },
 
-  
   getIndemniteRepas: async (
     annee,
     mois,
@@ -337,7 +334,7 @@ const presenceService = {
     return response.data;
   },
 
-   getAbsencesMois: async (
+  getAbsencesMois: async (
     annee,
     mois,
     section = "",
@@ -353,12 +350,13 @@ const presenceService = {
     return response.data;
   },
 
-
   getPeriodesFermeture: async (annee = null, mois = null) => {
     const params = {};
     if (annee) params.annee = annee;
-    if (mois)  params.mois  = mois;
-    const response = await api.get("api/presence/periodes-fermeture/", { params });
+    if (mois) params.mois = mois;
+    const response = await api.get("api/presence/periodes-fermeture/", {
+      params,
+    });
     return response.data;
   },
 
@@ -368,7 +366,10 @@ const presenceService = {
   },
 
   updatePeriodeFermeture: async (id, data) => {
-    const response = await api.patch(`api/presence/periodes-fermeture/${id}/`, data);
+    const response = await api.patch(
+      `api/presence/periodes-fermeture/${id}/`,
+      data,
+    );
     return response.data;
   },
 
@@ -376,6 +377,35 @@ const presenceService = {
     const response = await api.delete(`api/presence/periodes-fermeture/${id}/`);
     return response.data;
   },
+
+  //vérification présence
+  // getVerificationPresences: async (
+  //   annee,
+  //   mois,
+  //   section = "",
+  //   page = 1,
+  //   pageSize = 50,
+  //   q = "",
+  // ) => {
+  //   const params = { annee, mois, page, page_size: pageSize };
+  //   if (section) params.section = section;
+  //   if (q) params.q = q;
+  //   const response = await api.get("api/presence/verification-presences/", {
+  //     params,
+  //   });
+  //   return response.data;
+  // },
+  // presenceService.js
+getVerificationPresences: async (
+  annee, mois, section = "", page = 1, pageSize = 50, q = "", refresh = false,
+) => {
+  const params = { annee, mois, page, page_size: pageSize };
+  if (section) params.section = section;
+  if (q) params.q = q;
+  if (refresh) params.refresh = true;
+  const response = await api.get("api/presence/verification-presences/", { params });
+  return response.data;
+},
 };
 
 export default presenceService;
