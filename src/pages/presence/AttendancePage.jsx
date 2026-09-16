@@ -1,5 +1,3 @@
-
-
 // import React, {
 //   useState,
 //   useEffect,
@@ -4911,10 +4909,10 @@ const EvenementModal = ({
                 onChange={(e) => setCpJours(e.target.value)}
                 className="w-full px-3 py-2 border-2 border-teal-300 rounded focus:border-teal-600 font-semibold text-teal-900"
               >
-                <option value="">CP (sans nombre de jours)</option>
+                <option value="">CP (sans nombre d'heures)</option>
                 {[2, 3, 4, 5, 6, 7].map((n) => (
                   <option key={n} value={String(n)}>
-                    CP{n} — {n} jours
+                    CP{n}
                   </option>
                 ))}
               </select>
@@ -5629,7 +5627,17 @@ const AttendancePage = () => {
       });
 
       const evMap = buildEvenementsMapFromPresences(allPresences);
-      const orderedDates = datesValides;
+      // Pour l'export Excel, on veut TOUJOURS les 5 semaines complètes
+      // (code_date de "11" à "57"), même les jours hors période, afin que
+      // le tableau garde une largeur fixe d'un mois à l'autre. Les jours
+      // hors période (ou sans présence) resteront simplement vides sur les
+      // colonnes de valeurs, car ils n'ont pas d'entrée dans `presences`.
+      const orderedDates = dates
+        .filter((d) => {
+          const semaine = Number(d.code_date?.[0]);
+          return semaine >= 1 && semaine <= 5;
+        })
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
       const responsableBySection = Object.fromEntries(
         horaires.map((h) => [h.section, h.responsable || ""]),
       );
@@ -5644,7 +5652,8 @@ const AttendancePage = () => {
         "section",
         "num_employe",
         "num_evm",
-        ...orderedDates.map((d) => d.code_affichage),
+        // Sur l'export Excel uniquement : code brut sans suffixe F/P.
+        ...orderedDates.map((d) => d.code_date),
         "responsable",
         "ind_repas",
         "temps_presence_cnaps",
@@ -5670,9 +5679,11 @@ const AttendancePage = () => {
         const tcpHeureVirgule = String(
           Number(cnaps.heures).toFixed(2),
         ).replace(".", ",");
+        // Le matricule est répété sur les 3 lignes (entrée/événement/sortie)
+        // pour éviter les cellules vides dans le tableau exporté.
         const rowEntree = [employee.section, badge, `${badge}1`];
-        const rowEvenement = [employee.section, "", `${badge}2`];
-        const rowSortie = [employee.section, "", `${badge}3`];
+        const rowEvenement = [employee.section, badge, `${badge}2`];
+        const rowSortie = [employee.section, badge, `${badge}3`];
 
         orderedDates.forEach((dateObj) => {
           const d = formatDate(dateObj.date);
@@ -5693,9 +5704,11 @@ const AttendancePage = () => {
           rowEvenement.push(ev?.display || "");
         });
 
+        // ind_repas, tcp (temps_presence_cnaps) et tcp_heure sont également
+        // répétés sur les 3 lignes pour éviter les cellules/colonnes vides.
         rowEntree.push(responsable, indRepas, cnaps.jours, tcpHeureVirgule);
-        rowEvenement.push(responsable, "", "", "");
-        rowSortie.push(responsable, "", "", "");
+        rowEvenement.push(responsable, indRepas, cnaps.jours, tcpHeureVirgule);
+        rowSortie.push(responsable, indRepas, cnaps.jours, tcpHeureVirgule);
 
         rows.push(rowEntree, rowEvenement, rowSortie);
       });
@@ -5727,7 +5740,7 @@ const AttendancePage = () => {
     currentMonth,
     selectedSection,
     debouncedSearch,
-    datesValides,
+    dates,
     periode,
     horaires,
   ]);
