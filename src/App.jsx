@@ -96,7 +96,7 @@ import MealAllowancePage from './pages/presence/MealAllowancePage';
 import CalendrierPage from './pages/calendrier/CalendrierPage';
 // import AbsencesPage from "./pages/presence/AbsencesPage";
 import VerificationPresencesPage from './pages/presence/VerificationPresencesPage';
-
+import UtilisateursPage from "./pages/parametres/UtilisateursPage";
 function LayoutWithSidebar() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
@@ -114,6 +114,7 @@ function LayoutWithSidebar() {
     if (path.includes('/meal-allowance')) return 'meal-allowance'; 
     if (path.includes('/calendrier'))     return 'calendrier'; 
     if (path.includes('/verification-presences')) return 'verification-presences';
+    if (path.includes('/parametres')) return 'settings';
     return 'dashboard';
   };
 
@@ -133,6 +134,7 @@ function LayoutWithSidebar() {
       'meal-allowance': '/meal-allowance',
       'calendrier':     '/calendrier',
       'verification-presences': '/verification-presences',
+      'settings': '/parametres/utilisateurs',
     };
     if (routes[menuId]) {
       navigate(routes[menuId]);
@@ -160,6 +162,7 @@ function LayoutWithSidebar() {
           <Route path="/meal-allowance" element={<MealAllowancePage />} />
           <Route path="/calendrier"      element={<CalendrierPage />} />
           <Route path="/verification-presences" element={<VerificationPresencesPage />} />
+          <Route path="/parametres/utilisateurs" element={<UtilisateursPage />} />
         </Routes>
       </main>
     </div>

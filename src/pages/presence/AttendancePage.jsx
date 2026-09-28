@@ -1451,9 +1451,10 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
               disabled: !!horaire,
             },
             {
-              label: "Responsable",
+              label: "Responsable (géré automatiquement)",
               key: "responsable",
               type: "text",
+              disabled: true,
             },
             { label: "Heure d'entrée *", key: "heure_entree", type: "time" },
             {
@@ -1483,7 +1484,11 @@ const HoraireModal = ({ horaire, onClose, onSave }) => {
                         : e.target.value,
                   })
                 }
-                className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800 focus:outline-none"
+                className={`w-full px-3 py-2 border-2 rounded focus:outline-none ${
+                  disabled
+                    ? "border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed"
+                    : "border-gray-300 focus:border-gray-800"
+                }`}
                 disabled={disabled}
                 placeholder={
                   key === "section"
@@ -2621,9 +2626,16 @@ const AttendancePage = () => {
                   <td className="border-2 border-gray-800 p-3 font-semibold">
                     {horaire.section}
                   </td>
+                  {/* <td className="border-2 border-gray-800 p-3">
+                    {horaire.responsable || (
+                      <span className="text-gray-400 italic ">-</span>
+                    )}
+                  </td> */}
                   <td className="border-2 border-gray-800 p-3">
                     {horaire.responsable || (
-                      <span className="text-gray-400 italic">—</span>
+                      <span className="text-gray-400 italic block text-center">
+                        -
+                      </span>
                     )}
                   </td>
                   <td className="border-2 border-gray-800 p-3 text-center">

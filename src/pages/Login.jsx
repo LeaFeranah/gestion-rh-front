@@ -29,18 +29,28 @@ export default function Login() {
 
     try {
       const response = await api.post("api/personnel/login/", credentials);
-      const { token, username: userUsername, email, is_admin } = response.data;
+      // const { token, username: userUsername, email, is_admin } = response.data;
+
+      // localStorage.setItem("token", token);
+      // localStorage.setItem("username", userUsername);
+      // localStorage.setItem("email", email);
+      // localStorage.setItem("is_admin", String(is_admin));
+      const { token, username: userUsername, email, is_admin, role, sections } = response.data;
 
       localStorage.setItem("token", token);
       localStorage.setItem("username", userUsername);
       localStorage.setItem("email", email);
       localStorage.setItem("is_admin", String(is_admin));
+      localStorage.setItem("role", role || "ADMIN");
+      localStorage.setItem("sections", JSON.stringify(sections || []));
 
       navigate("/dashboard");
     } catch (error) {
       console.error("Erreur de connexion:", error);
       if (error.code === "ERR_NETWORK") {
-        setErrorMessage("Erreur de connexion au serveur. Vérifiez que le serveur est démarré.");
+        setErrorMessage(
+          "Erreur de connexion au serveur. Vérifiez que le serveur est démarré.",
+        );
       } else if (error.response?.status === 400) {
         setErrorMessage("Données invalides. Vérifiez les champs.");
       } else if (error.response?.status === 401) {
@@ -53,7 +63,7 @@ export default function Login() {
         setErrorMessage(
           error.response?.data?.error ||
             error.response?.data?.detail ||
-            "Une erreur est survenue. Veuillez réessayer."
+            "Une erreur est survenue. Veuillez réessayer.",
         );
       }
     } finally {

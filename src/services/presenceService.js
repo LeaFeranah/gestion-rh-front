@@ -396,16 +396,29 @@ const presenceService = {
   //   return response.data;
   // },
   // presenceService.js
-getVerificationPresences: async (
-  annee, mois, section = "", page = 1, pageSize = 50, q = "", refresh = false,
-) => {
-  const params = { annee, mois, page, page_size: pageSize };
-  if (section) params.section = section;
-  if (q) params.q = q;
-  if (refresh) params.refresh = true;
-  const response = await api.get("api/presence/verification-presences/", { params });
-  return response.data;
-},
+  getVerificationPresences: async (
+    annee,
+    mois,
+    section = "",
+    page = 1,
+    pageSize = 50,
+    q = "",
+    refresh = false,
+  ) => {
+    const params = { annee, mois, page, page_size: pageSize };
+    if (section) params.section = section;
+    if (q) params.q = q;
+    if (refresh) params.refresh = true;
+    const response = await api.get("api/presence/verification-presences/", {
+      params,
+    });
+    return response.data;
+  },
+
+    getToutesSections: async () => {
+    const response = await api.get('api/presence/toutes-sections/');
+    return response.data;
+  },
 };
 
 export default presenceService;

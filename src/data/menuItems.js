@@ -36,4 +36,5 @@ export const MENU_ITEMS = [
   // { id: "documents", icon: FileText, label: "Documents", color: "gray" },
   // { id: "awards", icon: Award, label: "Récompenses", color: "gray" },
   // { id: "settings", icon: Settings, label: "Paramètres", color: "gray" },
+  { id: "settings", icon: Settings, label: "Paramètres", color: "gray" },
 ];
