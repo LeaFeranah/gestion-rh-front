@@ -1886,6 +1886,10 @@ const AttendancePage = () => {
 
   const componentRef = useRef();
   const isFirstLoad = useRef(true);
+  // Identifiant de la dernière requête lancée : permet d'ignorer les réponses
+  // obsolètes (ex. une requête sans filtre, plus lente, qui arrive APRÈS la
+  // requête de recherche et écrase son résultat).
+  const lastRequestId = useRef(0);
 
   // ─── Debounce recherche ────────────────────────────────────────────────────
   useEffect(() => {
@@ -1983,6 +1987,9 @@ const AttendancePage = () => {
   // ─── Chargement principal ─────────────────────────────────────────────────
   const fetchPresences = useCallback(
     async (annee, mois) => {
+      const requestId = ++lastRequestId.current;
+      const isStale = () => requestId !== lastRequestId.current;
+
       if (isFirstLoad.current) {
         setLoading(true);
         isFirstLoad.current = false;
@@ -2004,6 +2011,7 @@ const AttendancePage = () => {
           await presenceService.genererDates(annee, mois);
           datesData = await presenceService.getDates(annee, mois);
         }
+        if (isStale()) return;
 
         const presencesData = await presenceService.getPresencesMoisCalculee(
           annee,
@@ -2014,6 +2022,10 @@ const AttendancePage = () => {
           rowsPerPage,
           debouncedSearch,
         );
+
+        // Une requête plus récente a été lancée entre-temps (nouvelle
+        // recherche, changement de page/section…) : on ignore cette réponse.
+        if (isStale()) return;
 
         setDates(datesData || []);
         setPeriode(presencesData.periode || null);
@@ -2039,11 +2051,15 @@ const AttendancePage = () => {
         });
         setEvenementsMap(newMap);
       } catch (err) {
+        if (isStale()) return;
         console.error("❌ Erreur chargement:", err);
         alert("Erreur lors du chargement des présences: " + err.message);
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        // Seule la requête la plus récente arrête l'indicateur de chargement
+        if (!isStale()) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     [selectedSection, page, debouncedSearch],
