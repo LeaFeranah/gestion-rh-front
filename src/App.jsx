@@ -97,6 +97,7 @@ import CalendrierPage from './pages/calendrier/CalendrierPage';
 // import AbsencesPage from "./pages/presence/AbsencesPage";
 import VerificationPresencesPage from './pages/presence/VerificationPresencesPage';
 import UtilisateursPage from "./pages/parametres/UtilisateursPage";
+import CongesValidesPage from './pages/presence/CongesValidesPage';
 function LayoutWithSidebar() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
@@ -115,6 +116,7 @@ function LayoutWithSidebar() {
     if (path.includes('/calendrier'))     return 'calendrier'; 
     if (path.includes('/verification-presences')) return 'verification-presences';
     if (path.includes('/parametres')) return 'settings';
+    if (path.includes('/conges-valides')) return 'attendance';
     return 'dashboard';
   };
 
@@ -163,6 +165,7 @@ function LayoutWithSidebar() {
           <Route path="/calendrier"      element={<CalendrierPage />} />
           <Route path="/verification-presences" element={<VerificationPresencesPage />} />
           <Route path="/parametres/utilisateurs" element={<UtilisateursPage />} />
+          <Route path="/conges-valides" element={<CongesValidesPage />} />
         </Routes>
       </main>
     </div>

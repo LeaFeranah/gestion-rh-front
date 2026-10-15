@@ -85,7 +85,77 @@ const buildEvenementsMapFromPresences = (list) => {
   return map;
 };
 
-// Même logique d'affichage/masquage de l'événement que dans le tableau (getEvenementForCell),
+// Le serveur renvoie au maximum 200 employés par requête (page_size plafonné).
+// Pour l'export et l'impression "toutes sections", on charge donc TOUTES les
+// pages une par une et on concatène la liste (`listKey`).
+const PAGE_SIZE_MAX = 200;
+const fetchAllPages = async (fetchPage, listKey, onProgress) => {
+  const first = await fetchPage(1);
+  const totalPages = first?.pagination?.total_pages || 1;
+  let done = 1;
+  onProgress?.(done, totalPages);
+  const results = new Array(totalPages);
+  results[0] = first?.[listKey] || [];
+  // Pages suivantes : 3 requêtes en parallèle (plus rapide, sans surcharger le serveur)
+  const pages = [];
+  for (let p = 2; p <= totalPages; p++) pages.push(p);
+  const worker = async () => {
+    while (pages.length) {
+      const p = pages.shift();
+      const data = await fetchPage(p);
+      results[p - 1] = data?.[listKey] || [];
+      onProgress?.(++done, totalPages);
+    }
+  };
+  await Promise.all([worker(), worker(), worker()]);
+  return { ...first, [listKey]: results.flat() };
+};
+
+// Impression "toutes sections" : on génère directement un fichier PDF
+// (jsPDF), sans passer par la mise en page d'impression du navigateur.
+// Un PDF s'affiche et s'imprime de la même façon dans Edge, Chrome et Firefox,
+// sans problème de mémoire ni de lenteur de l'aperçu.
+// Couleurs des évènements (mêmes teintes que getEvenementTextColor)
+const EVENEMENT_HEX = {
+  X: "#15803d", RM: "#1d4ed8", HP: "#7e22ce", RC: "#a16207", ANO: "#374151",
+  CP: "#0f766e", CE: "#0f766e", EF: "#be185d", F: "#4338ca", PS: "#c2410c",
+  HA: "#7e22ce", OS: "#4338ca", MP: "#b91c1c", AMP: "#1d4ed8", A: "#b91c1c",
+  CM: "#1d4ed8", AUT: "#b45309",
+};
+
+
+// Regroupe une liste brute de présences par employé (même logique que le tableau)
+const buildEmployeesFromPresences = (list) => {
+  const map = {};
+  (list || []).forEach((p) => {
+    if (p.hors_periode) return;
+    if (!map[p.userid]) {
+      map[p.userid] = {
+        userid: p.userid,
+        badgenumber: p.badgenumber,
+        name: p.name,
+        section: p.section || "ADMINISTRATION",
+        presences: {},
+        hasPresence: false,
+      };
+    }
+    const d = formatDate(p.date);
+    if (d) {
+      map[p.userid].presences[d] = p;
+      map[p.userid].hasPresence = true;
+    }
+  });
+  return Object.values(map)
+    .filter((e) => e.hasPresence)
+    .sort(
+      (a, b) =>
+        a.badgenumber?.localeCompare(b.badgenumber, undefined, {
+          numeric: true,
+        }) || 0,
+    );
+};
+
+// Logique d'affichage/masquage de l'événement dans une cellule du tableau,
 // mais utilisable hors du hook (pour l'export sur l'ensemble des employés, pas juste la page affichée)
 const getEvenementForExportCell = (
   evenementsMap,
@@ -1848,14 +1918,35 @@ const AttendancePage = () => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [forceRefresh, setForceRefresh] = useState(0);
 
-  const [sections, setSections] = useState([]);
+  // const [sections, setSections] = useState([]);
+  // const [selectedSection, setSelectedSection] = useState("");
+
+    const [sections, setSections] = useState([]);
   const [selectedSection, setSelectedSection] = useState("");
+
+  // Filtre exact sur un matricule (double-clic depuis « Congés validés »)
+  const [matriculeFilter, setMatriculeFilter] = useState(
+    locationState.matricule || "",
+  );
+  const [matriculeNom, setMatriculeNom] = useState(locationState.nom || "");
 
   // Nouveaux états pour les deux nouvelles fonctionnalités
   const [showExceptionModal, setShowExceptionModal] = useState(false);
   const [showSupprimerJourModal, setShowSupprimerJourModal] = useState(false);
   const [showPeriodeFermetureModal, setShowPeriodeFermetureModal] =
     useState(false);
+
+  // useEffect(() => {
+  //   if (locationState.section) {
+    useEffect(() => {
+    if (locationState.matricule) {
+      setMatriculeFilter(locationState.matricule);
+      setMatriculeNom(locationState.nom || "");
+      setSelectedSection("");
+      setSearchFilter("");
+      setPage(0);
+    }
+  }, [locationState.matricule, locationState.nom]);
 
   useEffect(() => {
     if (locationState.section) {
@@ -2018,9 +2109,15 @@ const AttendancePage = () => {
           mois,
           false,
           selectedSection,
-          page + 1,
+        //   page + 1,
+        //   rowsPerPage,
+        //   debouncedSearch,
+        // );
+
+                  page + 1,
           rowsPerPage,
           debouncedSearch,
+          matriculeFilter,
         );
 
         // Une requête plus récente a été lancée entre-temps (nouvelle
@@ -2062,7 +2159,9 @@ const AttendancePage = () => {
         }
       }
     },
-    [selectedSection, page, debouncedSearch],
+  //   [selectedSection, page, debouncedSearch],
+  // );
+      [selectedSection, page, debouncedSearch, matriculeFilter],
   );
 
   useEffect(() => {
@@ -2099,29 +2198,8 @@ const AttendancePage = () => {
     [modeHeures],
   );
 
-  const getEvenementForCell = useCallback(
-    (userId, dateStr, attendance) => {
-      const d = formatDate(dateStr);
-      if (!d) return null;
-      const ev = evenementsMap[`${userId}-${d}`];
-      if (!ev) return null;
-      if (
-        ev.type === "X" &&
-        !attendance?.present &&
-        !attendance?.est_anomalie_corrigee
-      )
-        return null;
-      // Jour supprimé → pas d'heures rectifiées → cacher l'événement
-      if (
-        attendance?.est_anomalie_corrigee &&
-        !attendance?.heure_entree_rectifiee &&
-        !attendance?.heure_sortie_rectifiee
-      )
-        return null;
-      return ev;
-    },
-    [evenementsMap],
-  );
+  // (getEvenementForCell supprimé : le tableau utilise getEvenementForExportCell,
+  //  même logique, pour l'écran comme pour l'impression par section)
 
   const handleEvenementClick = useCallback(
     (employee, dateStr, attendance) => {
@@ -2346,10 +2424,285 @@ const AttendancePage = () => {
     ][d.getMonth()];
   }, []);
 
+  // preserveAfterPrint : sous Edge, window.print() rend la main avant la fin
+  // de l'aperçu ; sans cette option react-to-print supprime aussitôt l'iframe
+  // et l'aperçu d'Edge reste bloqué sur "Chargement". L'iframe est nettoyée
+  // automatiquement à l'impression suivante.
   const handlePrint = useReactToPrint({
     contentRef: componentRef,
     documentTitle: `Fiche_Presence_${periode?.mois}_${periode?.annee}${selectedSection ? `_${selectedSection}` : ""}`,
+    preserveAfterPrint: true,
   });
+
+  // ─── Impression "Toutes les sections" : une fiche par section ─────────────
+  const [preparingPrint, setPreparingPrint] = useState(false);
+  const [printProgress, setPrintProgress] = useState("");
+
+  // Génère le PDF avec le même rendu que l'impression d'origine :
+  // en-tête encadré, colonne N° / NOM large, 3 lignes par employé
+  // (entrée / évènement / sortie) séparées par un trait gris fin,
+  // trait épais foncé autour de chaque employé.
+  const buildPdf = async (groupes, evMap) => {
+    const { jsPDF } = await import("jspdf");
+    const { default: autoTable } = await import("jspdf-autotable");
+
+    const doc = new jsPDF({
+      orientation: "landscape",
+      unit: "mm",
+      format: "a4",
+      compress: true,
+    });
+    const W = doc.internal.pageSize.getWidth();
+    const M = 8; // marge
+    const FONCE = "#1f2937";
+    const GRIS = "#4b5563";
+    const GRIS_CLAIR = "#d1d5db";
+    const moisAnnee = `${periode?.mois || ""} ${periode?.annee || ""}`.trim();
+
+    // ── En-tête encadré (début de chaque section) ───────────────────────
+    const HEADER_H = 34;
+    const drawHeader = (section) => {
+      doc.setDrawColor(FONCE);
+      doc.setLineWidth(0.5);
+      doc.rect(M, M, W - 2 * M, HEADER_H - 4);
+      doc.setFillColor("#56656b");
+      doc.rect(M + 6, M + 5, 30, 10, "F");
+      doc.setTextColor("#ffffff");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text("AKANJO", M + 21, M + 11.6, { align: "center" });
+      doc.setTextColor("#111111");
+      doc.setFontSize(16);
+      doc.text("FICHE DE PRESENCE", M + 42, M + 12.2);
+      doc.setFontSize(14);
+      doc.text(moisAnnee, W - M - 6, M + 11, { align: "right" });
+      doc.setLineWidth(0.6);
+      doc.line(M + 6, M + 18, W - M - 6, M + 18);
+      doc.setFontSize(10.5);
+      doc.setFont("helvetica", "bolditalic");
+      doc.text("SECTION:", M + 6, M + 25);
+      doc.setFont("helvetica", "normal");
+      doc.text(String(section), M + 28, M + 25);
+      const au = `${periode?.au || ""}`;
+      const du = `${periode?.du || ""}`;
+      // "Période du: <du>  au: <au>" aligné à droite
+      let x = W - M - 6;
+      doc.text(au, x, M + 25, { align: "right" });
+      x -= doc.getTextWidth(au) + 1.5;
+      doc.setFont("helvetica", "bolditalic");
+      doc.text("au:", x, M + 25, { align: "right" });
+      x -= doc.getTextWidth("au:") + 2;
+      doc.setFont("helvetica", "normal");
+      doc.text(du, x, M + 25, { align: "right" });
+      x -= doc.getTextWidth(du) + 1.5;
+      doc.setFont("helvetica", "bolditalic");
+      doc.text("Période du:", x, M + 25, { align: "right" });
+    };
+
+    // ── En-tête du tableau (répété sur chaque page) ─────────────────────
+    const head = [
+      [
+        { content: "N° / NOM", rowSpan: 4, styles: { valign: "middle", fontSize: 9 } },
+        ...weekNumbers.map((w) => ({ content: `Semaine ${w}`, colSpan: weeks[w].length })),
+      ],
+      datesValides.map((d) => String(d.code_affichage ?? "")),
+      datesValides.map((d) => {
+        const dt = new Date(d.date);
+        return `${dt.toLocaleDateString("fr-FR", { weekday: "short" })}\n${dt.getDate()}`;
+      }),
+      datesValides.map((d) => getMonthAbbreviation(d.date)),
+    ];
+
+    // ── Corps : 3 lignes par employé ─────────────────────────────────────
+    const ROUGE = "#b91c1c";
+    const GRIS_SAMEDI = "#f3f4f6";
+    const bodyFor = (emps) => {
+      const body = [];
+      emps.forEach((employee) => {
+        const lE = [], lEv = [], lS = [];
+        datesValides.forEach((dateObj) => {
+          const attendance = getAttendanceData(employee, dateObj.date);
+          const ev = getEvenementForExportCell(evMap, employee.userid, dateObj.date, attendance);
+          const { heureEntreeAffichee, heureSortieAffichee } = getHeuresAffichees(attendance);
+          const { entreeColor, sortieColor } = getTimeAnomalyColor(attendance);
+          const fill = attendance?.est_samedi ? GRIS_SAMEDI : undefined;
+          lE.push({ content: heureEntreeAffichee || "", styles: { textColor: entreeColor ? ROUGE : "#111111", fillColor: fill } });
+          lEv.push({
+            content: ev?.display || "",
+            styles: {
+              textColor: ev?.type ? EVENEMENT_HEX[ev.type] || "#374151" : "#111111",
+              fontStyle: "bold",
+              fontSize: 7,
+              fillColor: fill,
+            },
+          });
+          lS.push({ content: heureSortieAffichee || "", styles: { textColor: sortieColor ? ROUGE : "#111111", fillColor: fill } });
+        });
+        // Colonne nom : dessinée à la main (badge en gras + nom en italique)
+        const nom = { content: "", rowSpan: 3, _badge: employee.badgenumber ?? "", _nom: employee.name ?? "" };
+        const r1 = [nom, ...lE];
+        r1._ligne = 0;
+        lEv._ligne = 1;
+        lS._ligne = 2;
+        body.push(r1, lEv, lS);
+      });
+      return body;
+    };
+
+    const nbJours = datesValides.length;
+    const largeurNom = 42;
+    const largeurJour = (W - 2 * M - largeurNom) / Math.max(1, nbJours);
+    const columnStyles = { 0: { cellWidth: largeurNom } };
+    for (let c = 1; c <= nbJours; c++) columnStyles[c] = { cellWidth: largeurJour };
+
+    groupes.forEach(({ section, employees: emps }, idx) => {
+      if (idx > 0) doc.addPage();
+      drawHeader(section);
+      autoTable(doc, {
+        head,
+        body: bodyFor(emps),
+        startY: M + HEADER_H,
+        margin: { top: M, left: M, right: M, bottom: M },
+        theme: "plain",
+        showHead: "everyPage",
+        rowPageBreak: "avoid",
+        tableWidth: W - 2 * M,
+        columnStyles,
+        styles: {
+          font: "helvetica",
+          fontSize: 6.5,
+          cellPadding: { top: 1, bottom: 1, left: 0.2, right: 0.2 },
+          halign: "center",
+          valign: "middle",
+          textColor: "#111111",
+          overflow: "hidden",
+          minCellHeight: 4.8,
+          lineWidth: 0,
+        },
+        headStyles: {
+          fillColor: "#f3f4f6",
+          textColor: "#111111",
+          fontStyle: "bold",
+          fontSize: 6.5,
+          lineColor: FONCE,
+          lineWidth: 0.25,
+          cellPadding: { top: 1, bottom: 1, left: 0.2, right: 0.2 },
+        },
+        didDrawCell: (data) => {
+          if (data.section !== "body") return;
+          const { x, y, width: w, height: h } = data.cell;
+          // Colonne N° / NOM : cadre épais + badge / nom
+          if (data.column.index === 0) {
+            doc.setDrawColor(FONCE);
+            doc.setLineWidth(0.6);
+            doc.rect(x, y, w, h);
+            const raw = data.cell.raw || {};
+            doc.setTextColor("#111111");
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.text(String(raw._badge ?? ""), x + 2.5, y + h / 2 - 0.5);
+            doc.setFont("helvetica", "italic");
+            doc.setFontSize(6.5);
+            const nomLignes = doc.splitTextToSize(String(raw._nom ?? ""), w - 4);
+            doc.text(nomLignes.slice(0, 2), x + 2.5, y + h / 2 + 3);
+            return;
+          }
+          const ligne = data.row.raw?._ligne;
+          // traits verticaux gris entre les jours
+          doc.setDrawColor(GRIS);
+          doc.setLineWidth(0.15);
+          doc.line(x + w, y, x + w, y + h);
+          // trait fin gris clair entre entrée / évènement / sortie
+          if (ligne === 0 || ligne === 1) {
+            doc.setDrawColor(GRIS_CLAIR);
+            doc.setLineWidth(0.15);
+            doc.line(x, y + h, x + w, y + h);
+          }
+          // trait épais foncé au-dessus et en dessous de chaque employé
+          doc.setDrawColor(FONCE);
+          doc.setLineWidth(0.6);
+          if (ligne === 0) doc.line(x, y, x + w, y);
+          if (ligne === 2) doc.line(x, y + h, x + w, y + h);
+        },
+      });
+    });
+
+    return doc;
+  };
+
+  const handlePrintClick = useCallback(async () => {
+    // Une section choisie → impression habituelle
+    if (selectedSection) {
+      handlePrint();
+      return;
+    }
+
+    // Toutes les sections → PDF. On ouvre l'onglet TOUT DE SUITE (pendant le
+    // clic), sinon le navigateur le bloque comme pop-up.
+    const win = window.open("", "_blank");
+    if (win) {
+      win.document.write(
+        '<p style="font-family:Arial;padding:40px;font-size:16px">Préparation de la fiche de présence (PDF)…</p>',
+      );
+    }
+
+    setPreparingPrint(true);
+    setPrintProgress("");
+    try {
+      const data = await fetchAllPages(
+        (p) =>
+          presenceService.getPresencesMoisCalculee(
+            currentYear,
+            currentMonth,
+            false,
+            "",
+            p,
+            PAGE_SIZE_MAX,
+            debouncedSearch,
+          ),
+        "presences",
+        (page, total) => setPrintProgress(`${page}/${total}`),
+      );
+      const all = data.presences || [];
+      const parSection = {};
+      buildEmployeesFromPresences(all).forEach((e) => {
+        const sec = e.section || "SANS SECTION";
+        if (!parSection[sec]) parSection[sec] = [];
+        parSection[sec].push(e);
+      });
+      const groupes = Object.keys(parSection)
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+        .map((section) => ({ section, employees: parSection[section] }));
+
+      if (groupes.length === 0) {
+        if (win && !win.closed) win.close();
+        alert("Aucune présence à imprimer.");
+        return;
+      }
+
+      setPrintProgress("PDF…");
+      const doc = await buildPdf(groupes, buildEvenementsMapFromPresences(all));
+      const nomFichier = `Fiche_Presence_${periode?.mois || currentMonth}_${periode?.annee || currentYear}_par_section.pdf`;
+
+      if (win && !win.closed) {
+        // Affiche le PDF dans l'onglet : bouton Imprimer du lecteur PDF
+        const url = URL.createObjectURL(doc.output("blob"));
+        win.location.href = url;
+        setTimeout(() => URL.revokeObjectURL(url), 10 * 60 * 1000);
+      } else {
+        // Pop-up bloquée → téléchargement du PDF
+        doc.save(nomFichier);
+      }
+    } catch (err) {
+      console.error("Erreur préparation impression:", err);
+      if (win && !win.closed) win.close();
+      alert("Erreur lors de la préparation de l'impression.");
+    } finally {
+      setPreparingPrint(false);
+    }
+    // buildPdf dépend des mêmes données que celles listées ici
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSection, handlePrint, currentYear, currentMonth, debouncedSearch, periode, datesValides, weeks, weekNumbers, getHeuresAffichees]);
 
   // ─── Export Excel ──────────────────────────────────────────────────────────
   const [exporting, setExporting] = useState(false);
@@ -2359,14 +2712,18 @@ const AttendancePage = () => {
     try {
       // On récupère TOUS les employés correspondant aux filtres actuels
       // (mois/année/section/recherche), sans la pagination d'affichage.
-      const data = await presenceService.getPresencesMoisCalculee(
-        currentYear,
-        currentMonth,
-        false,
-        selectedSection,
-        1,
-        100000,
-        debouncedSearch,
+      const data = await fetchAllPages(
+        (p) =>
+          presenceService.getPresencesMoisCalculee(
+            currentYear,
+            currentMonth,
+            false,
+            selectedSection,
+            p,
+            PAGE_SIZE_MAX,
+            debouncedSearch,
+          ),
+        "presences",
       );
       const allPresences = data.presences || [];
 
@@ -2401,21 +2758,29 @@ const AttendancePage = () => {
 
       // ── Indemnité repas + Temps de présence CNAPS (jours + heures) ──────────
       const [indemniteData, heuresTravailData] = await Promise.all([
-        presenceService.getIndemniteRepas(
-          currentYear,
-          currentMonth,
-          selectedSection,
-          1,
-          100000,
-          debouncedSearch,
+        fetchAllPages(
+          (p) =>
+            presenceService.getIndemniteRepas(
+              currentYear,
+              currentMonth,
+              selectedSection,
+              p,
+              PAGE_SIZE_MAX,
+              debouncedSearch,
+            ),
+          "employes",
         ),
-        presenceService.getHeuresTravail(
-          currentYear,
-          currentMonth,
-          selectedSection,
-          1,
-          100000,
-          debouncedSearch,
+        fetchAllPages(
+          (p) =>
+            presenceService.getHeuresTravail(
+              currentYear,
+              currentMonth,
+              selectedSection,
+              p,
+              PAGE_SIZE_MAX,
+              debouncedSearch,
+            ),
+          "employes",
         ),
       ]);
       const indemniteParUser = Object.fromEntries(
@@ -2701,6 +3066,219 @@ const AttendancePage = () => {
   }
 
   // ─── Vue principale ────────────────────────────────────────────────────────
+  // Tableau de présence réutilisable : écran (page courante) et impression
+  // par section (tous les employés).
+  const renderAttendanceTable = (employeesList, evMap) => (
+            <table className="w-full border-collapse text-xs print:text-[7.5pt] print:table-fixed attendance-table">
+              {/* <thead className="sticky top-0 z-20"> */}
+              <thead className="sticky top-0 z-20 shadow-[0_2px_0_0_#1f2937,0_-2px_0_0_#1f2937]">
+                <tr className="bg-gray-100">
+                  <th
+                    // className="border-2 border-gray-800 p-2 sticky left-0 bg-gray-100 z-30 print:w-[120px] print:max-w-[120px]"
+                    // rowSpan={4}
+                    className="border-2 border-gray-800 p-2 sticky left-0 bg-gray-100 z-30 shadow-[2px_0_5px_rgba(0,0,0,0.12)] print:w-[120px] print:max-w-[120px]"
+                    rowSpan={4}
+                  >
+                    <div className="font-bold text-sm w-32 print:w-full">
+                      N° / NOM
+                    </div>
+                  </th>
+                  {weekNumbers.map((weekNum) => (
+                    <th
+                      key={weekNum}
+                      colSpan={weeks[weekNum].length}
+                      className="border-2 border-gray-600 p-1 font-bold bg-gray-100"
+                    >
+                      Semaine {weekNum}
+                    </th>
+                  ))}
+                </tr>
+
+                <tr className="bg-gray-100">
+                  {datesValides.map((date, idx) => (
+                    <th
+                      key={idx}
+                      className="border border-gray-600 p-1 min-w-10 bg-gray-100"
+                    >
+                      <div className="font-bold">{date.code_affichage}</div>
+                    </th>
+                  ))}
+                </tr>
+
+                <tr className="bg-gray-100">
+                  {datesValides.map((date, idx) => (
+                    <th
+                      key={idx}
+                      className="border border-gray-600 p-1 bg-gray-100"
+                    >
+                      <div className="text-xs">
+                        {new Date(date.date).toLocaleDateString("fr-FR", {
+                          weekday: "short",
+                        })}
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        {new Date(date.date).getDate()}
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+
+                <tr className="bg-gray-100">
+                  {datesValides.map((date, idx) => (
+                    <th
+                      key={idx}
+                      className="border border-gray-600 p-1 bg-gray-100"
+                    >
+                      <div className="text-xs font-bold text-gray-700">
+                        {getMonthAbbreviation(date.date)}
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              <tbody>
+                {employeesList.map((employee, empIdx) => (
+                  <React.Fragment key={empIdx}>
+                    <tr className="border-b-2 border-gray-800">
+                      {/* <td className="border-2 border-gray-800 p-2 sticky left-0 bg-white z-10 print:w-[120px] print:max-w-[120px]"> */}
+                      <td className="border-2 border-gray-800 p-2 sticky left-0 bg-white z-10 shadow-[2px_0_5px_rgba(0,0,0,0.08)] print:w-[120px] print:max-w-[120px]">
+                        <div className="flex items-baseline gap-2 print:flex-col print:gap-0">
+                          <span className="font-bold text-sm shrink-0">
+                            {employee.badgenumber}
+                          </span>
+                          <span className="italic text-sm print:text-[7pt] print:leading-tight print:break-words print:overflow-hidden print:line-clamp-2">
+                            {employee.name}
+                          </span>
+                        </div>
+                        {!selectedSection && (
+                          <div className="text-xs text-gray-400 mt-0.5 print:hidden">
+                            {employee.section}
+                          </div>
+                        )}
+                      </td>
+
+                      {datesValides.map((dateObj, dayIdx) => {
+                        const attendance = getAttendanceData(
+                          employee,
+                          dateObj.date,
+                        );
+                        const eventData = getEvenementForExportCell(
+                          evMap,
+                          employee.userid,
+                          dateObj.date,
+                          attendance,
+                        );
+                        const { heureEntreeAffichee, heureSortieAffichee } =
+                          getHeuresAffichees(attendance);
+                        const backgroundColor =
+                          getCellBackgroundColor(attendance);
+                        const { entreeColor, sortieColor } =
+                          getTimeAnomalyColor(attendance);
+                        const estModifieManuellement =
+                          !!attendance?.anomalie_id;
+                        const estCorrectionAuto =
+                          !!attendance?.est_correction_auto;
+
+                        return (
+                          <td
+                            key={dayIdx}
+                            className={`border border-gray-600 p-0 text-center relative group ${backgroundColor}`}
+                          >
+                            {estModifieManuellement && (
+                              <div
+                                className="absolute top-0 right-0 w-2 h-2 bg-yellow-500 rounded-full"
+                                title="Heures modifiées manuellement"
+                              ></div>
+                            )}
+                            {estCorrectionAuto && (
+                              <div
+                                className="absolute top-0 left-0 w-2 h-2 bg-green-500 rounded-full"
+                                title="Correction automatique"
+                              ></div>
+                            )}
+
+                            <div className="flex flex-col h-full">
+                              <button
+                                onClick={() =>
+                                  modeHeures !== "brutes" &&
+                                  handleHeureClick(
+                                    employee,
+                                    dateObj.date,
+                                    attendance,
+                                  )
+                                }
+                                disabled={modeHeures === "brutes"}
+                                className="border-b border-gray-300 px-1 py-0.5 min-h-[20px] w-full transition-colors print:hover:bg-transparent"
+                                title={
+                                  modeHeures === "brutes"
+                                    ? "Non modifiable"
+                                    : "Modifier"
+                                }
+                              >
+                                {heureEntreeAffichee ? (
+                                  <span className={entreeColor}>
+                                    {heureEntreeAffichee}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400 italic text-xs"></span>
+                                )}
+                              </button>
+
+                              <button
+                                onClick={() =>
+                                  handleEvenementClick(
+                                    employee,
+                                    dateObj.date,
+                                    attendance,
+                                  )
+                                }
+                                className={`print:text-[7pt] border-b border-gray-300 px-1 py-0.5 min-h-[21px] text-xs font-bold w-full hover:bg-gray-50 transition-colors print:hover:bg-transparent ${eventData?.type ? getEvenementTextColor(eventData.type) : ""}`}
+                                title={
+                                  eventData?.type
+                                    ? `Événement: ${eventData.type}`
+                                    : "Ajouter un événement"
+                                }
+                              >
+                                {eventData?.display || ""}
+                              </button>
+
+                              <button
+                                onClick={() =>
+                                  modeHeures !== "brutes" &&
+                                  handleHeureClick(
+                                    employee,
+                                    dateObj.date,
+                                    attendance,
+                                  )
+                                }
+                                disabled={modeHeures === "brutes"}
+                                className="px-1 py-0.5 min-h-[20px] w-full transition-colors print:hover:bg-transparent"
+                                title={
+                                  modeHeures === "brutes"
+                                    ? "Non modifiable"
+                                    : "Modifier"
+                                }
+                              >
+                                {heureSortieAffichee ? (
+                                  <span className={sortieColor}>
+                                    {heureSortieAffichee}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400 italic text-xs"></span>
+                                )}
+                              </button>
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+  );
+
   return (
     <div className="p-4 bg-gray-50 min-h-screen">
       {/* Spinner discret lors des rechargements */}
@@ -2885,6 +3463,36 @@ const AttendancePage = () => {
                 Horaires
               </button>
             )}
+                        <button
+              onClick={() =>
+                navigate("/conges-valides", {
+                  state: { month: currentMonth, year: currentYear },
+                })
+              }
+              title="Liste des congés validés importés d'Access"
+              className="shrink-0 px-3 h-8 text-sm font-medium bg-green-600 text-white rounded hover:bg-green-700 whitespace-nowrap"
+            >
+              Congé validé
+            </button>
+
+            {matriculeFilter && (
+              <span className="shrink-0 flex items-center gap-1 pl-2.5 pr-1 h-8 text-sm bg-blue-50 border border-blue-300 text-blue-800 rounded whitespace-nowrap">
+                Matricule <b>{matriculeFilter}</b>
+                {matriculeNom && <span className="text-blue-600">· {matriculeNom}</span>}
+                <button
+                  onClick={() => {
+                    setMatriculeFilter("");
+                    setMatriculeNom("");
+                    setPage(0);
+                    window.history.replaceState({}, document.title);
+                  }}
+                  title="Afficher tous les employés"
+                  className="ml-1 p-0.5 rounded hover:bg-blue-100"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            )}
 
             <button
               onClick={() =>
@@ -2961,12 +3569,19 @@ const AttendancePage = () => {
             </button>
 
             <button
-              onClick={() => handlePrint()}
-              title="Imprimer"
-              className="shrink-0 flex items-center gap-1.5 px-3 h-8 text-sm font-medium bg-akj text-white rounded hover:bg-gray-700 whitespace-nowrap"
+              onClick={handlePrintClick}
+              disabled={preparingPrint}
+              title={
+                selectedSection
+                  ? "Imprimer"
+                  : "Imprimer toutes les sections (une fiche par section)"
+              }
+              className="shrink-0 flex items-center gap-1.5 px-3 h-8 text-sm font-medium bg-akj text-white rounded hover:bg-gray-700 disabled:opacity-60 whitespace-nowrap"
             >
               <Printer className="w-4 h-4" />
-              Imprimer
+              {preparingPrint
+                ? `Préparation… ${printProgress}`
+                : "Imprimer"}
             </button>
           </div>
         </div>
@@ -2998,213 +3613,7 @@ const AttendancePage = () => {
         {employees.length > 0 && (
           // <div className="bg-white border-x-2 border-b-2 border-gray-800 print:overflow-visible">
           <div className="bg-white border-2 border-gray-800 overflow-auto max-h-[calc(100vh-300px)] print:overflow-visible print:max-h-none">
-            <table className="w-full border-collapse text-xs print:text-[7.5pt] print:table-fixed attendance-table">
-              {/* <thead className="sticky top-0 z-20"> */}
-              <thead className="sticky top-0 z-20 shadow-[0_2px_0_0_#1f2937,0_-2px_0_0_#1f2937]">
-                <tr className="bg-gray-100">
-                  <th
-                    // className="border-2 border-gray-800 p-2 sticky left-0 bg-gray-100 z-30 print:w-[120px] print:max-w-[120px]"
-                    // rowSpan={4}
-                    className="border-2 border-gray-800 p-2 sticky left-0 bg-gray-100 z-30 shadow-[2px_0_5px_rgba(0,0,0,0.12)] print:w-[120px] print:max-w-[120px]"
-                    rowSpan={4}
-                  >
-                    <div className="font-bold text-sm w-32 print:w-full">
-                      N° / NOM
-                    </div>
-                  </th>
-                  {weekNumbers.map((weekNum) => (
-                    <th
-                      key={weekNum}
-                      colSpan={weeks[weekNum].length}
-                      className="border-2 border-gray-600 p-1 font-bold bg-gray-100"
-                    >
-                      Semaine {weekNum}
-                    </th>
-                  ))}
-                </tr>
-
-                <tr className="bg-gray-100">
-                  {datesValides.map((date, idx) => (
-                    <th
-                      key={idx}
-                      className="border border-gray-600 p-1 min-w-10 bg-gray-100"
-                    >
-                      <div className="font-bold">{date.code_affichage}</div>
-                    </th>
-                  ))}
-                </tr>
-
-                <tr className="bg-gray-100">
-                  {datesValides.map((date, idx) => (
-                    <th
-                      key={idx}
-                      className="border border-gray-600 p-1 bg-gray-100"
-                    >
-                      <div className="text-xs">
-                        {new Date(date.date).toLocaleDateString("fr-FR", {
-                          weekday: "short",
-                        })}
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        {new Date(date.date).getDate()}
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-
-                <tr className="bg-gray-100">
-                  {datesValides.map((date, idx) => (
-                    <th
-                      key={idx}
-                      className="border border-gray-600 p-1 bg-gray-100"
-                    >
-                      <div className="text-xs font-bold text-gray-700">
-                        {getMonthAbbreviation(date.date)}
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-
-              <tbody>
-                {employees.map((employee, empIdx) => (
-                  <React.Fragment key={empIdx}>
-                    <tr className="border-b-2 border-gray-800">
-                      {/* <td className="border-2 border-gray-800 p-2 sticky left-0 bg-white z-10 print:w-[120px] print:max-w-[120px]"> */}
-                      <td className="border-2 border-gray-800 p-2 sticky left-0 bg-white z-10 shadow-[2px_0_5px_rgba(0,0,0,0.08)] print:w-[120px] print:max-w-[120px]">
-                        <div className="flex items-baseline gap-2 print:flex-col print:gap-0">
-                          <span className="font-bold text-sm shrink-0">
-                            {employee.badgenumber}
-                          </span>
-                          <span className="italic text-sm print:text-[7pt] print:leading-tight print:break-words print:overflow-hidden print:line-clamp-2">
-                            {employee.name}
-                          </span>
-                        </div>
-                        {!selectedSection && (
-                          <div className="text-xs text-gray-400 mt-0.5 print:hidden">
-                            {employee.section}
-                          </div>
-                        )}
-                      </td>
-
-                      {datesValides.map((dateObj, dayIdx) => {
-                        const attendance = getAttendanceData(
-                          employee,
-                          dateObj.date,
-                        );
-                        const eventData = getEvenementForCell(
-                          employee.userid,
-                          dateObj.date,
-                          attendance,
-                        );
-                        const { heureEntreeAffichee, heureSortieAffichee } =
-                          getHeuresAffichees(attendance);
-                        const backgroundColor =
-                          getCellBackgroundColor(attendance);
-                        const { entreeColor, sortieColor } =
-                          getTimeAnomalyColor(attendance);
-                        const estModifieManuellement =
-                          !!attendance?.anomalie_id;
-                        const estCorrectionAuto =
-                          !!attendance?.est_correction_auto;
-
-                        return (
-                          <td
-                            key={dayIdx}
-                            className={`border border-gray-600 p-0 text-center relative group ${backgroundColor}`}
-                          >
-                            {estModifieManuellement && (
-                              <div
-                                className="absolute top-0 right-0 w-2 h-2 bg-yellow-500 rounded-full"
-                                title="Heures modifiées manuellement"
-                              ></div>
-                            )}
-                            {estCorrectionAuto && (
-                              <div
-                                className="absolute top-0 left-0 w-2 h-2 bg-green-500 rounded-full"
-                                title="Correction automatique"
-                              ></div>
-                            )}
-
-                            <div className="flex flex-col h-full">
-                              <button
-                                onClick={() =>
-                                  modeHeures !== "brutes" &&
-                                  handleHeureClick(
-                                    employee,
-                                    dateObj.date,
-                                    attendance,
-                                  )
-                                }
-                                disabled={modeHeures === "brutes"}
-                                className="border-b border-gray-300 px-1 py-0.5 min-h-[20px] w-full transition-colors print:hover:bg-transparent"
-                                title={
-                                  modeHeures === "brutes"
-                                    ? "Non modifiable"
-                                    : "Modifier"
-                                }
-                              >
-                                {heureEntreeAffichee ? (
-                                  <span className={entreeColor}>
-                                    {heureEntreeAffichee}
-                                  </span>
-                                ) : (
-                                  <span className="text-gray-400 italic text-xs"></span>
-                                )}
-                              </button>
-
-                              <button
-                                onClick={() =>
-                                  handleEvenementClick(
-                                    employee,
-                                    dateObj.date,
-                                    attendance,
-                                  )
-                                }
-                                className={`print:text-[7pt] border-b border-gray-300 px-1 py-0.5 min-h-[21px] text-xs font-bold w-full hover:bg-gray-50 transition-colors print:hover:bg-transparent ${eventData?.type ? getEvenementTextColor(eventData.type) : ""}`}
-                                title={
-                                  eventData?.type
-                                    ? `Événement: ${eventData.type}`
-                                    : "Ajouter un événement"
-                                }
-                              >
-                                {eventData?.display || ""}
-                              </button>
-
-                              <button
-                                onClick={() =>
-                                  modeHeures !== "brutes" &&
-                                  handleHeureClick(
-                                    employee,
-                                    dateObj.date,
-                                    attendance,
-                                  )
-                                }
-                                disabled={modeHeures === "brutes"}
-                                className="px-1 py-0.5 min-h-[20px] w-full transition-colors print:hover:bg-transparent"
-                                title={
-                                  modeHeures === "brutes"
-                                    ? "Non modifiable"
-                                    : "Modifier"
-                                }
-                              >
-                                {heureSortieAffichee ? (
-                                  <span className={sortieColor}>
-                                    {heureSortieAffichee}
-                                  </span>
-                                ) : (
-                                  <span className="text-gray-400 italic text-xs"></span>
-                                )}
-                              </button>
-                            </div>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
+            {renderAttendanceTable(employees, evenementsMap)}
           </div>
         )}
 
@@ -3231,6 +3640,7 @@ const AttendancePage = () => {
           </div>
         )}
       </div>
+
       <AppFooter />
 
       {/* ── Modals ── */}

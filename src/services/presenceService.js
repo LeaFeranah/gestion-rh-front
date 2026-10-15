@@ -95,9 +95,25 @@ const presenceService = {
     mois,
     inclureHorsPeriode = false,
     section = "",
-    page = 1,
+  //   page = 1,
+  //   pageSize = 50,
+  //   q = "",
+  // ) => {
+  //   try {
+  //     const params = {
+  //       annee,
+  //       mois,
+  //       inclure_hors_periode: inclureHorsPeriode,
+  //       page,
+  //       page_size: pageSize,
+  //     };
+
+  //     if (section) params.section = section;
+  //     if (q) params.q = q;
+      page = 1,
     pageSize = 50,
     q = "",
+    badgenumber = "",
   ) => {
     try {
       const params = {
@@ -110,6 +126,7 @@ const presenceService = {
 
       if (section) params.section = section;
       if (q) params.q = q;
+      if (badgenumber) params.badgenumber = badgenumber; // matricule exact
 
       const response = await api.get(`api/presence/mois/detail/calculee/`, {
         params,
@@ -415,6 +432,54 @@ const presenceService = {
     return response.data;
   },
 
+
+
+
+      // ─── Congés validés (importés depuis Access dbo_congevalides) ───────────
+  getCongesValides: async ({
+    annee = null,
+    mois = null,
+    q = "",
+    section = "",
+    statut = "",
+    page = 1,
+    pageSize = 50,
+  } = {}) => {
+    const params = { page, page_size: pageSize };
+    if (annee && mois) {
+      params.annee = annee;
+      params.mois = mois;
+    }
+    if (q) params.q = q;
+    if (section) params.section = section;
+    if (statut) params.statut = statut;
+    const response = await api.get("api/presence/conges-valides/", { params });
+    return response.data;
+  },
+
+  validerConge: async (id, valide) => {
+    const response = await api.patch(
+      `api/presence/conges-valides/${id}/valider/`,
+      { valide },
+    );
+    return response.data;
+  },
+  // Notification 🔔 : nouveaux congés arrivés d'Access, pas encore validés
+  getNotificationsConges: async () => {
+    const response = await api.get("api/presence/conges-valides/notifications/");
+    return response.data;
+  },
+    // Marque les notifications comme vues -> badge rouge à 0
+  marquerNotificationsVues: async () => {
+    const response = await api.post("api/presence/conges-valides/notifications/vues/");
+    return response.data;
+  },
+  synchroniserConges: async () => {
+    const response = await api.post("api/presence/conges-valides/synchroniser/");
+    return response.data;
+  },
+
+  
     getToutesSections: async () => {
     const response = await api.get('api/presence/toutes-sections/');
     return response.data;

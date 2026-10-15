@@ -9,6 +9,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import anomalieService from "../../services/anomalieService";
+import presenceService from "../../services/presenceService";
 import "/src/styles/custom.css";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -67,6 +68,8 @@ const getEtatColor = (etat) => {
     pas_sortie: "bg-orange-100 text-orange-700 border-orange-300",
     multiples_pointages: "bg-yellow-100 text-yellow-700 border-yellow-300",
     entree_trop_tot: "bg-gray-100 text-gray-700 border-gray-300",
+    retard_sortie: "bg-purple-100 text-purple-700 border-purple-300",
+    ecart_horaire: "bg-blue-100 text-blue-700 border-blue-300",
     abs: "bg-gray-200 text-gray-800 border-gray-400",
     ok: "bg-green-100 text-green-700 border-green-300",
   };
@@ -85,11 +88,69 @@ const formatTimeHHMM = (timeStr) => {
 
 const formatDisplayTime = (timeStr) => formatTimeHHMM(timeStr) || "-";
 
+// CP en heures : CP2 … CP7 (enregistré comme type "CP" + commentaire "6",
+// exactement comme dans la page Présence → le calcul CP ne change pas)
+const CP_HEURES = ["2", "3", "4", "5", "6", "7"];
+
+// Valeur affichée dans la liste : "CP6" pour un CP, sinon le code (X, RM, OS…)
+const toSelectValue = (type, commentaire) => {
+  if (type === "CP") {
+    const h = (commentaire || "").trim();
+    return /^\d+$/.test(h) ? `CP${h}` : "CP";
+  }
+  return type || "X";
+};
+
 // ─── Ligne anomalie ───────────────────────────────────────────────────────────
 
-const AnomalieRow = ({ anomalie, onUpdate }) => {
+const AnomalieRow = ({ anomalie, onUpdate, typesEvenement = [] }) => {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [savingEvenement, setSavingEvenement] = useState(false);
+
+  const evenementValue = toSelectValue(
+    anomalie.evenement,
+    anomalie.evenement_commentaire,
+  );
+  const optionsValues = typesEvenement.flatMap((t) =>
+    t.code === "CP" ? CP_HEURES.map((h) => `CP${h}`) : [t.code],
+  );
+
+  // Modification directe de l'évènement (X, RM, CP, OS…) → table Evenement,
+  // la même que celle affichée dans la page Présence.
+  const handleEvenementChange = async (e) => {
+    const valeur = e.target.value;
+    const ancienType = anomalie.evenement || "X";
+    let type = valeur;
+    let commentaire =
+      valeur === ancienType ? anomalie.evenement_commentaire || "" : "";
+
+    const cp = valeur.match(/^CP(\d*)$/); // CP2 … CP7
+    if (cp) {
+      type = "CP";
+      commentaire = cp[1]; // nombre d'heures
+    } else if (type === "AUT") {
+      const txt = window.prompt("Précisez l'évènement :", commentaire);
+      if (txt === null) return; // annulé
+      commentaire = txt.trim();
+    }
+
+    setSavingEvenement(true);
+    try {
+      await presenceService.updateEvenementByUserDate(
+        anomalie.userid,
+        anomalie.date,
+        type,
+        commentaire,
+      );
+      onUpdate({ ...anomalie, evenement: type, evenement_commentaire: commentaire });
+    } catch (err) {
+      console.error("Erreur:", err);
+      alert("Erreur lors de la modification de l'évènement");
+    } finally {
+      setSavingEvenement(false);
+    }
+  };
 
   const [brutsOriginaux] = useState({
     estMultiple: anomalie.etat === "multiples_pointages",
@@ -291,6 +352,33 @@ const AnomalieRow = ({ anomalie, onUpdate }) => {
       <td className={td}>{renderRectifie()}</td>
       <td className={td}>{renderBrutes()}</td>
       <td className={td}>
+        <select
+          value={evenementValue}
+          onChange={handleEvenementChange}
+          disabled={savingEvenement}
+          title={anomalie.evenement_commentaire || "Modifier l'évènement"}
+          className="w-full px-1.5 py-1 border border-gray-200 rounded text-xs bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 disabled:opacity-60"
+        >
+          {!optionsValues.includes(evenementValue) && (
+            <option value={evenementValue}>{evenementValue}</option>
+          )}
+          {typesEvenement.map((t) =>
+            t.code === "CP" ? (
+              CP_HEURES.map((h) => (
+                <option key={`CP${h}`} value={`CP${h}`}>
+                  CP{h} - Congé Payé {h}h
+                </option>
+              ))
+            ) : (
+              <option key={t.code} value={t.code}>
+                {t.code}
+                {t.libelle ? ` - ${t.libelle}` : ""}
+              </option>
+            ),
+          )}
+        </select>
+      </td>
+      <td className={td}>
         <div className="flex items-center justify-between gap-2">
           <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium border ${getEtatColor(anomalie.etat)}`}>
             {anomalie.etat_display}
@@ -333,6 +421,15 @@ const AnomaliesPage = () => {
   const [selectedDate, setSelectedDate] = useState("all");
   const [currentMonth, setCurrentMonth] = useState(getInitialMonth);
   const [currentYear, setCurrentYear] = useState(getInitialYear);
+  const [typesEvenement, setTypesEvenement] = useState([]);
+
+  // Liste des évènements de présence (X, RM, CP, OS…)
+  useEffect(() => {
+    presenceService
+      .getTypesEvenements()
+      .then((d) => setTypesEvenement(d?.types_evenements || []))
+      .catch((err) => console.error("Erreur types évènements:", err));
+  }, []);
 
   const fetchAnomalies = useCallback(async () => {
     try {
@@ -609,6 +706,7 @@ const AnomaliesPage = () => {
                       <col style={{ width: "100px" }} />
                       <col style={{ width: "100px" }} />
                       <col style={{ width: "100px" }} />
+                      <col style={{ width: "150px" }} />
                     </colgroup>
                     <thead>
                       <tr className="border-b border-gray-100 bg-gray-200">
@@ -628,6 +726,7 @@ const AnomaliesPage = () => {
                           <span className="text-gray-700 font-bold">{anomalies[0]?.code_date}</span>
                           <span className="block text-gray-400 font-normal normal-case tracking-normal">Pointages bruts</span>
                         </th>
+                        <th className="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider">Évènement</th>
                         <th className="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider">État</th>
                       </tr>
                     </thead>
@@ -637,6 +736,7 @@ const AnomaliesPage = () => {
                           key={anomalie.id}
                           anomalie={anomalie}
                           onUpdate={handleUpdateAnomalie}
+                          typesEvenement={typesEvenement}
                         />
                       ))}
                     </tbody>

@@ -1,7 +1,176 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, LogOut, ChevronDown, User, X } from "lucide-react";
 import logo from "../../assets/akanjo.png";
+
+import presenceService from "../../services/presenceService";
+
+const fmtDateCourte = (d) => {
+  if (!d) return "—";
+  const [y, m, j] = String(d).slice(0, 10).split("-");
+  return `${j}/${m}/${y}`;
+};
+
+/* ── Cloche : nouveaux congés à valider ──────────────────────── */
+const NOTIF_INTERVAL_MS = 60 * 1000; // vérifie toutes les minutes
+
+const NotificationConges = () => {
+  const navigate = useNavigate();
+  const [count, setCount] = useState(0); // non vues (badge rouge)
+  const [aValider, setAValider] = useState(0); // nouveaux congés encore à valider
+  const [derniers, setDerniers] = useState([]);
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  const charger = useCallback(async () => {
+    try {
+      const d = await presenceService.getNotificationsConges();
+      setCount(d.count || 0);
+      setAValider(d.a_valider || 0);
+      setDerniers(d.derniers || []);
+      return d;
+    } catch {
+      /* serveur indisponible : on garde l'ancien compteur */
+      return null;
+    }
+  }, []);
+
+  // Ouvrir la cloche = notifications vues -> le badge rouge revient à 0
+  const ouvrir = async () => {
+    if (open) {
+      setOpen(false);
+      return;
+    }
+    setOpen(true);
+    const d = await charger();
+    if (d && d.count > 0) {
+      try {
+        await presenceService.marquerNotificationsVues();
+        setCount(0);
+      } catch {
+        /* on réessaiera à la prochaine ouverture */
+      }
+    }
+  };
+
+  useEffect(() => {
+    charger();
+    const t = setInterval(charger, NOTIF_INTERVAL_MS);
+    // rafraîchi aussi tout de suite quand on valide / synchronise un congé
+    window.addEventListener("conges-maj", charger);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener("conges-maj", charger);
+    };
+  }, [charger]);
+
+  useEffect(() => {
+    const close = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
+
+  const voirTout = () => {
+    setOpen(false);
+    navigate("/conges-valides", {
+      state: { statut: "nouveau", toutesPeriodes: true },
+    });
+  };
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={ouvrir}
+        title={
+          count > 0
+            ? `${count} nouvelle(s) notification(s)`
+            : "Aucune nouvelle notification"
+        }
+        className="relative flex items-center justify-center w-9 h-9 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+      >
+        <Bell className="w-[18px] h-[18px] text-gray-600" strokeWidth={1.8} />
+        {count > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
+            {count > 99 ? "99+" : count}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-xl border border-gray-200 shadow-lg z-50 animate-dropIn">
+          <div className="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between">
+            <p className="text-[13px] font-semibold text-gray-800">
+              Congés à valider
+            </p>
+            {aValider > 0 && (
+              <span className="px-2 py-0.5 text-[11px] font-medium rounded-md bg-yellow-50 text-yellow-700 border border-yellow-200">
+                {aValider} à valider
+              </span>
+            )}
+          </div>
+
+          {derniers.length === 0 ? (
+            <p className="px-4 py-6 text-center text-[13px] text-gray-400">
+              Aucun nouveau congé à valider
+            </p>
+          ) : (
+            <ul className="max-h-80 overflow-y-auto divide-y divide-gray-100">
+              {derniers.map((c) => (
+                <li key={c.id}>
+                  <button
+                    onClick={voirTout}
+                    className={`w-full text-left px-4 py-2.5 hover:bg-gray-50 transition-colors ${
+                      c.vu ? "" : "bg-blue-50/60"
+                    }`}
+                  >
+                    <p className="text-[13px] font-semibold text-gray-800 flex items-center gap-1.5">
+                      {!c.vu && (
+                        <span
+                          className="w-2 h-2 rounded-full bg-blue-500 shrink-0"
+                          title="Non lue"
+                        />
+                      )}
+                      {c.matricule}
+                      {c.nom && (
+                        <span className="font-normal text-gray-500">
+                          {" "}
+                          · {c.nom}
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-[12px] text-gray-500 mt-0.5">
+                      {fmtDateCourte(c.date_depart)} →{" "}
+                      {fmtDateCourte(c.date_retour)}
+                      {c.type_absence && (
+                        <span className="ml-1.5 px-1.5 py-px rounded bg-gray-100 text-gray-600 text-[11px]">
+                          {c.type_absence}
+                        </span>
+                      )}
+                    </p>
+                    {c.motif && (
+                      <p className="text-[12px] text-gray-400 truncate">
+                        {c.motif}
+                      </p>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <button
+            onClick={voirTout}
+            className="w-full px-4 py-2.5 text-[13px] font-medium text-gray-700 hover:bg-gray-50 border-t border-gray-100 rounded-b-xl"
+          >
+            Voir tous les congés à valider →
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
 
 /* ── Toggle Switch ───────────────────────────────────────────── */
 const SidebarToggle = ({ isOpen, onClick }) => (
@@ -170,6 +339,7 @@ const Navbar = ({ sidebarOpen, onToggleSidebar }) => {
 
         {/* Right */}
         <div className="flex items-center gap-1">
+          <NotificationConges />
           <div className="h-5 w-px bg-gray-200 mx-1 hidden sm:block" />
 
           {/* User */}
