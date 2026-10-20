@@ -26,7 +26,6 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import * as XLSX from "xlsx";
 import presenceService from "../../services/presenceService";
-import { useReactToPrint } from "react-to-print";
 import "/src/styles/custom.css";
 import PageHeader from "../../components/headers/PageHeader";
 import AppFooter from "../../components/layout/AppFooter";
@@ -2424,16 +2423,6 @@ const AttendancePage = () => {
     ][d.getMonth()];
   }, []);
 
-  // preserveAfterPrint : sous Edge, window.print() rend la main avant la fin
-  // de l'aperçu ; sans cette option react-to-print supprime aussitôt l'iframe
-  // et l'aperçu d'Edge reste bloqué sur "Chargement". L'iframe est nettoyée
-  // automatiquement à l'impression suivante.
-  const handlePrint = useReactToPrint({
-    contentRef: componentRef,
-    documentTitle: `Fiche_Presence_${periode?.mois}_${periode?.annee}${selectedSection ? `_${selectedSection}` : ""}`,
-    preserveAfterPrint: true,
-  });
-
   // ─── Impression "Toutes les sections" : une fiche par section ─────────────
   const [preparingPrint, setPreparingPrint] = useState(false);
   const [printProgress, setPrintProgress] = useState("");
@@ -2539,7 +2528,14 @@ const AttendancePage = () => {
           lS.push({ content: heureSortieAffichee || "", styles: { textColor: sortieColor ? ROUGE : "#111111", fillColor: fill } });
         });
         // Colonne nom : dessinée à la main (badge en gras + nom en italique)
-        const nom = { content: "", rowSpan: 3, _badge: employee.badgenumber ?? "", _nom: employee.name ?? "" };
+        const nom = {
+          content: "",
+          rowSpan: 3,
+          _badge: employee.badgenumber ?? "",
+          _nom: employee.name ?? "",
+          _userid: employee.userid,
+          _section: employee.section,
+        };
         const r1 = [nom, ...lE];
         r1._ligne = 0;
         lEv._ligne = 1;
@@ -2555,14 +2551,27 @@ const AttendancePage = () => {
     const columnStyles = { 0: { cellWidth: largeurNom } };
     for (let c = 1; c <= nbJours; c++) columnStyles[c] = { cellWidth: largeurJour };
 
+    // ── Pied de page : infos collectées pendant le dessin du tableau ─────
+    // pageInfos[n° page] = { section, employes: Set(userid), finSection }
+    const pageInfos = {};
+    const pageCourante = () => doc.internal.getCurrentPageInfo().pageNumber;
+    const infoPage = (section) => {
+      const n = pageCourante();
+      if (!pageInfos[n]) pageInfos[n] = { section, employes: new Set(), finSection: false };
+      return pageInfos[n];
+    };
+    const FOOTER_H = 6; // place réservée au pied de page sous le tableau
+
     groupes.forEach(({ section, employees: emps }, idx) => {
       if (idx > 0) doc.addPage();
       drawHeader(section);
+      infoPage(section);
       autoTable(doc, {
         head,
         body: bodyFor(emps),
         startY: M + HEADER_H,
-        margin: { top: M, left: M, right: M, bottom: M },
+        margin: { top: M, left: M, right: M, bottom: M + FOOTER_H },
+        didAddPage: () => infoPage(section),
         theme: "plain",
         showHead: "everyPage",
         rowPageBreak: "avoid",
@@ -2597,6 +2606,8 @@ const AttendancePage = () => {
             doc.setLineWidth(0.6);
             doc.rect(x, y, w, h);
             const raw = data.cell.raw || {};
+            // Compte l'employé sur la feuille où il est imprimé
+            infoPage(raw._section).employes.add(raw._userid);
             doc.setTextColor("#111111");
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
@@ -2625,20 +2636,52 @@ const AttendancePage = () => {
           if (ligne === 2) doc.line(x, y + h, x + w, y + h);
         },
       });
+      // Dernière feuille de la section : on y mettra le total effectif
+      const fin = infoPage(section);
+      fin.finSection = true;
+      fin.totalSection = emps.length;
     });
+
+    // ── Pied de chaque feuille (dessiné à la fin : nombre total de pages connu)
+    const H = doc.internal.pageSize.getHeight();
+    const totalPages = doc.getNumberOfPages();
+    const yPied = H - M - 1;
+    for (let n = 1; n <= totalPages; n++) {
+      doc.setPage(n);
+      const info = pageInfos[n] || { section: "", employes: new Set() };
+      doc.setDrawColor(GRIS);
+      doc.setLineWidth(0.2);
+      doc.line(M, yPied - 4, W - M, yPied - 4);
+      doc.setTextColor("#111111");
+      doc.setFontSize(8.5);
+
+      // En bas à gauche : Section · Effectif (· Total effectif en fin de section)
+      let x = M;
+      const morceau = (label, valeur) => {
+        doc.setFont("helvetica", "bold");
+        doc.text(label, x, yPied);
+        x += doc.getTextWidth(label) + 1.2;
+        doc.setFont("helvetica", "normal");
+        doc.text(String(valeur), x, yPied);
+        x += doc.getTextWidth(String(valeur)) + 8;
+      };
+      morceau("Section :", info.section || "");
+      morceau("Effectif :", info.employes.size);
+      if (info.finSection) morceau("Total effectif :", info.totalSection);
+
+      // En bas à droite : numéro de page
+      doc.setFont("helvetica", "normal");
+      doc.text(`Page ${n} / ${totalPages}`, W - M, yPied, { align: "right" });
+    }
 
     return doc;
   };
 
   const handlePrintClick = useCallback(async () => {
-    // Une section choisie → impression habituelle
-    if (selectedSection) {
-      handlePrint();
-      return;
-    }
-
-    // Toutes les sections → PDF. On ouvre l'onglet TOUT DE SUITE (pendant le
-    // clic), sinon le navigateur le bloque comme pop-up.
+    // Une section ou toutes les sections → PDF (une fiche par section, avec
+    // pied de page : section, effectif de la feuille, total, n° de page).
+    // On ouvre l'onglet TOUT DE SUITE (pendant le clic), sinon le navigateur
+    // le bloque comme pop-up.
     const win = window.open("", "_blank");
     if (win) {
       win.document.write(
@@ -2655,10 +2698,11 @@ const AttendancePage = () => {
             currentYear,
             currentMonth,
             false,
-            "",
+            selectedSection || "",
             p,
             PAGE_SIZE_MAX,
             debouncedSearch,
+            matriculeFilter,
           ),
         "presences",
         (page, total) => setPrintProgress(`${page}/${total}`),
@@ -2682,7 +2726,7 @@ const AttendancePage = () => {
 
       setPrintProgress("PDF…");
       const doc = await buildPdf(groupes, buildEvenementsMapFromPresences(all));
-      const nomFichier = `Fiche_Presence_${periode?.mois || currentMonth}_${periode?.annee || currentYear}_par_section.pdf`;
+      const nomFichier = `Fiche_Presence_${periode?.mois || currentMonth}_${periode?.annee || currentYear}_${selectedSection || "par_section"}.pdf`;
 
       if (win && !win.closed) {
         // Affiche le PDF dans l'onglet : bouton Imprimer du lecteur PDF
@@ -2702,7 +2746,7 @@ const AttendancePage = () => {
     }
     // buildPdf dépend des mêmes données que celles listées ici
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSection, handlePrint, currentYear, currentMonth, debouncedSearch, periode, datesValides, weeks, weekNumbers, getHeuresAffichees]);
+  }, [selectedSection, matriculeFilter, currentYear, currentMonth, debouncedSearch, periode, datesValides, weeks, weekNumbers, getHeuresAffichees]);
 
   // ─── Export Excel ──────────────────────────────────────────────────────────
   const [exporting, setExporting] = useState(false);
