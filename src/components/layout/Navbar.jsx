@@ -4,6 +4,7 @@ import { Bell, LogOut, ChevronDown, User, X } from "lucide-react";
 import logo from "../../assets/akanjo.png";
 
 import presenceService from "../../services/presenceService";
+import "/src/styles/custom.css";
 
 const fmtDateCourte = (d) => {
   if (!d) return "—";
@@ -72,10 +73,19 @@ const NotificationConges = () => {
     return () => document.removeEventListener("mousedown", close);
   }, []);
 
+  // Clic sur un matricule : uniquement ce congé
+  const voirConge = (c) => {
+    setOpen(false);
+    navigate("/conges-valides", {
+      state: { congeId: c.id, matricule: c.matricule },
+    });
+  };
+
+  // « Voir tous » : tous les congés validés, toutes périodes
   const voirTout = () => {
     setOpen(false);
     navigate("/conges-valides", {
-      state: { statut: "nouveau", toutesPeriodes: true },
+      state: { statut: "", toutesPeriodes: true, congeId: null },
     });
   };
 
@@ -105,9 +115,7 @@ const NotificationConges = () => {
               Congés à valider
             </p>
             {aValider > 0 && (
-              <span className="px-2 py-0.5 text-[11px] font-medium rounded-md bg-yellow-50 text-yellow-700 border border-yellow-200">
-                {aValider} à valider
-              </span>
+              <span className="text-[12px] text-gray-500">{aValider}</span>
             )}
           </div>
 
@@ -120,18 +128,12 @@ const NotificationConges = () => {
               {derniers.map((c) => (
                 <li key={c.id}>
                   <button
-                    onClick={voirTout}
-                    className={`w-full text-left px-4 py-2.5 hover:bg-gray-50 transition-colors ${
-                      c.vu ? "" : "bg-blue-50/60"
+                    onClick={() => voirConge(c)}
+                    className={`w-full text-left px-4 py-2.5 border-l-2 hover:bg-gray-50 transition-colors ${
+                      c.vu ? "border-transparent" : "border-[#56656b] bg-gray-50"
                     }`}
                   >
-                    <p className="text-[13px] font-semibold text-gray-800 flex items-center gap-1.5">
-                      {!c.vu && (
-                        <span
-                          className="w-2 h-2 rounded-full bg-blue-500 shrink-0"
-                          title="Non lue"
-                        />
-                      )}
+                    <p className="text-[13px] font-semibold text-gray-800">
                       {c.matricule}
                       {c.nom && (
                         <span className="font-normal text-gray-500">
@@ -144,8 +146,8 @@ const NotificationConges = () => {
                       {fmtDateCourte(c.date_depart)} →{" "}
                       {fmtDateCourte(c.date_retour)}
                       {c.type_absence && (
-                        <span className="ml-1.5 px-1.5 py-px rounded bg-gray-100 text-gray-600 text-[11px]">
-                          {c.type_absence}
+                        <span className="ml-1.5 text-gray-400">
+                          · {c.type_absence}
                         </span>
                       )}
                     </p>
@@ -162,9 +164,9 @@ const NotificationConges = () => {
 
           <button
             onClick={voirTout}
-            className="w-full px-4 py-2.5 text-[13px] font-medium text-gray-700 hover:bg-gray-50 border-t border-gray-100 rounded-b-xl"
+            className="w-full px-4 py-2 text-[13px] font-medium text-white bg-akj border-t border-gray-100 rounded-b-xl"
           >
-            Voir tous les congés à valider →
+            Voir tous
           </button>
         </div>
       )}

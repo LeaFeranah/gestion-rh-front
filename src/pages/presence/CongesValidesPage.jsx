@@ -46,6 +46,9 @@ const fmtDateHeure = (d) => {
   });
 };
 
+// Motif déjà terminé par « OK » (saisi dans Access)
+const motifFinitParOk = (m) => /ok[\s.!]*$/i.test((m || "").trim());
+
 const fmtDuree = (v) =>
   v === null || v === undefined ? "—" : String(v).replace(".", ",");
 
@@ -65,15 +68,29 @@ const CongesValidesPage = () => {
   const [sections, setSections] = useState([]);
   const [section, setSection] = useState("");
   const [statut, setStatut] = useState(st.statut || "");
+  // Congé ouvert depuis la notification (un seul congé affiché)
+  const [congeId, setCongeId] = useState(st.congeId || null);
+  const [congeMatricule, setCongeMatricule] = useState(st.matricule || "");
 
-  // Clic sur la cloche 🔔 alors qu'on est déjà sur cette page
+  // Clic dans la notification alors qu'on est déjà sur cette page
   useEffect(() => {
-    if (st.statut) {
-      setStatut(st.statut);
+    if (!location.state) return;
+    setCongeId(st.congeId || null);
+    setCongeMatricule(st.matricule || "");
+    if (!st.congeId) {
+      setStatut(st.statut || "");
       setToutesPeriodes(!!st.toutesPeriodes);
-      setPage("last");
+      setSearchInput("");
+      setSection("");
     }
+    setPage("last");
   }, [location.key]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const afficherTous = () => {
+    setCongeId(null);
+    setCongeMatricule("");
+    setPage("last");
+  };
   const [page, setPage] = useState("last"); // "last" = ouvre sur la dernière page (les plus récents)
 
   const [conges, setConges] = useState([]);
@@ -87,6 +104,7 @@ const CongesValidesPage = () => {
   useEffect(() => {
     const t = setTimeout(() => {
       setQ(searchInput.trim());
+      if (searchInput.trim()) setCongeId(null);
       setPage("last");
     }, 350);
     return () => clearTimeout(t);
@@ -102,15 +120,19 @@ const CongesValidesPage = () => {
   const fetchConges = useCallback(async () => {
     setLoading(true);
     try {
-      const d = await presenceService.getCongesValides({
-        annee: toutesPeriodes ? null : annee,
-        mois: toutesPeriodes ? null : mois,
-        q,
-        section,
-        statut,
-        page,
-        pageSize: PAGE_SIZE,
-      });
+      const d = await presenceService.getCongesValides(
+        congeId
+          ? { congeId, page: 1, pageSize: PAGE_SIZE }
+          : {
+              annee: toutesPeriodes ? null : annee,
+              mois: toutesPeriodes ? null : mois,
+              q,
+              section,
+              statut,
+              page,
+              pageSize: PAGE_SIZE,
+            },
+      );
       setConges(d.conges || []);
       setStats(d.statistiques || { total: 0, valides: 0, non_valides: 0 });
       setPagination(d.pagination || { total: 0, total_pages: 0 });
@@ -121,7 +143,7 @@ const CongesValidesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [annee, mois, toutesPeriodes, q, section, statut, page]);
+  }, [annee, mois, toutesPeriodes, q, section, statut, page, congeId]);
 
   useEffect(() => {
     fetchConges();
@@ -144,7 +166,7 @@ const CongesValidesPage = () => {
         valides: s.valides + (nouveau ? 1 : -1),
         non_valides: s.non_valides + (nouveau ? -1 : 1),
       }));
-      // Met à jour tout de suite le compteur de la cloche 🔔
+      // Met à jour tout de suite le compteur de la cloche
       window.dispatchEvent(new Event("conges-maj"));
     } catch (err) {
       setConges((prev) =>
@@ -168,13 +190,14 @@ const CongesValidesPage = () => {
     try {
       const r = await presenceService.synchroniserConges();
       alert(
-        `✅ Synchronisation Access terminée\n` +
-          `${r.crees} nouveau(x), ${r.mises_a_jour} mis à jour, ${r.supprimees} supprimé(s)`,
+        `Synchronisation Access terminée\n` +
+          `${r.crees} nouveau(x), ${r.mises_a_jour} mis à jour, ${r.supprimees} supprimé(s)` +
+          (r.auto_valides ? `\n${r.auto_valides} validé(s) automatiquement (motif OK)` : ""),
       );
       fetchConges();
       window.dispatchEvent(new Event("conges-maj"));
     } catch (err) {
-      alert("❌ " + (err.response?.data?.error || err.message));
+      alert((err.response?.data?.error || err.message));
     } finally {
       setSyncing(false);
     }
@@ -182,16 +205,19 @@ const CongesValidesPage = () => {
 
   // Double-clic → présence principale du matricule
   const ouvrirPresence = (c) => {
-    const year = toutesPeriodes ? c.periode_annee : annee;
-    const month = toutesPeriodes ? c.periode_mois : mois;
+    const autrePeriode = toutesPeriodes || congeId;
+    const year = autrePeriode ? c.periode_annee : annee;
+    const month = autrePeriode ? c.periode_mois : mois;
     navigate("/attendance", {
       state: { year, month, matricule: c.matricule, nom: c.nom },
     });
   };
 
-  const periodeLabel = toutesPeriodes
-    ? "Toutes les périodes"
-    : `${MOIS_FR[mois - 1]} ${annee}`;
+  const periodeLabel = congeId
+    ? `Congé du matricule ${congeMatricule || ""}`.trim()
+    : toutesPeriodes
+      ? "Toutes les périodes"
+      : `${MOIS_FR[mois - 1]} ${annee}`;
 
   const selectCls =
     "px-3 py-1 text-sm border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-400";
@@ -244,6 +270,7 @@ const CongesValidesPage = () => {
               disabled={toutesPeriodes}
               onChange={(e) => {
                 setMois(+e.target.value);
+                setCongeId(null);
                 setPage("last");
               }}
               className={`${selectCls} disabled:opacity-50`}
@@ -259,6 +286,7 @@ const CongesValidesPage = () => {
               disabled={toutesPeriodes}
               onChange={(e) => {
                 setAnnee(+e.target.value);
+                setCongeId(null);
                 setPage("last");
               }}
               className={`${selectCls} disabled:opacity-50`}
@@ -278,7 +306,8 @@ const CongesValidesPage = () => {
                 checked={toutesPeriodes}
                 onChange={(e) => {
                   setToutesPeriodes(e.target.checked);
-                  setPage("last");
+                  setCongeId(null);
+                setPage("last");
                 }}
                 className="accent-gray-700"
               />
@@ -320,7 +349,8 @@ const CongesValidesPage = () => {
             value={section}
             onChange={(e) => {
               setSection(e.target.value);
-              setPage("last");
+              setCongeId(null);
+                setPage("last");
             }}
             className={selectCls}
           >
@@ -336,14 +366,15 @@ const CongesValidesPage = () => {
             value={statut}
             onChange={(e) => {
               setStatut(e.target.value);
-              setPage("last");
+              setCongeId(null);
+                setPage("last");
             }}
             className={selectCls}
           >
             <option value="">Tous les statuts</option>
             <option value="valide">Validés</option>
             <option value="non_valide">À valider</option>
-            <option value="nouveau">🔔 Nouveaux à valider</option>
+            <option value="nouveau">Nouveaux à valider</option>
           </select>
 
           {/* <span className="ml-auto flex items-center gap-1.5 text-xs text-gray-400">
@@ -352,6 +383,21 @@ const CongesValidesPage = () => {
           </span> */}
         </div>
       </div>
+
+      {congeId && (
+        <div className="flex items-center justify-between gap-3 bg-white border border-gray-200 rounded-xl px-6 py-2.5 mb-4 text-sm text-gray-700">
+          <span>
+            Congé du matricule{" "}
+            <span className="font-semibold">{congeMatricule}</span>
+          </span>
+          <button
+            onClick={afficherTous}
+            className="px-3 py-1 text-sm text-white bg-akj rounded-md"
+          >
+            Voir tous
+          </button>
+        </div>
+      )}
 
       {/* Tableau (en-têtes comme la page Anomalies) */}
       <div className="bg-white border border-gray-200 rounded-xl overflow-auto max-h-[calc(100vh-380px)]">
@@ -482,8 +528,15 @@ const CongesValidesPage = () => {
                   />
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-700 align-top max-w-[260px]">
-                  <div className="truncate" title={c.motif || ""}>
-                    {c.motif || "—"}
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="truncate" title={c.motif || ""}>
+                      {c.motif || "—"}
+                    </span>
+                    {c.valide && !motifFinitParOk(c.motif) && (
+                      <span className="shrink-0 font-semibold text-green-600">
+                        OK
+                      </span>
+                    )}
                   </div>
                   {/* {c.type_absence && (
                     <div className="text-xs text-gray-400">

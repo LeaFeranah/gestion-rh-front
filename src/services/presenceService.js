@@ -444,8 +444,10 @@ const presenceService = {
     statut = "",
     page = 1,
     pageSize = 50,
+    congeId = null,
   } = {}) => {
     const params = { page, page_size: pageSize };
+    if (congeId) params.id = congeId;
     if (annee && mois) {
       params.annee = annee;
       params.mois = mois;

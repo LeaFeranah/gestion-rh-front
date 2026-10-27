@@ -8,6 +8,17 @@
   background-color: #98FF98;
 }
 
+/* Barre d'outils qui défile horizontalement (page Présence).
+   Firefox dessine la barre de défilement par-dessus les boutons :
+   on lui réserve sa place en dessous. Chrome / Edge ne sont pas concernés. */
+@supports (-moz-appearance: none) {
+  .toolbar-scroll {
+    padding-bottom: 12px;
+    scrollbar-width: thin;
+    scrollbar-color: #56656b transparent;
+  }
+}
+
 
 
 @media print {

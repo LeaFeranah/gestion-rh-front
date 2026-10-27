@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <title>Gestion RH</title>
+  <rect width="64" height="64" rx="14" fill="#1f2937"/>
+  <g fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="square" stroke-linejoin="miter">
+    <path d="M15 44V20h7.5a6 6 0 0 1 0 12H15M22 32l8 12"/>
+    <path d="M36 20v24M49 20v24M36 32h13"/>
+  </g>
+</svg>

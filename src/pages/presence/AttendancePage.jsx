@@ -1880,6 +1880,13 @@ const EvenementModal = ({
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 
+// "2026-10-25" -> true si c'est un dimanche (lu en date locale, sans décalage horaire)
+const estDimanche = (dateStr) => {
+  if (!dateStr) return false;
+  const [y, m, d] = String(dateStr).slice(0, 10).split("-").map(Number);
+  return new Date(y, m - 1, d).getDay() === 0;
+};
+
 const AttendancePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -2378,10 +2385,9 @@ const AttendancePage = () => {
     [modeHeures],
   );
 
-  const getCellBackgroundColor = useCallback((attendance) => {
-    if (!attendance) return "transparent";
-    if (attendance.est_jour_paiement) return "";
-    if (attendance.est_samedi) return "bg-gray-50";
+  // Colonnes du dimanche en gris (même sans pointage ce jour-là)
+  const getCellBackgroundColor = useCallback((attendance, dateStr) => {
+    if (estDimanche(dateStr)) return "bg-gray-50";
     return "transparent";
   }, []);
 
@@ -2504,7 +2510,7 @@ const AttendancePage = () => {
 
     // ── Corps : 3 lignes par employé ─────────────────────────────────────
     const ROUGE = "#b91c1c";
-    const GRIS_SAMEDI = "#f3f4f6";
+    const GRIS_DIMANCHE = "#f3f4f6";
     const bodyFor = (emps) => {
       const body = [];
       emps.forEach((employee) => {
@@ -2514,7 +2520,7 @@ const AttendancePage = () => {
           const ev = getEvenementForExportCell(evMap, employee.userid, dateObj.date, attendance);
           const { heureEntreeAffichee, heureSortieAffichee } = getHeuresAffichees(attendance);
           const { entreeColor, sortieColor } = getTimeAnomalyColor(attendance);
-          const fill = attendance?.est_samedi ? GRIS_SAMEDI : undefined;
+          const fill = estDimanche(dateObj.date) ? GRIS_DIMANCHE : undefined;
           lE.push({ content: heureEntreeAffichee || "", styles: { textColor: entreeColor ? ROUGE : "#111111", fillColor: fill } });
           lEv.push({
             content: ev?.display || "",
@@ -2551,27 +2557,17 @@ const AttendancePage = () => {
     const columnStyles = { 0: { cellWidth: largeurNom } };
     for (let c = 1; c <= nbJours; c++) columnStyles[c] = { cellWidth: largeurJour };
 
-    // ── Pied de page : infos collectées pendant le dessin du tableau ─────
-    // pageInfos[n° page] = { section, employes: Set(userid), finSection }
-    const pageInfos = {};
-    const pageCourante = () => doc.internal.getCurrentPageInfo().pageNumber;
-    const infoPage = (section) => {
-      const n = pageCourante();
-      if (!pageInfos[n]) pageInfos[n] = { section, employes: new Set(), finSection: false };
-      return pageInfos[n];
-    };
     const FOOTER_H = 6; // place réservée au pied de page sous le tableau
+    const TOTAL_H = 14; // case du total effectif sous le tableau
 
     groupes.forEach(({ section, employees: emps }, idx) => {
       if (idx > 0) doc.addPage();
       drawHeader(section);
-      infoPage(section);
       autoTable(doc, {
         head,
         body: bodyFor(emps),
         startY: M + HEADER_H,
         margin: { top: M, left: M, right: M, bottom: M + FOOTER_H },
-        didAddPage: () => infoPage(section),
         theme: "plain",
         showHead: "everyPage",
         rowPageBreak: "avoid",
@@ -2606,8 +2602,6 @@ const AttendancePage = () => {
             doc.setLineWidth(0.6);
             doc.rect(x, y, w, h);
             const raw = data.cell.raw || {};
-            // Compte l'employé sur la feuille où il est imprimé
-            infoPage(raw._section).employes.add(raw._userid);
             doc.setTextColor("#111111");
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
@@ -2636,10 +2630,26 @@ const AttendancePage = () => {
           if (ligne === 2) doc.line(x, y + h, x + w, y + h);
         },
       });
-      // Dernière feuille de la section : on y mettra le total effectif
-      const fin = infoPage(section);
-      fin.finSection = true;
-      fin.totalSection = emps.length;
+      // ── Fin de la section : total effectif en grand, collé sous le tableau
+      const hPage = doc.internal.pageSize.getHeight();
+      let yTotal = doc.lastAutoTable?.finalY ?? M + HEADER_H;
+      if (yTotal + TOTAL_H > hPage - M - FOOTER_H) {
+        doc.addPage();
+        yTotal = M;
+      }
+      // Case à gauche, sous la colonne N° / NOM : le chiffre seul, centré
+      const lCase = largeurNom;
+      const xCase = M;
+      doc.setDrawColor(FONCE);
+      doc.setLineWidth(0.6);
+      doc.setFillColor("#f3f4f6");
+      doc.rect(xCase, yTotal, lCase, TOTAL_H, "FD");
+      doc.setTextColor("#111111");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(26);
+      doc.text(String(emps.length), xCase + lCase / 2, yTotal + TOTAL_H / 2 + 3.5, {
+        align: "center",
+      });
     });
 
     // ── Pied de chaque feuille (dessiné à la fin : nombre total de pages connu)
@@ -2648,26 +2658,11 @@ const AttendancePage = () => {
     const yPied = H - M - 1;
     for (let n = 1; n <= totalPages; n++) {
       doc.setPage(n);
-      const info = pageInfos[n] || { section: "", employes: new Set() };
       doc.setDrawColor(GRIS);
       doc.setLineWidth(0.2);
       doc.line(M, yPied - 4, W - M, yPied - 4);
       doc.setTextColor("#111111");
       doc.setFontSize(8.5);
-
-      // En bas à gauche : Section · Effectif (· Total effectif en fin de section)
-      let x = M;
-      const morceau = (label, valeur) => {
-        doc.setFont("helvetica", "bold");
-        doc.text(label, x, yPied);
-        x += doc.getTextWidth(label) + 1.2;
-        doc.setFont("helvetica", "normal");
-        doc.text(String(valeur), x, yPied);
-        x += doc.getTextWidth(String(valeur)) + 8;
-      };
-      morceau("Section :", info.section || "");
-      morceau("Effectif :", info.employes.size);
-      if (info.finSection) morceau("Total effectif :", info.totalSection);
 
       // En bas à droite : numéro de page
       doc.setFont("helvetica", "normal");
@@ -2679,7 +2674,8 @@ const AttendancePage = () => {
 
   const handlePrintClick = useCallback(async () => {
     // Une section ou toutes les sections → PDF (une fiche par section, avec
-    // pied de page : section, effectif de la feuille, total, n° de page).
+    // n° de page en pied de page ; total effectif en grand chiffre sous le
+    // tableau, à la fin de chaque section).
     // On ouvre l'onglet TOUT DE SUITE (pendant le clic), sinon le navigateur
     // le bloque comme pop-up.
     const win = window.open("", "_blank");
@@ -3215,8 +3211,10 @@ const AttendancePage = () => {
                         );
                         const { heureEntreeAffichee, heureSortieAffichee } =
                           getHeuresAffichees(attendance);
-                        const backgroundColor =
-                          getCellBackgroundColor(attendance);
+                        const backgroundColor = getCellBackgroundColor(
+                          attendance,
+                          dateObj.date,
+                        );
                         const { entreeColor, sortieColor } =
                           getTimeAnomalyColor(attendance);
                         const estModifieManuellement =
@@ -3467,7 +3465,7 @@ const AttendancePage = () => {
           </div>
 
           {/* ── Barre d'outils : tout sur une seule ligne ── */}
-          <div className="flex flex-nowrap items-center gap-1.5 mt-4 border-t-2 border-gray-800 pt-3 print:hidden overflow-x-auto">
+          <div className="flex flex-nowrap items-center gap-1.5 mt-4 border-t-2 border-gray-800 pt-3 print:hidden overflow-x-auto toolbar-scroll">
             <div className="h-8 flex items-center w-[170px] shrink-0 [&_input]:h-8 [&_input]:py-0 [&_input]:text-sm">
               <LocalEmployeeSearch
                 value={searchFilter}
