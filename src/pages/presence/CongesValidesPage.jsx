@@ -400,7 +400,7 @@ const CongesValidesPage = () => {
       )}
 
       {/* Tableau (en-têtes comme la page Anomalies) */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-auto max-h-[calc(100vh-380px)]">
+      <div className="bg-white border border-gray-200 rounded-xl overflow-auto max-h-[calc(100vh-170px)] min-h-[420px]">
         <table className="w-full text-sm">
           <thead className="sticky top-0 z-10">
             <tr className="border-b border-gray-100 bg-gray-200">
