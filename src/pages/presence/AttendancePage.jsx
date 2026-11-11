@@ -22,6 +22,7 @@ import {
   Download,
   Printer,
   Users,
+  Moon,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import * as XLSX from "xlsx";
@@ -1107,6 +1108,26 @@ const PeriodeFermetureModal = ({ onClose, onSave }) => {
     </div>
   );
 };
+const hhmmToMinutes = (t) => {
+  if (!t) return null;
+  const [h, m] = t.slice(0, 5).split(":").map(Number);
+  if (isNaN(h) || isNaN(m)) return null;
+  return h * 60 + m;
+};
+
+const sortieAvantEntree = (entree, sortie) => {
+  const e = hhmmToMinutes(entree);
+  const s = hhmmToMinutes(sortie);
+  return e !== null && s !== null && s < e;
+};
+
+const dureeTravail = (entree, sortie) => {
+  const e = hhmmToMinutes(entree);
+  const s = hhmmToMinutes(sortie);
+  if (e === null || s === null) return null;
+  const diff = s < e ? s + 24 * 60 - e : s - e;
+  return `${Math.floor(diff / 60)}h${String(diff % 60).padStart(2, "0")}`;
+};
 
 // ─── Modal Modification des heures ───────────────────────────────────────────
 
@@ -1124,6 +1145,7 @@ const HeureModal = ({
     heure_entree: "",
     heure_sortie: "",
     commentaire: "",
+    travail_nuit: false,
   });
   const [horairesPrevus, setHorairesPrevus] = useState(null);
 
@@ -1162,6 +1184,10 @@ const HeureModal = ({
           heure_entree: heureEntreeDefaut,
           heure_sortie: heureSortieDefaut,
           commentaire: data.anomalie?.commentaire || "",
+          travail_nuit:
+            !!data.anomalie?.travail_nuit ||
+            !!attendance?.travail_nuit ||
+            sortieAvantEntree(heureEntreeDefaut, heureSortieDefaut),
         });
       } catch (err) {
         console.error("❌ Erreur chargement données:", err);
@@ -1187,6 +1213,16 @@ const HeureModal = ({
       return;
     }
 
+    if (
+      !formData.travail_nuit &&
+      sortieAvantEntree(formData.heure_entree, formData.heure_sortie)
+    ) {
+      alert(
+        "L'heure de sortie est avant l'heure d'entrée.\nCochez « Travail de nuit » si la sortie est le lendemain.",
+      );
+      return;
+    }
+
     setLoading(true);
     try {
       await presenceService.modifierHeuresManuellement({
@@ -1199,6 +1235,7 @@ const HeureModal = ({
           ? `${formData.heure_sortie}:00`
           : null,
         commentaire: formData.commentaire || "Ajouté manuellement",
+        travail_nuit: !!formData.travail_nuit,
       });
       alert("✅ Présence enregistrée avec succès !");
       onSave();
@@ -1359,15 +1396,56 @@ const HeureModal = ({
                   <input
                     type="time"
                     value={formData[key]}
-                    onChange={(e) =>
-                      setFormData({ ...formData, [key]: e.target.value })
-                    }
+                    // onChange={(e) =>
+                    //   setFormData({ ...formData, [key]: e.target.value })
+                    // }
+                    onChange={(e) => {
+                      const next = { ...formData, [key]: e.target.value };
+                      if (sortieAvantEntree(next.heure_entree, next.heure_sortie))
+                        next.travail_nuit = true;
+                      setFormData(next);
+                    }}
                     className="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-gray-800 focus:outline-none"
                     disabled={loading || deleting}
                   />
                 </div>
               ))}
             </div>
+                        <label
+              className={`flex items-center gap-3 p-3 rounded border-2 cursor-pointer select-none ${
+                formData.travail_nuit
+                  ? "border-indigo-400 bg-indigo-50"
+                  : "border-gray-200 bg-white"
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={!!formData.travail_nuit}
+                onChange={(e) =>
+                  setFormData({ ...formData, travail_nuit: e.target.checked })
+                }
+                className="w-4 h-4 accent-indigo-600"
+                disabled={loading || deleting}
+              />
+              <Moon className="w-4 h-4 text-indigo-600" />
+              <div className="flex-1">
+                <div className="text-sm font-bold text-gray-800">Travail de nuit</div>
+                <div className="text-xs text-gray-500">
+                  La sortie est le lendemain de l'entrée (ex : 17:30 → 06:00)
+                </div>
+              </div>
+              {formData.heure_entree && formData.heure_sortie && (
+                <div className="text-right">
+                  <div className="text-xs text-gray-500">Durée</div>
+                  <div className="text-sm font-bold text-gray-800">
+                    {formData.travail_nuit ||
+                    !sortieAvantEntree(formData.heure_entree, formData.heure_sortie)
+                      ? dureeTravail(formData.heure_entree, formData.heure_sortie)
+                      : "—"}
+                  </div>
+                </div>
+              )}
+            </label>
             <div>
               <label className="block text-sm font-bold mb-2 text-gray-700">
                 Commentaire
@@ -2638,7 +2716,8 @@ const AttendancePage = () => {
         yTotal = M;
       }
       // Case à gauche, sous la colonne N° / NOM : le chiffre seul, centré
-      const lCase = largeurNom;
+      //const lCase = largeurNom;
+      const lCase = 20;
       const xCase = M;
       doc.setDrawColor(FONCE);
       doc.setLineWidth(0.6);
@@ -3239,6 +3318,16 @@ const AttendancePage = () => {
                                 title="Correction automatique"
                               ></div>
                             )}
+
+                                                        {attendance?.travail_nuit &&
+                              modeHeures !== "brutes" && (
+                                <span
+                                  className="absolute bottom-0 right-0 leading-none"
+                                  title="Travail de nuit"
+                                >
+                                  <Moon className="w-2.5 h-2.5 text-indigo-600" />
+                                </span>
+                              )}
 
                             <div className="flex flex-col h-full">
                               <button
