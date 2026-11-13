@@ -117,12 +117,24 @@ const fetchAllPages = async (fetchPage, listKey, onProgress) => {
 // sans problème de mémoire ni de lenteur de l'aperçu.
 // Couleurs des évènements (mêmes teintes que getEvenementTextColor)
 const EVENEMENT_HEX = {
-  X: "#15803d", RM: "#1d4ed8", HP: "#7e22ce", RC: "#a16207", ANO: "#374151",
-  CP: "#0f766e", CE: "#0f766e", EF: "#be185d", F: "#4338ca", PS: "#c2410c",
-  HA: "#7e22ce", OS: "#4338ca", MP: "#b91c1c", AMP: "#1d4ed8", A: "#b91c1c",
-  CM: "#1d4ed8", AUT: "#b45309",
+  X: "#15803d",
+  RM: "#1d4ed8",
+  HP: "#7e22ce",
+  RC: "#a16207",
+  ANO: "#374151",
+  CP: "#0f766e",
+  CE: "#0f766e",
+  EF: "#be185d",
+  F: "#4338ca",
+  PS: "#c2410c",
+  HA: "#7e22ce",
+  OS: "#4338ca",
+  MP: "#b91c1c",
+  AMP: "#1d4ed8",
+  A: "#b91c1c",
+  CM: "#1d4ed8",
+  AUT: "#b45309",
 };
-
 
 // Regroupe une liste brute de présences par employé (même logique que le tableau)
 const buildEmployeesFromPresences = (list) => {
@@ -1401,7 +1413,9 @@ const HeureModal = ({
                     // }
                     onChange={(e) => {
                       const next = { ...formData, [key]: e.target.value };
-                      if (sortieAvantEntree(next.heure_entree, next.heure_sortie))
+                      if (
+                        sortieAvantEntree(next.heure_entree, next.heure_sortie)
+                      )
                         next.travail_nuit = true;
                       setFormData(next);
                     }}
@@ -1411,10 +1425,10 @@ const HeureModal = ({
                 </div>
               ))}
             </div>
-                        <label
+            <label
               className={`flex items-center gap-3 p-3 rounded border-2 cursor-pointer select-none ${
                 formData.travail_nuit
-                  ? "border-indigo-400 bg-indigo-50"
+                  ? "border-indigo-400 bg-gray-50"
                   : "border-gray-200 bg-white"
               }`}
             >
@@ -1424,29 +1438,37 @@ const HeureModal = ({
                 onChange={(e) =>
                   setFormData({ ...formData, travail_nuit: e.target.checked })
                 }
-                className="w-4 h-4 accent-indigo-600"
+                className="w-4 h-4 accent-gray-600"
                 disabled={loading || deleting}
               />
-              <Moon className="w-4 h-4 text-indigo-600" />
+              <Moon className="w-4 h-4 text-gray-600" />
               <div className="flex-1">
-                <div className="text-sm font-bold text-gray-800">Travail de nuit</div>
-                <div className="text-xs text-gray-500">
-                  La sortie est le lendemain de l'entrée (ex : 17:30 → 06:00)
+                <div className="text-sm font-bold text-gray-800">
+                  Travail de nuit
                 </div>
+                {/* <div className="text-xs text-gray-500">
+                  La sortie est le lendemain de l'entrée (ex : 17:30 → 06:00)
+                </div> */}
               </div>
               {formData.heure_entree && formData.heure_sortie && (
                 <div className="text-right">
                   <div className="text-xs text-gray-500">Durée</div>
                   <div className="text-sm font-bold text-gray-800">
                     {formData.travail_nuit ||
-                    !sortieAvantEntree(formData.heure_entree, formData.heure_sortie)
-                      ? dureeTravail(formData.heure_entree, formData.heure_sortie)
+                    !sortieAvantEntree(
+                      formData.heure_entree,
+                      formData.heure_sortie,
+                    )
+                      ? dureeTravail(
+                          formData.heure_entree,
+                          formData.heure_sortie,
+                        )
                       : "—"}
                   </div>
                 </div>
               )}
             </label>
-            <div>
+            {/* <div>
               <label className="block text-sm font-bold mb-2 text-gray-700">
                 Commentaire
               </label>
@@ -1460,7 +1482,7 @@ const HeureModal = ({
                 placeholder="Ex: Oubli de pointage..."
                 disabled={loading || deleting}
               />
-            </div>
+            </div> */}
           </div>
 
           <div className="flex gap-3 pt-6 border-t border-gray-200">
@@ -2005,7 +2027,7 @@ const AttendancePage = () => {
   // const [sections, setSections] = useState([]);
   // const [selectedSection, setSelectedSection] = useState("");
 
-    const [sections, setSections] = useState([]);
+  const [sections, setSections] = useState([]);
   const [selectedSection, setSelectedSection] = useState("");
 
   // Filtre exact sur un matricule (double-clic depuis « Congés validés »)
@@ -2022,7 +2044,7 @@ const AttendancePage = () => {
 
   // useEffect(() => {
   //   if (locationState.section) {
-    useEffect(() => {
+  useEffect(() => {
     if (locationState.matricule) {
       setMatriculeFilter(locationState.matricule);
       setMatriculeNom(locationState.nom || "");
@@ -2193,12 +2215,12 @@ const AttendancePage = () => {
           mois,
           false,
           selectedSection,
-        //   page + 1,
-        //   rowsPerPage,
-        //   debouncedSearch,
-        // );
+          //   page + 1,
+          //   rowsPerPage,
+          //   debouncedSearch,
+          // );
 
-                  page + 1,
+          page + 1,
           rowsPerPage,
           debouncedSearch,
           matriculeFilter,
@@ -2243,9 +2265,9 @@ const AttendancePage = () => {
         }
       }
     },
-  //   [selectedSection, page, debouncedSearch],
-  // );
-      [selectedSection, page, debouncedSearch, matriculeFilter],
+    //   [selectedSection, page, debouncedSearch],
+    // );
+    [selectedSection, page, debouncedSearch, matriculeFilter],
   );
 
   useEffect(() => {
@@ -2575,8 +2597,15 @@ const AttendancePage = () => {
     // ── En-tête du tableau (répété sur chaque page) ─────────────────────
     const head = [
       [
-        { content: "N° / NOM", rowSpan: 4, styles: { valign: "middle", fontSize: 9 } },
-        ...weekNumbers.map((w) => ({ content: `Semaine ${w}`, colSpan: weeks[w].length })),
+        {
+          content: "N° / NOM",
+          rowSpan: 4,
+          styles: { valign: "middle", fontSize: 9 },
+        },
+        ...weekNumbers.map((w) => ({
+          content: `Semaine ${w}`,
+          colSpan: weeks[w].length,
+        })),
       ],
       datesValides.map((d) => String(d.code_affichage ?? "")),
       datesValides.map((d) => {
@@ -2592,24 +2621,46 @@ const AttendancePage = () => {
     const bodyFor = (emps) => {
       const body = [];
       emps.forEach((employee) => {
-        const lE = [], lEv = [], lS = [];
+        const lE = [],
+          lEv = [],
+          lS = [];
         datesValides.forEach((dateObj) => {
           const attendance = getAttendanceData(employee, dateObj.date);
-          const ev = getEvenementForExportCell(evMap, employee.userid, dateObj.date, attendance);
-          const { heureEntreeAffichee, heureSortieAffichee } = getHeuresAffichees(attendance);
+          const ev = getEvenementForExportCell(
+            evMap,
+            employee.userid,
+            dateObj.date,
+            attendance,
+          );
+          const { heureEntreeAffichee, heureSortieAffichee } =
+            getHeuresAffichees(attendance);
           const { entreeColor, sortieColor } = getTimeAnomalyColor(attendance);
           const fill = estDimanche(dateObj.date) ? GRIS_DIMANCHE : undefined;
-          lE.push({ content: heureEntreeAffichee || "", styles: { textColor: entreeColor ? ROUGE : "#111111", fillColor: fill } });
+          lE.push({
+            content: heureEntreeAffichee || "",
+            styles: {
+              textColor: entreeColor ? ROUGE : "#111111",
+              fillColor: fill,
+            },
+          });
           lEv.push({
             content: ev?.display || "",
             styles: {
-              textColor: ev?.type ? EVENEMENT_HEX[ev.type] || "#374151" : "#111111",
+              textColor: ev?.type
+                ? EVENEMENT_HEX[ev.type] || "#374151"
+                : "#111111",
               fontStyle: "bold",
               fontSize: 7,
               fillColor: fill,
             },
           });
-          lS.push({ content: heureSortieAffichee || "", styles: { textColor: sortieColor ? ROUGE : "#111111", fillColor: fill } });
+          lS.push({
+            content: heureSortieAffichee || "",
+            styles: {
+              textColor: sortieColor ? ROUGE : "#111111",
+              fillColor: fill,
+            },
+          });
         });
         // Colonne nom : dessinée à la main (badge en gras + nom en italique)
         const nom = {
@@ -2633,7 +2684,8 @@ const AttendancePage = () => {
     const largeurNom = 42;
     const largeurJour = (W - 2 * M - largeurNom) / Math.max(1, nbJours);
     const columnStyles = { 0: { cellWidth: largeurNom } };
-    for (let c = 1; c <= nbJours; c++) columnStyles[c] = { cellWidth: largeurJour };
+    for (let c = 1; c <= nbJours; c++)
+      columnStyles[c] = { cellWidth: largeurJour };
 
     const FOOTER_H = 6; // place réservée au pied de page sous le tableau
     const TOTAL_H = 14; // case du total effectif sous le tableau
@@ -2686,7 +2738,10 @@ const AttendancePage = () => {
             doc.text(String(raw._badge ?? ""), x + 2.5, y + h / 2 - 0.5);
             doc.setFont("helvetica", "italic");
             doc.setFontSize(6.5);
-            const nomLignes = doc.splitTextToSize(String(raw._nom ?? ""), w - 4);
+            const nomLignes = doc.splitTextToSize(
+              String(raw._nom ?? ""),
+              w - 4,
+            );
             doc.text(nomLignes.slice(0, 2), x + 2.5, y + h / 2 + 3);
             return;
           }
@@ -2726,9 +2781,14 @@ const AttendancePage = () => {
       doc.setTextColor("#111111");
       doc.setFont("helvetica", "bold");
       doc.setFontSize(26);
-      doc.text(String(emps.length), xCase + lCase / 2, yTotal + TOTAL_H / 2 + 3.5, {
-        align: "center",
-      });
+      doc.text(
+        String(emps.length),
+        xCase + lCase / 2,
+        yTotal + TOTAL_H / 2 + 3.5,
+        {
+          align: "center",
+        },
+      );
     });
 
     // ── Pied de chaque feuille (dessiné à la fin : nombre total de pages connu)
@@ -2821,7 +2881,18 @@ const AttendancePage = () => {
     }
     // buildPdf dépend des mêmes données que celles listées ici
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSection, matriculeFilter, currentYear, currentMonth, debouncedSearch, periode, datesValides, weeks, weekNumbers, getHeuresAffichees]);
+  }, [
+    selectedSection,
+    matriculeFilter,
+    currentYear,
+    currentMonth,
+    debouncedSearch,
+    periode,
+    datesValides,
+    weeks,
+    weekNumbers,
+    getHeuresAffichees,
+  ]);
 
   // ─── Export Excel ──────────────────────────────────────────────────────────
   const [exporting, setExporting] = useState(false);
@@ -3188,226 +3259,204 @@ const AttendancePage = () => {
   // Tableau de présence réutilisable : écran (page courante) et impression
   // par section (tous les employés).
   const renderAttendanceTable = (employeesList, evMap) => (
-            <table className="w-full border-collapse text-xs print:text-[7.5pt] print:table-fixed attendance-table">
-              {/* <thead className="sticky top-0 z-20"> */}
-              <thead className="sticky top-0 z-20 shadow-[0_2px_0_0_#1f2937,0_-2px_0_0_#1f2937]">
-                <tr className="bg-gray-100">
-                  <th
-                    // className="border-2 border-gray-800 p-2 sticky left-0 bg-gray-100 z-30 print:w-[120px] print:max-w-[120px]"
-                    // rowSpan={4}
-                    className="border-2 border-gray-800 p-2 sticky left-0 bg-gray-100 z-30 shadow-[2px_0_5px_rgba(0,0,0,0.12)] print:w-[120px] print:max-w-[120px]"
-                    rowSpan={4}
+    <table className="w-full border-collapse text-xs print:text-[7.5pt] print:table-fixed attendance-table">
+      {/* <thead className="sticky top-0 z-20"> */}
+      <thead className="sticky top-0 z-20 shadow-[0_2px_0_0_#1f2937,0_-2px_0_0_#1f2937]">
+        <tr className="bg-gray-100">
+          <th
+            // className="border-2 border-gray-800 p-2 sticky left-0 bg-gray-100 z-30 print:w-[120px] print:max-w-[120px]"
+            // rowSpan={4}
+            className="border-2 border-gray-800 p-2 sticky left-0 bg-gray-100 z-30 shadow-[2px_0_5px_rgba(0,0,0,0.12)] print:w-[120px] print:max-w-[120px]"
+            rowSpan={4}
+          >
+            <div className="font-bold text-sm w-32 print:w-full">N° / NOM</div>
+          </th>
+          {weekNumbers.map((weekNum) => (
+            <th
+              key={weekNum}
+              colSpan={weeks[weekNum].length}
+              className="border-2 border-gray-600 p-1 font-bold bg-gray-100"
+            >
+              Semaine {weekNum}
+            </th>
+          ))}
+        </tr>
+
+        <tr className="bg-gray-100">
+          {datesValides.map((date, idx) => (
+            <th
+              key={idx}
+              className="border border-gray-600 p-1 min-w-10 bg-gray-100"
+            >
+              <div className="font-bold">{date.code_affichage}</div>
+            </th>
+          ))}
+        </tr>
+
+        <tr className="bg-gray-100">
+          {datesValides.map((date, idx) => (
+            <th key={idx} className="border border-gray-600 p-1 bg-gray-100">
+              <div className="text-xs">
+                {new Date(date.date).toLocaleDateString("fr-FR", {
+                  weekday: "short",
+                })}
+              </div>
+              <div className="text-xs text-gray-600">
+                {new Date(date.date).getDate()}
+              </div>
+            </th>
+          ))}
+        </tr>
+
+        <tr className="bg-gray-100">
+          {datesValides.map((date, idx) => (
+            <th key={idx} className="border border-gray-600 p-1 bg-gray-100">
+              <div className="text-xs font-bold text-gray-700">
+                {getMonthAbbreviation(date.date)}
+              </div>
+            </th>
+          ))}
+        </tr>
+      </thead>
+
+      <tbody>
+        {employeesList.map((employee, empIdx) => (
+          <React.Fragment key={empIdx}>
+            <tr className="border-b-2 border-gray-800">
+              {/* <td className="border-2 border-gray-800 p-2 sticky left-0 bg-white z-10 print:w-[120px] print:max-w-[120px]"> */}
+              <td className="border-2 border-gray-800 p-2 sticky left-0 bg-white z-10 shadow-[2px_0_5px_rgba(0,0,0,0.08)] print:w-[120px] print:max-w-[120px]">
+                <div className="flex items-baseline gap-2 print:flex-col print:gap-0">
+                  <span className="font-bold text-sm shrink-0">
+                    {employee.badgenumber}
+                  </span>
+                  <span className="italic text-sm print:text-[7pt] print:leading-tight print:break-words print:overflow-hidden print:line-clamp-2">
+                    {employee.name}
+                  </span>
+                </div>
+                {!selectedSection && (
+                  <div className="text-xs text-gray-400 mt-0.5 print:hidden">
+                    {employee.section}
+                  </div>
+                )}
+              </td>
+
+              {datesValides.map((dateObj, dayIdx) => {
+                const attendance = getAttendanceData(employee, dateObj.date);
+                const eventData = getEvenementForExportCell(
+                  evMap,
+                  employee.userid,
+                  dateObj.date,
+                  attendance,
+                );
+                const { heureEntreeAffichee, heureSortieAffichee } =
+                  getHeuresAffichees(attendance);
+                const backgroundColor = getCellBackgroundColor(
+                  attendance,
+                  dateObj.date,
+                );
+                const { entreeColor, sortieColor } =
+                  getTimeAnomalyColor(attendance);
+                const estModifieManuellement = !!attendance?.anomalie_id;
+                const estCorrectionAuto = !!attendance?.est_correction_auto;
+
+                return (
+                  <td
+                    key={dayIdx}
+                    className={`border border-gray-600 p-0 text-center relative group ${backgroundColor}`}
                   >
-                    <div className="font-bold text-sm w-32 print:w-full">
-                      N° / NOM
-                    </div>
-                  </th>
-                  {weekNumbers.map((weekNum) => (
-                    <th
-                      key={weekNum}
-                      colSpan={weeks[weekNum].length}
-                      className="border-2 border-gray-600 p-1 font-bold bg-gray-100"
-                    >
-                      Semaine {weekNum}
-                    </th>
-                  ))}
-                </tr>
+                    {estModifieManuellement && (
+                      <div
+                        className="absolute top-0 right-0 w-2 h-2 bg-yellow-500 rounded-full"
+                        title="Heures modifiées manuellement"
+                      ></div>
+                    )}
+                    {estCorrectionAuto && (
+                      <div
+                        className="absolute top-0 left-0 w-2 h-2 bg-green-500 rounded-full"
+                        title="Correction automatique"
+                      ></div>
+                    )}
 
-                <tr className="bg-gray-100">
-                  {datesValides.map((date, idx) => (
-                    <th
-                      key={idx}
-                      className="border border-gray-600 p-1 min-w-10 bg-gray-100"
-                    >
-                      <div className="font-bold">{date.code_affichage}</div>
-                    </th>
-                  ))}
-                </tr>
+                    {attendance?.travail_nuit && modeHeures !== "brutes" && (
+                      <span
+                        className="absolute bottom-0 right-0 leading-none"
+                        title="Travail de nuit"
+                      >
+                        <Moon className="w-2.5 h-2.5 text-gray-600" />
+                      </span>
+                    )}
 
-                <tr className="bg-gray-100">
-                  {datesValides.map((date, idx) => (
-                    <th
-                      key={idx}
-                      className="border border-gray-600 p-1 bg-gray-100"
-                    >
-                      <div className="text-xs">
-                        {new Date(date.date).toLocaleDateString("fr-FR", {
-                          weekday: "short",
-                        })}
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        {new Date(date.date).getDate()}
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-
-                <tr className="bg-gray-100">
-                  {datesValides.map((date, idx) => (
-                    <th
-                      key={idx}
-                      className="border border-gray-600 p-1 bg-gray-100"
-                    >
-                      <div className="text-xs font-bold text-gray-700">
-                        {getMonthAbbreviation(date.date)}
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-
-              <tbody>
-                {employeesList.map((employee, empIdx) => (
-                  <React.Fragment key={empIdx}>
-                    <tr className="border-b-2 border-gray-800">
-                      {/* <td className="border-2 border-gray-800 p-2 sticky left-0 bg-white z-10 print:w-[120px] print:max-w-[120px]"> */}
-                      <td className="border-2 border-gray-800 p-2 sticky left-0 bg-white z-10 shadow-[2px_0_5px_rgba(0,0,0,0.08)] print:w-[120px] print:max-w-[120px]">
-                        <div className="flex items-baseline gap-2 print:flex-col print:gap-0">
-                          <span className="font-bold text-sm shrink-0">
-                            {employee.badgenumber}
+                    <div className="flex flex-col h-full">
+                      <button
+                        onClick={() =>
+                          modeHeures !== "brutes" &&
+                          handleHeureClick(employee, dateObj.date, attendance)
+                        }
+                        disabled={modeHeures === "brutes"}
+                        className="border-b border-gray-300 px-1 py-0.5 min-h-[20px] w-full transition-colors print:hover:bg-transparent"
+                        title={
+                          modeHeures === "brutes"
+                            ? "Non modifiable"
+                            : "Modifier"
+                        }
+                      >
+                        {heureEntreeAffichee ? (
+                          <span className={entreeColor}>
+                            {heureEntreeAffichee}
                           </span>
-                          <span className="italic text-sm print:text-[7pt] print:leading-tight print:break-words print:overflow-hidden print:line-clamp-2">
-                            {employee.name}
-                          </span>
-                        </div>
-                        {!selectedSection && (
-                          <div className="text-xs text-gray-400 mt-0.5 print:hidden">
-                            {employee.section}
-                          </div>
+                        ) : (
+                          <span className="text-gray-400 italic text-xs"></span>
                         )}
-                      </td>
+                      </button>
 
-                      {datesValides.map((dateObj, dayIdx) => {
-                        const attendance = getAttendanceData(
-                          employee,
-                          dateObj.date,
-                        );
-                        const eventData = getEvenementForExportCell(
-                          evMap,
-                          employee.userid,
-                          dateObj.date,
-                          attendance,
-                        );
-                        const { heureEntreeAffichee, heureSortieAffichee } =
-                          getHeuresAffichees(attendance);
-                        const backgroundColor = getCellBackgroundColor(
-                          attendance,
-                          dateObj.date,
-                        );
-                        const { entreeColor, sortieColor } =
-                          getTimeAnomalyColor(attendance);
-                        const estModifieManuellement =
-                          !!attendance?.anomalie_id;
-                        const estCorrectionAuto =
-                          !!attendance?.est_correction_auto;
+                      <button
+                        onClick={() =>
+                          handleEvenementClick(
+                            employee,
+                            dateObj.date,
+                            attendance,
+                          )
+                        }
+                        className={`print:text-[7pt] border-b border-gray-300 px-1 py-0.5 min-h-[21px] text-xs font-bold w-full hover:bg-gray-50 transition-colors print:hover:bg-transparent ${eventData?.type ? getEvenementTextColor(eventData.type) : ""}`}
+                        title={
+                          eventData?.type
+                            ? `Événement: ${eventData.type}`
+                            : "Ajouter un événement"
+                        }
+                      >
+                        {eventData?.display || ""}
+                      </button>
 
-                        return (
-                          <td
-                            key={dayIdx}
-                            className={`border border-gray-600 p-0 text-center relative group ${backgroundColor}`}
-                          >
-                            {estModifieManuellement && (
-                              <div
-                                className="absolute top-0 right-0 w-2 h-2 bg-yellow-500 rounded-full"
-                                title="Heures modifiées manuellement"
-                              ></div>
-                            )}
-                            {estCorrectionAuto && (
-                              <div
-                                className="absolute top-0 left-0 w-2 h-2 bg-green-500 rounded-full"
-                                title="Correction automatique"
-                              ></div>
-                            )}
-
-                                                        {attendance?.travail_nuit &&
-                              modeHeures !== "brutes" && (
-                                <span
-                                  className="absolute bottom-0 right-0 leading-none"
-                                  title="Travail de nuit"
-                                >
-                                  <Moon className="w-2.5 h-2.5 text-indigo-600" />
-                                </span>
-                              )}
-
-                            <div className="flex flex-col h-full">
-                              <button
-                                onClick={() =>
-                                  modeHeures !== "brutes" &&
-                                  handleHeureClick(
-                                    employee,
-                                    dateObj.date,
-                                    attendance,
-                                  )
-                                }
-                                disabled={modeHeures === "brutes"}
-                                className="border-b border-gray-300 px-1 py-0.5 min-h-[20px] w-full transition-colors print:hover:bg-transparent"
-                                title={
-                                  modeHeures === "brutes"
-                                    ? "Non modifiable"
-                                    : "Modifier"
-                                }
-                              >
-                                {heureEntreeAffichee ? (
-                                  <span className={entreeColor}>
-                                    {heureEntreeAffichee}
-                                  </span>
-                                ) : (
-                                  <span className="text-gray-400 italic text-xs"></span>
-                                )}
-                              </button>
-
-                              <button
-                                onClick={() =>
-                                  handleEvenementClick(
-                                    employee,
-                                    dateObj.date,
-                                    attendance,
-                                  )
-                                }
-                                className={`print:text-[7pt] border-b border-gray-300 px-1 py-0.5 min-h-[21px] text-xs font-bold w-full hover:bg-gray-50 transition-colors print:hover:bg-transparent ${eventData?.type ? getEvenementTextColor(eventData.type) : ""}`}
-                                title={
-                                  eventData?.type
-                                    ? `Événement: ${eventData.type}`
-                                    : "Ajouter un événement"
-                                }
-                              >
-                                {eventData?.display || ""}
-                              </button>
-
-                              <button
-                                onClick={() =>
-                                  modeHeures !== "brutes" &&
-                                  handleHeureClick(
-                                    employee,
-                                    dateObj.date,
-                                    attendance,
-                                  )
-                                }
-                                disabled={modeHeures === "brutes"}
-                                className="px-1 py-0.5 min-h-[20px] w-full transition-colors print:hover:bg-transparent"
-                                title={
-                                  modeHeures === "brutes"
-                                    ? "Non modifiable"
-                                    : "Modifier"
-                                }
-                              >
-                                {heureSortieAffichee ? (
-                                  <span className={sortieColor}>
-                                    {heureSortieAffichee}
-                                  </span>
-                                ) : (
-                                  <span className="text-gray-400 italic text-xs"></span>
-                                )}
-                              </button>
-                            </div>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
+                      <button
+                        onClick={() =>
+                          modeHeures !== "brutes" &&
+                          handleHeureClick(employee, dateObj.date, attendance)
+                        }
+                        disabled={modeHeures === "brutes"}
+                        className="px-1 py-0.5 min-h-[20px] w-full transition-colors print:hover:bg-transparent"
+                        title={
+                          modeHeures === "brutes"
+                            ? "Non modifiable"
+                            : "Modifier"
+                        }
+                      >
+                        {heureSortieAffichee ? (
+                          <span className={sortieColor}>
+                            {heureSortieAffichee}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 italic text-xs"></span>
+                        )}
+                      </button>
+                    </div>
+                  </td>
+                );
+              })}
+            </tr>
+          </React.Fragment>
+        ))}
+      </tbody>
+    </table>
   );
 
   return (
@@ -3594,7 +3643,7 @@ const AttendancePage = () => {
                 Horaires
               </button>
             )}
-                        <button
+            <button
               onClick={() =>
                 navigate("/conges-valides", {
                   state: { month: currentMonth, year: currentYear },
@@ -3609,7 +3658,9 @@ const AttendancePage = () => {
             {matriculeFilter && (
               <span className="shrink-0 flex items-center gap-1 pl-2.5 pr-1 h-8 text-sm bg-blue-50 border border-blue-300 text-blue-800 rounded whitespace-nowrap">
                 Matricule <b>{matriculeFilter}</b>
-                {matriculeNom && <span className="text-blue-600">· {matriculeNom}</span>}
+                {matriculeNom && (
+                  <span className="text-blue-600">· {matriculeNom}</span>
+                )}
                 <button
                   onClick={() => {
                     setMatriculeFilter("");
@@ -3710,9 +3761,7 @@ const AttendancePage = () => {
               className="shrink-0 flex items-center gap-1.5 px-3 h-8 text-sm font-medium bg-akj text-white rounded hover:bg-gray-700 disabled:opacity-60 whitespace-nowrap"
             >
               <Printer className="w-4 h-4" />
-              {preparingPrint
-                ? `Préparation… ${printProgress}`
-                : "Imprimer"}
+              {preparingPrint ? `Préparation… ${printProgress}` : "Imprimer"}
             </button>
           </div>
         </div>
